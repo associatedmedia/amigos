@@ -2,41 +2,33 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Order extends Model
 {
-    //
+    use HasFactory;
 
     protected $fillable = [
         'user_id',
+        'driver_id', // Make sure this is added if you ran the migration
         'mobile_no',
         'address',
+        'latitude',
+        'longitude',
         'total_amount',
-        'status',
+        'status'
     ];
 
-    protected static function boot()
+    // ✅ THIS WAS MISSING
+    public function user()
     {
-        parent::boot();
-
-        // This runs automatically whenever you do Order::create()
-        static::creating(function ($order) {
-            $order->order_number = self::generateOrderNumber();
-        });
+        return $this->belongsTo(User::class);
     }
 
-    public function items() {
-    return $this->hasMany(OrderItem::class);
-    }
-
-    public static function generateOrderNumber()
+    // Optional: If you want to grab driver details too
+    public function driver()
     {
-        do {
-            // Generate a random 10-digit number (1,000,000,000 to 9,999,999,999)
-            $number = random_int(1000000000, 9999999999);
-        } while (self::where('order_number', $number)->exists());
-
-        return $number;
+        return $this->belongsTo(User::class, 'driver_id');
     }
 }
