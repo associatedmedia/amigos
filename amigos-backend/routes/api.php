@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\AuthOtpController;
 use App\Http\Controllers\Api\MenuController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\AdminController;
 
 
 // Auth Routes
@@ -28,3 +29,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [ProfileController::class, 'show']);
     Route::post('/user/update', [ProfileController::class, 'update']);
 });
+
+
+Route::get('/admin/orders', [AdminController::class, 'getOrders']);
+Route::get('/admin/drivers', [AdminController::class, 'getDrivers']);
