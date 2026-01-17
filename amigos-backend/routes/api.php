@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\MenuController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\ContentController;
 
 
 // Auth Routes
@@ -35,3 +36,10 @@ Route::get('/admin/orders', [AdminController::class, 'getOrders']);
 Route::get('/admin/drivers', [AdminController::class, 'getDrivers']);
 Route::get('/admin/stats', [AdminController::class, 'getDashboardStats']);
 Route::get('/admin/customers', [AdminController::class, 'getCustomers']);
+
+
+Route::get('/admin/content', [ContentController::class, 'getAll']);
+Route::post('/admin/product', [ContentController::class, 'storeProduct']);
+Route::delete('/admin/product/{id}', [ContentController::class, 'deleteProduct']);
+Route::post('/admin/banner', [ContentController::class, 'storeBanner']);
+Route::delete('/admin/banner/{id}', [ContentController::class, 'deleteBanner']);
