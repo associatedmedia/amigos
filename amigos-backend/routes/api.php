@@ -33,3 +33,4 @@ Route::middleware('auth:sanctum')->group(function () {
 
 Route::get('/admin/orders', [AdminController::class, 'getOrders']);
 Route::get('/admin/drivers', [AdminController::class, 'getDrivers']);
+Route::get('/admin/stats', [AdminController::class, 'getDashboardStats']);

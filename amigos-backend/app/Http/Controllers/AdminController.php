@@ -59,4 +59,29 @@ class AdminController extends Controller
 
         return response()->json(['success' => false, 'message' => 'Order not found'], 404);
     }
+
+    // 5. Get Dashboard Stats
+    public function getDashboardStats()
+    {
+        // Import Carbon at the top: use Carbon\Carbon;
+        
+        $today = \Carbon\Carbon::today();
+
+        $stats = [
+            'total_orders' => Order::count(),
+            'total_customers' => User::count(), // You can filter by role later
+            'total_drivers' => User::count(),   // Placeholder until role added
+            // 'total_products' => Product::count(), // Uncomment when Product model exists
+            // 'total_categories' => Category::count(), // Uncomment when Category model exists
+            'total_products' => 12,   // Mock for now
+            'total_categories' => 4,  // Mock for now
+            
+            'total_sales' => Order::where('status', 'delivered')->sum('total_amount') ?? 0,
+            'today_sales' => Order::whereDate('created_at', $today)
+                                  ->where('status', 'delivered')
+                                  ->sum('total_amount') ?? 0,
+        ];
+
+        return response()->json($stats);
+    }
 }
