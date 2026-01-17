@@ -12,15 +12,21 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
-           $table->id();
+            $table->id();
             $table->string('name')->default('Amigo Customer');
-            $table->string('mobile_no')->unique(); // Add this
-            $table->string('email')->nullable()->unique(); // Change to nullable()
+            
+            // 1. Define columns in the exact order you want them in MySQL
+            $table->string('mobile_no')->unique(); 
+            
+            // These are the new columns placed right after mobile_no
+            $table->text('address')->nullable();
+            $table->decimal('latitude', 10, 8)->nullable();
+            $table->decimal('longitude', 11, 8)->nullable();
+
+            $table->string('email')->nullable()->unique();
             $table->timestamp('email_verified_at')->nullable();
-            $table->string('password')->nullable(); // Change to nullable()
-            $table->text('address')->nullable()->after('mobile_no');
-            $table->decimal('latitude', 10, 8)->nullable()->after('address');
-            $table->decimal('longitude', 11, 8)->nullable()->after('latitude');
+            $table->string('password')->nullable();
+            
             $table->rememberToken();
             $table->timestamps();
         });
