@@ -51,7 +51,7 @@ class AdminController extends Controller
             $order->status = 'out_for_delivery';
             
             // IMPORTANT: We will enable this line after adding the 'driver_id' column to your database
-            // $order->driver_id = $request->driver_id; 
+             $order->driver_id = $request->driver_id; 
             
             $order->save();
             return response()->json(['success' => true, 'message' => 'Driver assigned successfully']);
