@@ -55,6 +55,9 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // 2. SEED CATEGORIES (If you have a categories table)
+        $this->call([
+            ProductSeeder::class,
+        ]);
         // Uncomment if you have this table created
         /*
         $catPizza = DB::table('categories')->insertGetId(['name' => 'Pizza', 'image' => 'pizza.png']);
