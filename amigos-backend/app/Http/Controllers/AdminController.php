@@ -84,4 +84,11 @@ class AdminController extends Controller
 
         return response()->json($stats);
     }
+    // 6. Get All Customers
+    public function getCustomers()
+    {
+        // Fetches all users, newest first
+        $customers = User::orderBy('created_at', 'desc')->get();
+        return response()->json($customers);
+    }
 }
