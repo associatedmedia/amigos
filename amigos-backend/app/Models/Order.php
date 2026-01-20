@@ -40,6 +40,6 @@ class Order extends Model
     // Helper for Order Number
     public static function generateOrderNumber()
     {
-        return strtoupper(Str::random(8));
+        return 'ORD-' . strtoupper(Str::random(8));
     }
 }
