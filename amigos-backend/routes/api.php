@@ -24,6 +24,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/place-order', [OrderController::class, 'store']);
     Route::get('/order-history', [OrderController::class, 'index']);
     Route::get('/orders', [OrderController::class, 'index']);
+    Route::post('/update-order-status', [OrderController::class, 'updatePaymentStatus']);
 
 
     // Profile

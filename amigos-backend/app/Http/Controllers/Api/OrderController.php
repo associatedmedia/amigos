@@ -90,5 +90,33 @@ class OrderController extends Controller
         ]);
     }
 
+    // Update Order Status (Called after successful payment)
+    public function updatePaymentStatus(Request $request)
+    {
+        $request->validate([
+            'order_id' => 'required|exists:orders,id',
+            'payment_id' => 'required|string',
+            'status' => 'required|string' // e.g. 'paid'
+        ]);
+
+        $order = Order::find($request->order_id);
+
+        if ($order) {
+            $order->payment_id = $request->payment_id;
+            $order->payment_status = 'paid';
+            
+            // Optional: If you want to move the main status to 'confirmed' or keep it 'pending'
+            // $order->status = 'pending'; 
+            
+            $order->save();
+
+            return response()->json([
+                'success' => true, 
+                'message' => 'Payment updated successfully'
+            ]);
+        }
+
+        return response()->json(['success' => false, 'message' => 'Order not found'], 404);
+    }
 
 }
