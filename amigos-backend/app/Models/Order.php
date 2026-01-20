@@ -40,6 +40,9 @@ class Order extends Model
     // Helper for Order Number
     public static function generateOrderNumber()
     {
-        return 'ORD-' . strtoupper(Str::random(8));
+        // Format: dmy (DayMonthYear) + 4 Random Digits
+        // Example: 290125 + 6244 = 2901256244
+        
+        return date('dmy') . mt_rand(1000, 9999);
     }
 }
