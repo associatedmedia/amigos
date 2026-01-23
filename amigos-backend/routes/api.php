@@ -30,7 +30,6 @@ Route::middleware('auth:sanctum')->group(function () {
     // Profile
     Route::get('/user', [ProfileController::class, 'show']);
     Route::post('/user/update', [ProfileController::class, 'update']);
-    Route::post('/update-fcm-token', [AuthOtpController::class, 'updateFcmToken']);
 });
 
 
