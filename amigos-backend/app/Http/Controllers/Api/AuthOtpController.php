@@ -25,7 +25,7 @@ class AuthOtpController extends Controller {
         // Example: Http::post('https://whatsapp-api...', ['message' => "Your Amigos OTP is $otp"]);
 
 
-        return response()->json(['success' => true, 'message' => 'Your OTP is '. $otp]);
+        return response()->json(['success' => true, 'message' => $otp]);
     }
 
    public function verifyOtp(Request $request) 
