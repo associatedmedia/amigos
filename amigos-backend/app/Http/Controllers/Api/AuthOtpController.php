@@ -120,4 +120,24 @@ class AuthOtpController extends Controller {
             ]
         ]);
     }
+
+    public function updateFcmToken(Request $request) 
+    {
+        // 1. Validate the incoming request
+        $request->validate([
+            'fcm_token' => 'required|string'
+        ]);
+
+        // 2. Get the currently logged-in user
+        $user = $request->user();
+
+        // 3. Update the user's token in the database
+        $user->fcm_token = $request->fcm_token;
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Notification token updated successfully.'
+        ]);
+    }
 }
