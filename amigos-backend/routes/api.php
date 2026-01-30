@@ -33,7 +33,7 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 
-Route::get('/admin/orders', [AdminController::class, 'getOrders']);
+// Route::get('/admin/orders', [AdminController::class, 'getOrders']);
 Route::get('/admin/drivers', [AdminController::class, 'getDrivers']);
 Route::get('/admin/stats', [AdminController::class, 'getDashboardStats']);
 Route::get('/admin/customers', [AdminController::class, 'getCustomers']);
@@ -44,3 +44,14 @@ Route::post('/admin/product', [ContentController::class, 'storeProduct']);
 Route::delete('/admin/product/{id}', [ContentController::class, 'deleteProduct']);
 Route::post('/admin/banner', [ContentController::class, 'storeBanner']);
 Route::delete('/admin/banner/{id}', [ContentController::class, 'deleteBanner']);
+
+Route::middleware(['auth:sanctum', 'admin'])->group(function () {
+    
+    // Kitchen Dashboard: Get all orders
+    Route::get('/admin/orders', [AdminController::class, 'index']);
+    // Kitchen Action: Change status (Cooking, Ready, etc.)
+    Route::post('/admin/orders/{id}/status', [AdminController::class, 'updateStatus']);
+    // Admin Stats
+    Route::get('/admin/stats', [AdminController::class, 'stats']);
+
+});
