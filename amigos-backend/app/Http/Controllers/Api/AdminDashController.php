@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Order; // Make sure you have an Order model
 use App\Models\User;
 
-class AdminController extends Controller
+class AdminDashController extends Controller
 {
     // 1. GET ALL ACTIVE ORDERS (Kitchen View)
     public function index()
