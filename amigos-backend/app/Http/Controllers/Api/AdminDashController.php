@@ -12,11 +12,20 @@ use App\Models\Banner; // ✅ Import the Banner Model
 class AdminDashController extends Controller
 {
     // 1. GET ALL ACTIVE ORDERS
+   // 1. GET ALL ORDERS (Updated to include Delivery & History)
     public function index()
     {
         $orders = Order::with(['items.product', 'user'])
-            ->whereIn('status', ['pending', 'cooking', 'ready_for_pickup'])
+            // ✅ FIX: Add 'out_for_delivery' and 'delivered' so they show up in the App
+            ->whereIn('status', [
+                'pending', 
+                'cooking', 
+                'ready_for_pickup', 
+                'out_for_delivery', 
+                'delivered'
+            ])
             ->orderBy('created_at', 'desc')
+            ->limit(50) // Optional: Limit to last 50 orders to keep app fast
             ->get();
 
         return response()->json($orders);
