@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ContentController;
+use App\Http\Controllers\Api\AdminDashController;
 
 
 // Auth Routes
@@ -34,9 +35,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
 // Route::get('/admin/orders', [AdminController::class, 'getOrders']);
-Route::get('/admin/drivers', [AdminController::class, 'getDrivers']);
-Route::get('/admin/stats', [AdminController::class, 'getDashboardStats']);
-Route::get('/admin/customers', [AdminController::class, 'getCustomers']);
+// Route::get('/admin/drivers', [AdminController::class, 'getDrivers']);
+// Route::get('/admin/stats', [AdminController::class, 'getDashboardStats']);
+// Route::get('/admin/customers', [AdminController::class, 'getCustomers']);
 
 
 Route::get('/admin/content', [ContentController::class, 'getAll']);
@@ -48,10 +49,10 @@ Route::delete('/admin/banner/{id}', [ContentController::class, 'deleteBanner']);
 Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     
     // Kitchen Dashboard: Get all orders
-    Route::get('/admin/orders', [AdminController::class, 'index']);
+    Route::get('/admin/orders', [AdminDashController::class, 'index']);
     // Kitchen Action: Change status (Cooking, Ready, etc.)
-    Route::post('/admin/orders/{id}/status', [AdminController::class, 'updateStatus']);
+    Route::post('/admin/orders/{id}/status', [AdminDashController::class, 'updateStatus']);
     // Admin Stats
-    Route::get('/admin/stats', [AdminController::class, 'stats']);
+    Route::get('/admin/stats', [AdminDashController::class, 'stats']);
 
 });
