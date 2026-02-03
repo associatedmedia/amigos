@@ -167,7 +167,7 @@ class AdminDashController extends Controller
     {
         return User::where('role', 'driver')
                    ->orderBy('name', 'asc')
-                   ->get(['id', 'name', 'mobile_no', 'is_active']); // Select specific fields
+                   ->get(['id', 'name', 'mobile_no']); // Select specific fields
     }
 
     // 9. ADD NEW DRIVER
