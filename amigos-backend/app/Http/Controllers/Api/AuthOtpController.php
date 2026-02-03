@@ -70,7 +70,8 @@ class AuthOtpController extends Controller {
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,
-                'mobile_no' => $user->mobile_no
+                'mobile_no' => $user->mobile_no,
+                'role' => $user->role
             ]
         ]);
     }
