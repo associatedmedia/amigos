@@ -23,22 +23,33 @@ class AdminDashController extends Controller
     }
 
     // 2. UPDATE ORDER STATUS
+   // 2. UPDATE ORDER STATUS (Updated with Driver Logic)
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:pending,cooking,ready_for_pickup,delivered,cancelled'
+            // Add 'out_for_delivery' to the allowed list
+            'status' => 'required|in:pending,cooking,ready_for_pickup,out_for_delivery,delivered,cancelled',
+            'driver_id' => 'nullable|exists:users,id' // Check if driver exists
         ]);
 
         $order = Order::findOrFail($id);
         $order->status = $request->status;
+
+        // If a driver is selected, assign them
+        if ($request->has('driver_id') && $request->driver_id != null) {
+            $order->driver_id = $request->driver_id;
+        }
+
         $order->save();
+
+        // TODO: Notification logic
+        // If status == 'out_for_delivery', notify Customer ("Driver X is coming") AND Driver ("New Order Assigned")
 
         return response()->json([
             'success' => true,
             'message' => 'Order status updated to ' . $request->status
         ]);
     }
-
     // 3. DASHBOARD STATS
     public function stats() 
     {
@@ -145,5 +156,49 @@ class AdminDashController extends Controller
             return response()->json(['success' => true]);
         }
         return response()->json(['error' => 'Banner not found'], 404);
+    }
+
+    // ==========================================
+    //           DRIVER MANAGEMENT
+    // ==========================================
+
+    // 8. GET ALL DRIVERS
+    public function getDrivers()
+    {
+        return User::where('role', 'driver')
+                   ->orderBy('name', 'asc')
+                   ->get(['id', 'name', 'mobile_no', 'is_active']); // Select specific fields
+    }
+
+    // 9. ADD NEW DRIVER
+    public function addDriver(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string',
+            'mobile_no' => 'required|numeric|unique:users,mobile_no',
+            'password' => 'required|min:4' // Simple PIN/Password
+        ]);
+
+        $driver = new User();
+        $driver->name = $request->name;
+        $driver->mobile_no = $request->mobile_no;
+        $driver->password = bcrypt($request->password);
+        $driver->role = 'driver'; // ✅ Critical: Mark as driver
+        $driver->save();
+
+        return response()->json(['success' => true, 'driver' => $driver]);
+    }
+
+    // 10. DELETE DRIVER
+    public function deleteDriver($id)
+    {
+        $driver = User::where('id', $id)->where('role', 'driver')->first();
+        
+        if (!$driver) {
+            return response()->json(['error' => 'Driver not found'], 404);
+        }
+
+        $driver->delete();
+        return response()->json(['success' => true]);
     }
 }

@@ -6,59 +6,80 @@ use App\Http\Controllers\Api\AuthOtpController;
 use App\Http\Controllers\Api\MenuController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ProfileController;
-// use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ContentController;
 use App\Http\Controllers\Api\AdminDashController;
 
+/*
+|--------------------------------------------------------------------------
+| API Routes
+|--------------------------------------------------------------------------
+*/
 
-// Auth Routes
+// ==========================================
+// 1. PUBLIC ROUTES (No Token Required)
+// ==========================================
+
+// Authentication
 Route::post('/send-otp', [AuthOtpController::class, 'sendOtp']);
 Route::post('/verify-otp', [AuthOtpController::class, 'verifyOtp']);
+Route::post('/login-with-otp', [AuthOtpController::class, 'verifyOtp']); // Alias for Admin App
 
-// Protected Routes (Require Token)
+// Public Menu Data
+Route::get('/menu', [MenuController::class, 'index']);
+Route::get('/products', [MenuController::class, 'index']); // Fallback
+
+// ==========================================
+// 2. CUSTOMER ROUTES (Requires Token)
+// ==========================================
 Route::middleware('auth:sanctum')->group(function () {
-
-    // Menu
-    Route::get('/menu', [MenuController::class, 'index']);
-
-    // Orders
+    
+    // Ordering
     Route::post('/place-order', [OrderController::class, 'store']);
     Route::get('/order-history', [OrderController::class, 'index']);
-    Route::get('/orders', [OrderController::class, 'index']);
+    Route::get('/orders', [OrderController::class, 'index']); // Customer view
     Route::post('/update-order-status', [OrderController::class, 'updatePaymentStatus']);
-
 
     // Profile
     Route::get('/user', [ProfileController::class, 'show']);
     Route::post('/user/update', [ProfileController::class, 'update']);
 });
 
+// ==========================================
+// 3. ADMIN DASHBOARD ROUTES
+// ==========================================
 
-// Route::get('/admin/orders', [AdminController::class, 'getOrders']);
-// Route::get('/admin/drivers', [AdminController::class, 'getDrivers']);
-// Route::get('/admin/stats', [AdminController::class, 'getDashboardStats']);
-// Route::get('/admin/customers', [AdminController::class, 'getCustomers']);
+// NOTE: If you haven't created a specific 'admin' middleware yet, 
+// remove 'admin' from the array below -> middleware(['auth:sanctum'])
+Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
 
+    // --- Dashboard Stats ---
+    Route::get('/stats', [AdminDashController::class, 'stats']);
 
-Route::get('/admin/content', [ContentController::class, 'getAll']);
-Route::post('/admin/product', [ContentController::class, 'storeProduct']);
-Route::delete('/admin/product/{id}', [ContentController::class, 'deleteProduct']);
-Route::post('/admin/banner', [ContentController::class, 'storeBanner']);
-Route::delete('/admin/banner/{id}', [ContentController::class, 'deleteBanner']);
+    // --- Order Management (Kitchen Display) ---
+    Route::get('/orders', [AdminDashController::class, 'index']);
+    Route::post('/orders/{id}/status', [AdminDashController::class, 'updateStatus']);
 
-Route::middleware(['auth:sanctum', 'admin'])->group(function () {
-    
-    // Kitchen Dashboard: Get all orders
-    Route::get('/admin/orders', [AdminDashController::class, 'index']);
-    // Kitchen Action: Change status (Cooking, Ready, etc.)
-    Route::post('/admin/orders/{id}/status', [AdminDashController::class, 'updateStatus']);
-    // Admin Stats
-    Route::get('/admin/stats', [AdminDashController::class, 'stats']);
+    // --- Driver Management ---
+    Route::get('/drivers', [AdminDashController::class, 'getDrivers']);
+    Route::post('/drivers', [AdminDashController::class, 'addDriver']);
+    Route::delete('/drivers/{id}', [AdminDashController::class, 'deleteDriver']);
 
-    Route::get('/admin/customers', [AdminDashController::class, 'getCustomers']);
+    // --- Banner/Slider Management ---
+    Route::get('/sliders', [AdminDashController::class, 'getBanners']);
+    Route::post('/sliders', [AdminDashController::class, 'uploadBanner']);
+    Route::delete('/sliders/{id}', [AdminDashController::class, 'deleteBanner']);
 
-    Route::get('/admin/sliders', [AdminDashController::class, 'getBanners']); // App calls this
-    Route::post('/admin/sliders', [AdminDashController::class, 'uploadBanner']); // App calls this
-    Route::delete('/admin/sliders/{id}', [AdminDashController::class, 'deleteBanner']); // App calls this
+    // --- Menu/Product Management ---
+    Route::post('/products/{id}/toggle', [AdminDashController::class, 'toggleProduct']); // ✅ Missing Fix
+
+    // --- Customer Data ---
+    Route::get('/customers', [AdminDashController::class, 'getCustomers']);
+
+    // --- Legacy Content Controller (Optional) ---
+    Route::get('/content', [ContentController::class, 'getAll']);
+    Route::post('/product', [ContentController::class, 'storeProduct']);
+    Route::delete('/product/{id}', [ContentController::class, 'deleteProduct']);
+    Route::post('/banner', [ContentController::class, 'storeBanner']);
+    Route::delete('/banner/{id}', [ContentController::class, 'deleteBanner']);
 
 });
