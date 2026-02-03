@@ -1,277 +1,365 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  View, Text, FlatList, TouchableOpacity, StyleSheet, 
-  Image, Modal, TextInput, Alert, ActivityIndicator, ScrollView
+  View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet, 
+  Switch, Image, ActivityIndicator, Alert, Platform 
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker'; // Import Image Picker
+import * as ImagePicker from 'expo-image-picker'; 
 import api from '../services/api';
 
 const COLORS = {
-  primary: '#D23F45',
-  dark: '#1A1A1A',
-  white: '#FFFFFF',
-  lightGrey: '#F8F8F8',
-  border: '#EEEEEE',
+  primary: '#D23F45',    
+  secondary: '#FEC94A',  
+  dark: '#1F2937', 
+  light: '#F3F4F6', 
+  white: '#FFFFFF', 
+  border: '#E5E7EB',
+  danger: '#EF4444',
+  success: '#10B981'
 };
 
-const ContentScreen = () => {
-  const [activeTab, setActiveTab] = useState('banners'); // Default to banners for now
-  const [data, setData] = useState({ products: [], banners: [], categories: [] });
+export default function ContentScreen() {
+  const [activeTab, setActiveTab] = useState('menu'); 
   const [loading, setLoading] = useState(false);
+
+  // --- MENU STATE ---
+  const [products, setProducts] = useState([]); // Stores the flattened list
+  const [filteredProducts, setFilteredProducts] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // --- BANNER STATE ---
+  const [banners, setBanners] = useState([]);
   const [uploading, setUploading] = useState(false);
-  
-  const [modalVisible, setModalVisible] = useState(false);
-  
-  // Form State
-  const [bannerForm, setBannerForm] = useState({
-    imageUri: null, // Local URI for preview
-    title: '',
-    sub: '',
-    targetScreen: 'CategoryDetail',
-    categoryId: '', // We will pack this into targetParams
-    categoryName: ''
-  });
 
   useEffect(() => {
-    fetchContent();
-  }, []);
+    if (activeTab === 'menu') fetchProducts();
+    else fetchBanners();
+  }, [activeTab]);
 
-  const fetchContent = async () => {
+  // ==========================
+  //      MENU MANAGER
+  // ==========================
+  const fetchProducts = async () => {
     setLoading(true);
     try {
-      const res = await api.get('/admin/content');
-      setData(res.data);
-    } catch (error) {
-      console.log("Error fetching content:", error);
+      // 1. Get Nested Data from /api/menu
+      const res = await api.get('/menu'); 
+      
+      if (res.data.success) {
+        const categories = res.data.data;
+        let flatList = [];
+
+        // 2. Flatten the structure (Category -> Products) into one list
+        categories.forEach(cat => {
+            if(cat.products && cat.products.length > 0) {
+                cat.products.forEach(prod => {
+                    flatList.push({
+                        ...prod, 
+                        category_name: cat.category_name // Attach category name to product
+                    });
+                });
+            }
+        });
+
+        setProducts(flatList);
+        setFilteredProducts(flatList);
+      }
+    } catch (err) {
+      console.log("Error fetching menu:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = async (id, type) => {
-    Alert.alert("Delete", "Are you sure?", [
-      { text: "Cancel" },
-      { text: "Delete", style: 'destructive', onPress: async () => {
-          try {
-            const endpoint = type === 'products' ? `/admin/product/${id}` : `/admin/banner/${id}`;
-            await api.delete(endpoint);
-            fetchContent();
-          } catch (e) {
-            Alert.alert("Error", "Could not delete item.");
-          }
-      }}
+  const handleSearch = (text) => {
+    setSearchQuery(text);
+    if (text) {
+      const lower = text.toLowerCase();
+      // Search by Product Name OR Category Name
+      const results = products.filter(p => 
+        p.name.toLowerCase().includes(lower) || 
+        p.category_name.toLowerCase().includes(lower)
+      );
+      setFilteredProducts(results);
+    } else {
+      setFilteredProducts(products);
+    }
+  };
+
+  const toggleProduct = async (id, currentStatus) => {
+    // Note: API returns 'is_available' (1 or 0)
+    const newStatus = currentStatus === 1 ? 0 : 1;
+
+    // 1. Optimistic Update (Update UI immediately)
+    const updatedList = products.map(p => 
+        p.id === id ? { ...p, is_available: newStatus } : p
+    );
+    setProducts(updatedList);
+    
+    // Update filtered list too so search results don't revert
+    setFilteredProducts(prev => prev.map(p => 
+        p.id === id ? { ...p, is_available: newStatus } : p
+    ));
+
+    try {
+      // 2. Send to Server
+      await api.post(`/admin/products/${id}/toggle`);
+    } catch (err) {
+      Alert.alert("Error", "Failed to update status. Check connection.");
+      fetchProducts(); // Revert on fail
+    }
+  };
+
+  // ==========================
+  //     BANNER MANAGER
+  // ==========================
+  const fetchBanners = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/admin/sliders');
+      setBanners(res.data);
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+ const pickImage = async () => {
+    try {
+      console.log("Requesting permission...");
+      
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (permissionResult.granted === false) {
+        Alert.alert("Permission Required", "You need to allow photo access to upload banners.");
+        return;
+      }
+
+      console.log("Opening gallery...");
+
+      // ✅ SAFE FIX: Check which property exists before using it
+      const mediaTypesSetting = ImagePicker.MediaTypeOptions 
+          ? ImagePicker.MediaTypeOptions.Images  // Old/Stable way
+          : ImagePicker.MediaType 
+              ? ImagePicker.MediaType.Images     // New way
+              : 'Images';                        // Fallback string
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: mediaTypesSetting,
+        allowsEditing: true,
+        aspect: [16, 9],
+        quality: 0.8,
+      });
+
+      console.log("Gallery Result:", result.canceled ? "Cancelled" : "Image Picked");
+
+      if (!result.canceled) {
+        uploadBanner(result.assets[0]);
+      }
+
+    } catch (error) {
+      console.log("Error opening image picker:", error);
+      Alert.alert("Error", "Could not open gallery.");
+    }
+  };
+  const uploadBanner = async (asset) => {
+    setUploading(true);
+    
+    const formData = new FormData();
+    formData.append('image', {
+      uri: Platform.OS === 'ios' ? asset.uri.replace('file://', '') : asset.uri,
+      name: 'banner_upload.jpg',
+      type: 'image/jpeg',
+    });
+
+    try {
+        await api.post('/admin/sliders', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        Alert.alert("Success", "Banner uploaded!");
+        fetchBanners(); 
+    } catch (err) {
+        Alert.alert("Error", "Failed to upload image.");
+    } finally {
+        setUploading(false);
+    }
+  };
+
+  const deleteBanner = async (id) => {
+    Alert.alert("Delete", "Remove this banner?", [
+        { text: "Cancel" },
+        { text: "Delete", style: 'destructive', onPress: async () => {
+            try {
+                await api.delete(`/admin/sliders/${id}`);
+                fetchBanners();
+            } catch(e) { Alert.alert("Error", "Could not delete"); }
+        }}
     ]);
   };
 
-  // --- IMAGE PICKER ---
-  const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [16, 9], // Banner aspect ratio
-      quality: 0.8,
-    });
+  // ==========================
+  //       RENDER UI
+  // ==========================
+  
+  const renderProductItem = ({ item }) => (
+    <View style={styles.productCard}>
+        {/* Image */}
+        <Image 
+            source={{ uri: item.image_url || 'https://via.placeholder.com/100' }} 
+            style={[styles.prodImage, { opacity: item.is_available ? 1 : 0.5 }]} 
+        />
+        
+        {/* Info */}
+        <View style={{ flex: 1, marginLeft: 12 }}>
+            <View style={styles.catBadge}>
+                <Text style={styles.catText}>{item.category_name}</Text>
+            </View>
+            <Text style={[styles.prodName, { color: item.is_available ? COLORS.dark : '#999' }]}>
+                {item.name}
+            </Text>
+            <Text style={styles.prodPrice}>₹{item.price}</Text>
+        </View>
 
-    if (!result.canceled) {
-      setBannerForm({ ...bannerForm, imageUri: result.assets[0].uri });
-    }
-  };
-
-  // --- SUBMIT BANNER ---
-  const handleAddBanner = async () => {
-    if (!bannerForm.imageUri) {
-      Alert.alert("Missing Image", "Please select a banner image.");
-      return;
-    }
-
-    setUploading(true);
-    try {
-      const formData = new FormData();
-      
-      // 1. Append Image File
-      const uri = bannerForm.imageUri;
-      const fileType = uri.split('.').pop();
-      formData.append('image', {
-        uri,
-        name: `banner_${Date.now()}.${fileType}`,
-        type: `image/${fileType}`,
-      });
-
-      // 2. Append Text Fields
-      formData.append('title', bannerForm.title);
-      formData.append('sub', bannerForm.sub);
-      formData.append('target_screen', bannerForm.targetScreen);
-      
-      // 3. Construct Target Params JSON
-      const params = {
-        categoryId: bannerForm.categoryId,
-        categoryName: bannerForm.categoryName
-      };
-      formData.append('target_params', JSON.stringify(params));
-
-      // 4. Send as Multipart Form Data
-      // Note: Axios usually handles Content-Type automatically for FormData
-      await api.post('/admin/banner', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-
-      setModalVisible(false);
-      setBannerForm({ imageUri: null, title: '', sub: '', targetScreen: 'CategoryDetail', categoryId: '', categoryName: '' });
-      fetchContent();
-
-    } catch (error) {
-      console.error(error);
-      Alert.alert("Error", "Failed to upload banner.");
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const renderBanner = ({ item }) => (
-    <View style={styles.bannerCard}>
-      <Image source={{ uri: item.image }} style={styles.bannerImage} />
-      <View style={styles.bannerOverlay}>
-          <Text style={styles.bannerTitle}>{item.title}</Text>
-          <Text style={styles.bannerSub}>{item.sub}</Text>
-          <TouchableOpacity onPress={() => handleDelete(item.id, 'banners')} style={styles.deleteBtnBg}>
-            <Ionicons name="trash" size={20} color="white" />
-          </TouchableOpacity>
-      </View>
+        {/* Toggle */}
+        <View style={{ alignItems: 'center' }}>
+            <Switch 
+                trackColor={{ false: "#E5E7EB", true: COLORS.secondary }}
+                thumbColor={item.is_available ? COLORS.primary : "#F3F4F6"}
+                onValueChange={() => toggleProduct(item.id, item.is_available)}
+                value={item.is_available === 1} 
+            />
+            <Text style={[styles.statusLabel, { color: item.is_available ? COLORS.success : '#999' }]}>
+                {item.is_available ? 'IN STOCK' : 'SOLD OUT'}
+            </Text>
+        </View>
     </View>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* HEADER TABS (Simplified for Banner Focus) */}
-      <View style={styles.tabContainer}>
-         <TouchableOpacity style={[styles.tab, styles.activeTab]}>
-            <Text style={[styles.tabText, styles.activeTabText]}>BANNERS MANAGER</Text>
-         </TouchableOpacity>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.screenTitle}>Content Manager</Text>
       </View>
 
-      {/* LIST CONTENT */}
-      {loading ? (
-        <ActivityIndicator size="large" color={COLORS.primary} style={{marginTop: 50}} />
-      ) : (
-        <FlatList
-          data={data.banners}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={renderBanner}
-          contentContainerStyle={styles.list}
-          ListEmptyComponent={<Text style={styles.emptyText}>No banners found.</Text>}
-        />
+      {/* Tabs */}
+      <View style={styles.tabContainer}>
+        <TouchableOpacity 
+            style={[styles.tab, activeTab === 'menu' && styles.activeTab]} 
+            onPress={() => setActiveTab('menu')}
+        >
+            <Text style={[styles.tabText, activeTab === 'menu' && styles.activeTabText]}>🍔 Menu Items</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+            style={[styles.tab, activeTab === 'banners' && styles.activeTab]} 
+            onPress={() => setActiveTab('banners')}
+        >
+            <Text style={[styles.tabText, activeTab === 'banners' && styles.activeTabText]}>🖼️ App Banners</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* --- MENU TAB --- */}
+      {activeTab === 'menu' && (
+        <View style={{ flex: 1 }}>
+            <View style={styles.searchBox}>
+                <Ionicons name="search" size={20} color="#9CA3AF" />
+                <TextInput 
+                    style={styles.input}
+                    placeholder="Search by Item or Category..."
+                    value={searchQuery}
+                    onChangeText={handleSearch}
+                />
+            </View>
+
+            {loading ? <ActivityIndicator size="large" color={COLORS.primary} style={{marginTop:20}} /> : (
+                <FlatList 
+                    data={filteredProducts}
+                    keyExtractor={item => item.id.toString()}
+                    contentContainerStyle={{ padding: 15, paddingBottom: 50 }}
+                    renderItem={renderProductItem}
+                    initialNumToRender={10}
+                />
+            )}
+        </View>
       )}
 
-      {/* FAB ADD BUTTON */}
-      <TouchableOpacity style={styles.fab} onPress={() => setModalVisible(true)}>
-        <Ionicons name="add" size={30} color="white" />
-      </TouchableOpacity>
-
-      {/* ADD BANNER MODAL */}
-      <Modal visible={modalVisible} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>New Banner</Text>
-            
-            <ScrollView>
-                {/* Image Picker */}
-                <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
-                    {bannerForm.imageUri ? (
-                        <Image source={{ uri: bannerForm.imageUri }} style={{ width: '100%', height: '100%' }} />
-                    ) : (
-                        <View style={{alignItems:'center'}}>
-                            <Ionicons name="camera" size={30} color="#999" />
-                            <Text style={{color:'#999'}}>Tap to Select Image</Text>
-                        </View>
-                    )}
-                </TouchableOpacity>
-
-                <TextInput 
-                    placeholder="Title (e.g. 50% OFF)" 
-                    style={styles.input} 
-                    value={bannerForm.title}
-                    onChangeText={t => setBannerForm({...bannerForm, title: t})} 
-                />
-                <TextInput 
-                    placeholder="Sub Title (e.g. On all Pizzas)" 
-                    style={styles.input} 
-                    value={bannerForm.sub}
-                    onChangeText={t => setBannerForm({...bannerForm, sub: t})} 
-                />
-
-                <Text style={styles.label}>Target Action:</Text>
-                <View style={styles.row}>
-                    <TextInput 
-                        placeholder="Cat ID (e.g. 1)" 
-                        keyboardType="numeric"
-                        style={[styles.input, {flex:1, marginRight:5}]} 
-                        value={bannerForm.categoryId}
-                        onChangeText={t => setBannerForm({...bannerForm, categoryId: t})} 
-                    />
-                    <TextInput 
-                        placeholder="Cat Name (e.g. Pizza)" 
-                        style={[styles.input, {flex:2}]} 
-                        value={bannerForm.categoryName}
-                        onChangeText={t => setBannerForm({...bannerForm, categoryName: t})} 
-                    />
-                </View>
-
-                {uploading ? (
-                    <ActivityIndicator size="large" color={COLORS.primary} />
-                ) : (
-                    <TouchableOpacity style={styles.saveBtn} onPress={handleAddBanner}>
-                        <Text style={styles.saveBtnText}>Upload & Save</Text>
-                    </TouchableOpacity>
+      {/* --- BANNERS TAB --- */}
+      {activeTab === 'banners' && (
+        <View style={{ flex: 1, padding: 15 }}>
+            <TouchableOpacity style={styles.uploadBtn} onPress={pickImage} disabled={uploading}>
+                {uploading ? <ActivityIndicator color="#FFF" /> : (
+                    <>
+                        <Ionicons name="cloud-upload-outline" size={24} color="#FFF" />
+                        <Text style={styles.uploadText}>Upload New Banner</Text>
+                    </>
                 )}
+            </TouchableOpacity>
 
-                <TouchableOpacity style={styles.cancelBtn} onPress={() => setModalVisible(false)}>
-                <Text style={styles.cancelBtnText}>Cancel</Text>
-                </TouchableOpacity>
-            </ScrollView>
-          </View>
+            <FlatList 
+                data={banners}
+                keyExtractor={item => item.id.toString()}
+                renderItem={({ item }) => (
+                    <View style={styles.bannerCard}>
+                        <Image source={{ uri: item.image }} style={styles.bannerImage} />
+                        <TouchableOpacity style={styles.deleteBtn} onPress={() => deleteBanner(item.id)}>
+                            <Ionicons name="trash" size={18} color="#FFF" />
+                        </TouchableOpacity>
+                    </View>
+                )}
+                ListEmptyComponent={<Text style={styles.emptyText}>No banners uploaded yet.</Text>}
+            />
         </View>
-      </Modal>
+      )}
 
     </SafeAreaView>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.lightGrey },
-  tabContainer: { flexDirection: 'row', backgroundColor: COLORS.white, padding: 10 },
-  tab: { flex: 1, paddingVertical: 10, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: COLORS.primary },
-  tabText: { fontWeight: 'bold', color: COLORS.primary, fontSize: 14 },
+  container: { flex: 1, backgroundColor: COLORS.light },
   
-  list: { padding: 15 },
-  emptyText: { textAlign: 'center', marginTop: 50, color: '#888' },
+  header: { padding: 15, backgroundColor: COLORS.white, borderBottomWidth: 1, borderColor: COLORS.border },
+  screenTitle: { fontSize: 22, fontWeight: 'bold', color: COLORS.dark },
 
-  bannerCard: { marginBottom: 15, borderRadius: 10, overflow: 'hidden', height: 160, backgroundColor:'#000' },
-  bannerImage: { width: '100%', height: '100%', opacity: 0.8 },
-  bannerOverlay: { position: 'absolute', bottom: 10, left: 10, right: 10 },
-  bannerTitle: { color: 'white', fontWeight: 'bold', fontSize: 20 },
-  bannerSub: { color: 'white', fontSize: 14 },
-  deleteBtnBg: { position: 'absolute', right: 0, bottom: 0, backgroundColor: 'red', padding: 8, borderRadius: 20 },
+  tabContainer: { flexDirection: 'row', padding: 5, backgroundColor: COLORS.white },
+  tab: { flex: 1, paddingVertical: 12, alignItems: 'center', borderBottomWidth: 3, borderColor: 'transparent' },
+  activeTab: { borderColor: COLORS.primary },
+  tabText: { fontWeight: '600', color: '#6B7280', fontSize: 13 },
+  activeTabText: { color: COLORS.primary, fontWeight: 'bold' },
 
-  fab: { position: 'absolute', bottom: 20, right: 20, backgroundColor: COLORS.primary, width: 60, height: 60, borderRadius: 30, justifyContent: 'center', alignItems: 'center', elevation: 5 },
-
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 },
-  modalContent: { backgroundColor: 'white', padding: 20, borderRadius: 10, maxHeight: '80%' },
-  modalTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 15, textAlign: 'center' },
+  // Menu Styles
+  searchBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.white, margin: 15, borderRadius: 10, paddingHorizontal: 10, height: 45, borderWidth: 1, borderColor: COLORS.border },
+  input: { flex: 1, marginLeft: 10, fontSize: 16 },
   
-  imagePicker: { 
-      height: 150, backgroundColor: '#eee', borderRadius: 10, 
-      justifyContent: 'center', alignItems: 'center', marginBottom: 15, overflow: 'hidden'
+  productCard: { 
+    flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.white, 
+    borderRadius: 12, padding: 12, marginBottom: 12, 
+    shadowColor: "#000", shadowOffset: {width:0, height:1}, shadowOpacity: 0.05, elevation: 2 
   },
-  input: { borderWidth: 1, borderColor: '#ddd', padding: 10, borderRadius: 8, marginBottom: 10 },
-  label: { fontWeight: 'bold', marginBottom: 5, color: '#666' },
-  row: { flexDirection: 'row' },
+  prodImage: { width: 60, height: 60, borderRadius: 8, backgroundColor: '#f0f0f0' },
+  
+  catBadge: { backgroundColor: '#FFF7ED', alignSelf: 'flex-start', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, marginBottom: 4 },
+  catText: { fontSize: 10, color: '#EA580C', fontWeight: 'bold', textTransform: 'uppercase' },
+  
+  prodName: { fontSize: 15, fontWeight: '600', color: COLORS.dark, marginBottom: 2 },
+  prodPrice: { fontSize: 14, color: '#6B7280', fontWeight: '500' },
+  statusLabel: { fontSize: 9, fontWeight: 'bold', marginTop: 4 },
 
-  saveBtn: { backgroundColor: COLORS.primary, padding: 15, borderRadius: 8, alignItems: 'center', marginTop: 10 },
-  saveBtnText: { color: 'white', fontWeight: 'bold' },
-  cancelBtn: { padding: 15, alignItems: 'center' },
-  cancelBtnText: { color: '#666' }
+  // Banner Styles
+  uploadBtn: { 
+    flexDirection: 'row', backgroundColor: COLORS.dark, padding: 15, 
+    borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 20 
+  },
+  uploadText: { color: '#FFF', fontWeight: 'bold', marginLeft: 10 },
+  
+  bannerCard: { marginBottom: 15, borderRadius: 12, overflow: 'hidden', elevation: 3, backgroundColor: '#fff' },
+  bannerImage: { width: '100%', height: 160, resizeMode: 'cover' },
+  deleteBtn: { 
+    position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(239, 68, 68, 0.9)', 
+    padding: 8, borderRadius: 20 
+  },
+  emptyText: { textAlign: 'center', color: '#999', marginTop: 20 }
 });
-
-export default ContentScreen;

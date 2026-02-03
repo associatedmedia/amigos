@@ -13,17 +13,54 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "LSApplicationQueriesSchemes": [
+          "whatsapp"
+        ],
+        "NSBluetoothAlwaysUsageDescription": "This app uses Bluetooth to connect to nearby devices.",
+        "NSLocationWhenInUseUsageDescription": "This app uses location to scan for Bluetooth devices."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "android.permission.BLUETOOTH",
+        "android.permission.BLUETOOTH_ADMIN",
+        "android.permission.BLUETOOTH_CONNECT",
+        "android.permission.BLUETOOTH_SCAN",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.INTERNET",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.associatedmedia.amigosadmin"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app needs to access your photos to upload banners."
+        }
+      ],
+      [
+        "react-native-permissions",
+        {
+          "bluetooth": true,
+          "location": true
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "c10ff568-a464-408d-90e0-a9ddc987ff64"
+      }
     }
   }
 }

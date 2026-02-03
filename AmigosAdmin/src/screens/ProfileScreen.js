@@ -1,73 +1,122 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useContext } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import Constants from 'expo-constants';
+import { AuthContext } from '../context/AuthContext';
 
-const ProfileScreen = ({ navigation }) => {
+const APP_VERSION = Constants.expoConfig?.version || "1.0.0";
 
-  const handleLogout = async () => {
+const COLORS = {
+  primary: '#D23F45',
+  secondary: '#FEC94A',
+  dark: '#1F2937',
+  light: '#F9FAFB',
+  white: '#FFFFFF',
+  border: '#E5E7EB'
+};
+
+export default function ProfileScreen() {
+  const { logout, userInfo } = useContext(AuthContext);
+
+  const handleLogout = () => {
     Alert.alert(
       "Logout",
       "Are you sure you want to exit?",
       [
         { text: "Cancel", style: "cancel" },
-        { 
-          text: "Logout", 
-          style: 'destructive',
-          onPress: async () => {
-            // 1. Clear Session
-            await AsyncStorage.removeItem('admin_session');
-            // 2. Reset Navigation to Login
-            navigation.reset({
-              index: 0,
-              routes: [{ name: 'Login' }],
-            });
-          }
-        }
+        { text: "Logout", style: 'destructive', onPress: logout }
       ]
     );
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      
+      {/* 1. Header Section */}
       <View style={styles.header}>
-        <Image 
-          source={{ uri: 'https://cdn-icons-png.flaticon.com/512/2922/2922510.png' }} 
-          style={styles.avatar} 
-        />
-        <Text style={styles.name}>Manager Chef</Text>
-        <Text style={styles.role}>Kitchen Administrator</Text>
+        <View style={styles.avatarContainer}>
+            <Text style={styles.avatarText}>
+                {userInfo?.name?.charAt(0).toUpperCase() || 'A'}
+            </Text>
+        </View>
+        <Text style={styles.name}>{userInfo?.name || 'Admin User'}</Text>
+        <Text style={styles.role}>Manager Access</Text>
       </View>
 
-      <View style={styles.menu}>
+      {/* 2. Menu Options */}
+      <View style={styles.menuContainer}>
+        
+        {/* Account Info */}
         <View style={styles.menuItem}>
-          <Text style={styles.menuText}>📍 Branch: Jaipur HQ</Text>
+            <View style={[styles.iconBox, { backgroundColor: '#EEF2FF' }]}>
+                <Ionicons name="person" size={20} color="#4F46E5" />
+            </View>
+            <View style={styles.menuTextContainer}>
+                <Text style={styles.menuTitle}>Mobile Number</Text>
+                <Text style={styles.menuSub}>{userInfo?.mobile_no || userInfo?.phone || 'Not available'}</Text>
+            </View>
         </View>
+        
+        <View style={styles.divider} />
+
+        {/* Security */}
         <View style={styles.menuItem}>
-          <Text style={styles.menuText}>📞 Support: +91-9999999999</Text>
+            <View style={[styles.iconBox, { backgroundColor: '#ECFDF5' }]}>
+                <Ionicons name="shield-checkmark" size={20} color="#10B981" />
+            </View>
+            <View style={styles.menuTextContainer}>
+                <Text style={styles.menuTitle}>Security Status</Text>
+                <Text style={styles.menuSub}>PIN Authentication Active</Text>
+            </View>
         </View>
+
       </View>
 
+  
+
+      {/* 3. Logout Button */}
       <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-        <Text style={styles.logoutText}>LOGOUT</Text>
+        <Ionicons name="log-out-outline" size={20} color="#FFF" style={{ marginRight: 10 }} />
+        <Text style={styles.logoutText}>Logout of System</Text>
       </TouchableOpacity>
+
+      <Text style={styles.versionText}>Amigos Admin App v{APP_VERSION}</Text>
+
     </SafeAreaView>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f4f4f4', padding: 20 },
-  header: { alignItems: 'center', marginBottom: 40, marginTop: 20 },
-  avatar: { width: 100, height: 100, borderRadius: 50, marginBottom: 15 },
-  name: { fontSize: 22, fontWeight: 'bold', color: '#333' },
-  role: { fontSize: 16, color: '#666' },
+  container: { flex: 1, backgroundColor: COLORS.light, alignItems: 'center' },
   
-  menu: { backgroundColor: '#fff', borderRadius: 10, padding: 10, marginBottom: 30 },
-  menuItem: { padding: 15, borderBottomWidth: 1, borderBottomColor: '#eee' },
-  menuText: { fontSize: 16, color: '#333' },
+  header: { alignItems: 'center', marginTop: 30, marginBottom: 30 },
+  avatarContainer: {
+    width: 80, height: 80, borderRadius: 40,
+    backgroundColor: COLORS.secondary,
+    justifyContent: 'center', alignItems: 'center',
+    marginBottom: 15,
+    borderWidth: 3, borderColor: '#FFF',
+    shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 5, elevation: 5
+  },
+  avatarText: { fontSize: 32, fontWeight: 'bold', color: COLORS.dark },
+  name: { fontSize: 22, fontWeight: 'bold', color: COLORS.dark },
+  role: { fontSize: 14, color: '#6B7280', marginTop: 2 },
 
-  logoutBtn: { backgroundColor: '#ff4444', padding: 15, borderRadius: 10, alignItems: 'center' },
-  logoutText: { color: '#fff', fontWeight: 'bold', fontSize: 16 }
+  menuContainer: { width: '90%', backgroundColor: '#FFF', borderRadius: 16, padding: 20, elevation: 2 },
+  menuItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10 },
+  iconBox: { width: 40, height: 40, borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginRight: 15 },
+  menuTextContainer: { flex: 1 },
+  menuTitle: { fontSize: 16, fontWeight: '600', color: COLORS.dark },
+  menuSub: { fontSize: 13, color: '#9CA3AF' },
+  divider: { height: 1, backgroundColor: COLORS.border, marginVertical: 10 },
+
+  logoutBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: COLORS.primary, width: '90%', padding: 15, borderRadius: 12, marginTop: 40,
+    shadowColor: COLORS.primary, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4
+  },
+  logoutText: { color: '#FFF', fontWeight: 'bold', fontSize: 16 },
+
+  versionText: { color: '#D1D5DB', marginTop: 20, fontSize: 12 }
 });
-
-export default ProfileScreen;
