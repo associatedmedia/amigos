@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Order; // Make sure you have an Order model
+use App\Models\User;
 
 class AdminController extends Controller
 {
@@ -61,7 +62,7 @@ class AdminController extends Controller
             'total_products' => $totalProducts,
             'total_sales' => $totalSales,
             'today_sales' => $todaySales,
-            'total_drivers' => 0, // Placeholder until we build driver app
+            'total_drivers' => User::where('role', 'driver')->count(),
         ]);
     }
 }
