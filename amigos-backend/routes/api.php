@@ -6,7 +6,7 @@ use App\Http\Controllers\Api\AuthOtpController;
 use App\Http\Controllers\Api\MenuController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ProfileController;
-use App\Http\Controllers\AdminController;
+// use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ContentController;
 use App\Http\Controllers\Api\AdminDashController;
 
@@ -55,7 +55,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     // Admin Stats
     Route::get('/admin/stats', [AdminDashController::class, 'stats']);
 
-    Route::get('/admin/customers', [AdminController::class, 'getCustomers']);
+    Route::get('/admin/customers', [AdminDashController::class, 'getCustomers']);
 
     Route::get('/admin/sliders', [AdminDashController::class, 'getBanners']); // App calls this
     Route::post('/admin/sliders', [AdminDashController::class, 'uploadBanner']); // App calls this

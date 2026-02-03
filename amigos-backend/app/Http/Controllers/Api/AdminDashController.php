@@ -62,6 +62,13 @@ class AdminDashController extends Controller
         ]);
     }
 
+     public function getCustomers()
+    {
+        // Fetches all users, newest first
+        $customers = User::orderBy('created_at', 'desc')->get();
+        return response()->json($customers);
+    }
+
     // 4. TOGGLE PRODUCT STATUS
     public function toggleProduct($id)
     {
