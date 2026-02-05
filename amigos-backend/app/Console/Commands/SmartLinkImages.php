@@ -31,7 +31,9 @@ class SmartLinkImages extends Command
             // "categories/pizza.png" -> "pizza"
             $filename = basename($file);
             $keyword = pathinfo($filename, PATHINFO_FILENAME); 
-            $publicUrl = '/storage/' . $file;
+            // $publicUrl = '/storage/' . $file;
+            // Uses APP_URL from .env to create full link
+            $publicUrl = config('app.url') . '/storage/' . $filename;
 
             // 2. Define Keywords to match (e.g., 'pizza' matches 'VEG PIZZA', 'PIZZA MANIA')
             // You can rename your files to match these keys broadly
