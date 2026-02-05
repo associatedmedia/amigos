@@ -9,75 +9,85 @@ use Illuminate\Support\Str;
 
 class SmartLinkImages extends Command
 {
-    protected $signature = 'images:smart-link';
+    protected $signature = 'images:smart-link {--force : Overwrite existing images}';
     protected $description = 'Link uploaded images to products based on category names';
 
     public function handle()
     {
-        $this->info("🚀 Starting Smart Image Linker...");
+        $this->info("🚀 Starting Smart Image Linker (Force Mode)...");
 
         // 1. Get all images from 'storage/app/public/categories'
         $files = Storage::disk('public')->files('categories');
         
         if (empty($files)) {
-            $this->error("❌ No images found in 'public/categories'. Please upload some first!");
-            $this->info("   👉 Folder: storage/app/public/categories/");
+            $this->error("❌ No images found! Please upload images to: storage/app/public/categories/");
             return;
         }
 
-        $this->info("Found " . count($files) . " images. Linking them now...\n");
+        $this->info("📂 Found " . count($files) . " images. Processing...\n");
 
         foreach ($files as $file) {
-            // "categories/pizza.png" -> "pizza"
             $filename = basename($file);
-            $keyword = pathinfo($filename, PATHINFO_FILENAME); 
-            // $publicUrl = '/storage/' . $file;
-            // Uses APP_URL from .env to create full link
-            $publicUrl = config('app.url') . '/storage/' . $filename;
-
-            // 2. Define Keywords to match (e.g., 'pizza' matches 'VEG PIZZA', 'PIZZA MANIA')
-            // You can rename your files to match these keys broadly
+            // Convert 'Pizza.png' -> 'pizza' (lowercase for better matching)
+            $keyword = strtolower(pathinfo($filename, PATHINFO_FILENAME)); 
             
+            // Use APP_URL from .env to build the full link
+            $baseUrl = config('app.url');
+            // Remove trailing slash if present to avoid double slash
+            $baseUrl = rtrim($baseUrl, '/');
+            $publicUrl = $baseUrl . '/storage/categories/' . $filename;
+
+            $this->line("🔍 Processing '$filename' (Keyword: $keyword)...");
+
             $affected = 0;
 
-            // SPECIAL LOGIC: Match filename keyword to Product Category
-            // If file is "indian.png", it updates matches for 'INDIAN', 'MUGLAI', 'TANDOOR'
-            if ($keyword == 'indian') {
-                $affected = $this->updateDB(['INDIAN', 'MUGLAI', 'TANDOOR', 'KANTI', 'CURRY'], $publicUrl);
+            // SPECIAL MAPPING LOGIC
+            if ($keyword == 'indian' || $keyword == 'curry') {
+                $affected = $this->updateDB(['INDIAN', 'MUGLAI', 'TANDOOR', 'KANTI', 'CURRY', 'MAINCOURSE'], $publicUrl);
             } 
-            elseif ($keyword == 'chinese') {
-                $affected = $this->updateDB(['CHINESE', 'NOODLE', 'MANCHURIAN', 'MOMO'], $publicUrl);
+            elseif ($keyword == 'chinese' || $keyword == 'noodles') {
+                $affected = $this->updateDB(['CHINESE', 'NOODLE', 'MANCHURIAN', 'MOMO', 'SOUPS', 'FRIED RICE'], $publicUrl);
             }
-            elseif ($keyword == 'fastfood') {
-                $affected = $this->updateDB(['BURGER', 'SANDWICH', 'WRAP', 'ROLL', 'FRIES', 'KFC'], $publicUrl);
+            elseif ($keyword == 'fastfood' || $keyword == 'burger') {
+                $affected = $this->updateDB(['BURGER', 'SANDWICH', 'WRAP', 'ROLL', 'FRIES', 'KFC', 'TWISTER'], $publicUrl);
             }
-            elseif ($keyword == 'rice') {
+            elseif ($keyword == 'pizza') {
+                $affected = $this->updateDB(['PIZZA', 'ITALIAN', 'PASTA', 'ANTIPASTI', 'CALZONE'], $publicUrl);
+            }
+            elseif ($keyword == 'rice' || $keyword == 'biryani') {
                 $affected = $this->updateDB(['RICE', 'BIRYANI'], $publicUrl);
             }
-            elseif ($keyword == 'drink') {
-                $affected = $this->updateDB(['BEVERAGE', 'MOJITO', 'SHAKE', 'COFFEE', 'JUICE'], $publicUrl);
+            elseif ($keyword == 'drink' || $keyword == 'beverage') {
+                $affected = $this->updateDB(['BEVERAGE', 'MOJITO', 'SHAKE', 'COFFEE', 'JUICE', 'MOCKTAIL'], $publicUrl);
+            }
+            elseif ($keyword == 'dessert' || $keyword == 'cake') {
+                $affected = $this->updateDB(['DESSERT', 'CAKE', 'CONFECTIONERY', 'BROWNIE', 'WAFFLE'], $publicUrl);
             }
             else {
-                // Default: Match exact filename (e.g., "pizza" matches "PIZZA")
+                // Default: Match filename exactly (e.g. 'pasta.png' matches 'PASTA')
                 $affected = $this->updateDB([$keyword], $publicUrl);
             }
 
             if ($affected > 0) {
-                $this->info("✅ Linked '$filename' to $affected products.");
+                $this->info("   ✅ Linked to $affected products.");
+            } else {
+                $this->warn("   ⚠️ No products matched keyword: $keyword");
             }
         }
         
-        $this->info("\n✨ Done! Your menu is now visual.");
+        $this->info("\n✨ Done! Run 'php artisan config:clear' if URLs look wrong.");
     }
 
     private function updateDB($keywords, $url)
     {
-        $query = DB::table('products')->whereNull('image_url');
+        $query = DB::table('products');
+
+        // NOTE: removed ->whereNull('image_url') to FORCE update
         
         $query->where(function($q) use ($keywords) {
             foreach ($keywords as $word) {
                 $q->orWhere('category', 'LIKE', "%$word%")
-                  ->orWhere('name', 'LIKE', "%$word%");
+                  ->orWhere('name', 'LIKE', "%$word%"); // Also check Name column
             }
         });
 
