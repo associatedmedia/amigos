@@ -52,6 +52,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Profile
     Route::get('/user', [ProfileController::class, 'show']);
     Route::post('/user/update', [ProfileController::class, 'update']);
+    Route::get('/user/history', [OrderController::class, 'userHistory']);
 });
 
 // ==========================================

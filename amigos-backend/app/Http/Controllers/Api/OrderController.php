@@ -119,4 +119,37 @@ class OrderController extends Controller
         return response()->json(['success' => false, 'message' => 'Order not found'], 404);
     }
 
+    // Add this method inside the class
+    public function userHistory(Request $request)
+    {
+        // 1. Get User ID (Assuming you pass ?user_id=123 or use Auth)
+        // For now, we use the ID passed in the request
+        $userId = $request->query('user_id'); 
+
+        if (!$userId) {
+            return response()->json([]);
+        }
+
+        // 2. Fetch last 5 orders for this user
+        $orders = \App\Models\Order::where('user_id', $userId)
+                    ->orderBy('created_at', 'desc')
+                    ->take(5)
+                    ->get();
+
+        // 3. Extract unique items from these orders
+        $allItems = [];
+        foreach ($orders as $order) {
+            // Since 'items' is cast to array in your Model, we can loop directly
+            if (is_array($order->items)) {
+                foreach ($order->items as $item) {
+                    // Add to array using ID as key to prevent duplicates
+                    $allItems[$item['id']] = $item; 
+                }
+            }
+        }
+
+        // 4. Return as a clean list (re-indexed)
+        return response()->json(array_values($allItems));
+    }
+
 }
