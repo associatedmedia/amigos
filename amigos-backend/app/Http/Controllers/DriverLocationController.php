@@ -84,4 +84,5 @@ class DriverLocationController extends Controller
             return response()->json(['success' => false, 'message' => 'Server Error'], 500);
         }
     }
+    
 }
