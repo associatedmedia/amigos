@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\ContentController;
 use App\Http\Controllers\Api\AdminDashController;
+use App\Http\Controllers\BannerController;
 
 /*
 |--------------------------------------------------------------------------
@@ -27,6 +28,9 @@ Route::post('/login-with-otp', [AuthOtpController::class, 'verifyOtp']); // Alia
 // Public Menu Data
 Route::get('/menu', [MenuController::class, 'index']);
 Route::get('/products', [MenuController::class, 'index']); // Fallback
+
+// Banners/Sliders
+Route::get('/banners', [BannerController::class, 'index']);
 
 // ==========================================
 // 2. CUSTOMER ROUTES (Requires Token)

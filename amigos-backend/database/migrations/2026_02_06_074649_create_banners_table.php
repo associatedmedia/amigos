@@ -13,8 +13,11 @@ return new class extends Migration
     {
        Schema::create('banners', function (Blueprint $table) {
         $table->id();
-        $table->string('image_url');
-        $table->string('title')->nullable();
+        $table->string('image_url'); // Path or Full URL
+        $table->string('title');
+        $table->string('subtitle')->nullable();
+        $table->string('target_screen')->default('CategoryDetail'); // Where to go on click
+        $table->json('target_params')->nullable(); // JSON data (e.g. { categoryId: 1 })
         $table->boolean('is_active')->default(true);
         $table->timestamps();
     });
