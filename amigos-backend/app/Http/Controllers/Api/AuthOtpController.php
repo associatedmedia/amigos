@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\VerificationCode;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class AuthOtpController extends Controller {
 
@@ -24,8 +26,38 @@ class AuthOtpController extends Controller {
         // TODO: Integration with WhatsApp/SMS API here
         // Example: Http::post('https://whatsapp-api...', ['message' => "Your Amigos OTP is $otp"]);
 
+       // ---------------------------------------------------------
+        // ✅ CORRECTED INTEGRATION: TrustSignal SMS API
+        // ---------------------------------------------------------
+        try {
+            // 1. Construct the URL with the API Key
+            $url = env('TRUSTSIGNAL_URL') . '?api_key=' . env('TRUSTSIGNAL_API_KEY');
 
-        return response()->json(['success' => true, 'message' => $otp]);
+            // 2. Prepare the Message (Must match your DLT Template exactly!)
+            // Example DLT Template: "Your Amigos OTP is {#var#}"
+            $messageContent = "Your Amigos OTP is $otp"; 
+
+            // 3. Send Request
+            $response = Http::post($url, [
+                "sender_id"   => env('TRUSTSIGNAL_SENDER_ID'),
+                "to"          => [ (int)$request->phone ], // ⚠️ Must be an Array
+                "route"       => "transactional",
+                "message"     => $messageContent,
+                "template_id" => env('TRUSTSIGNAL_TEMPLATE_ID')
+            ]);
+
+            // Debugging
+            if ($response->failed()) {
+                Log::error('TrustSignal SMS Failed: ' . $response->body());
+            } else {
+                Log::info('TrustSignal SMS Sent: ' . $response->body());
+            }
+
+        } catch (\Exception $e) {
+            Log::error('SMS Integration Exception: ' . $e->getMessage());
+        }
+        return response()->json(['success' => true, 'message' => 'OTP sent successfully']);
+        // return response()->json(['success' => true, 'message' => $otp]);
     }
 
    public function verifyOtp(Request $request) 
