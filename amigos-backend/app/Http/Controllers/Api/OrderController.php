@@ -90,6 +90,22 @@ class OrderController extends Controller
         ]);
     }
 
+    public function show($id)
+    {
+        // Find order by ID
+        $order = \App\Models\Order::find($id);
+
+        // If not found, return error
+        if (!$order) {
+            return response()->json(['success' => false, 'message' => 'Order not found'], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'order' => $order
+        ]);
+    }
+
     // Update Order Status (Called after successful payment)
     public function updatePaymentStatus(Request $request)
     {

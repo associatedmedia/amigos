@@ -48,6 +48,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/order-history', [OrderController::class, 'index']);
     Route::get('/orders', [OrderController::class, 'index']); // Customer view
     Route::post('/update-order-status', [OrderController::class, 'updatePaymentStatus']);
+    Route::get('/orders/{id}', [OrderController::class, 'show']);
 
     // Profile
     Route::get('/user', [ProfileController::class, 'show']);
