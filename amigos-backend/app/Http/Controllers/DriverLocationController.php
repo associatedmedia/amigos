@@ -36,14 +36,19 @@ class DriverLocationController extends Controller
     // ✅ 2. CUSTOMER APP CALLS THIS (To Track Order)
     public function show($orderId)
     {
-        // 1. Find the driver assigned to this order
-        $order = \App\Models\Order::select('id', 'driver_id', 'status')->find($orderId);
+        // ✅ 1. Load Order WITH Driver Details
+        // We select specific fields to keep it fast
+        $order = \App\Models\Order::with(['driver' => function($query) {
+            $query->select('id', 'name', 'mobile_no', 'role'); // Fetch name & phone
+        }])
+        ->select('id', 'driver_id', 'status')
+        ->find($orderId);
 
-        // Check if order exists and has a driver
+        // Safety Checks
         if (!$order) {
             return response()->json(['success' => false, 'message' => 'Order not found']);
         }
-        if (!$order->driver_id) {
+        if (!$order->driver_id || !$order->driver) {
             return response()->json(['success' => false, 'message' => 'No driver assigned yet']);
         }
 
@@ -51,33 +56,31 @@ class DriverLocationController extends Controller
             // 2. Get Live Location from Redis
             $position = Redis::geopos('drivers_live', $order->driver_id);
 
-            // 🛑 CRASH FIX: Check if Redis returned [null]
-            // If the driver hasn't sent location yet, $position[0] will be null.
-            if (empty($position) || !isset($position[0])) {
-                return response()->json([
-                    'success' => true,
-                    'status' => $order->status,
-                    'message' => 'Driver location waiting...',
-                    'driver_location' => null // Return null safely instead of crashing
-                ]);
+            // Default to null if no GPS yet
+            $driverLoc = null;
+            if (!empty($position) && isset($position[0])) {
+                $driverLoc = [
+                    'latitude' => (float)$position[0][1],
+                    'longitude' => (float)$position[0][0]
+                ];
             }
-
-            // 3. Extract Coordinates (Only if we passed the check above)
-            $lng = $position[0][0];
-            $lat = $position[0][1];
 
             return response()->json([
                 'success' => true,
-                'driver_location' => [
-                    'latitude' => (float)$lat,
-                    'longitude' => (float)$lng
-                ],
-                'status' => $order->status
+                'status' => $order->status,
+                'driver_location' => $driverLoc,
+                
+                // ✅ SEND DRIVER DETAILS
+                'driver' => [
+                    'name' => $order->driver->name,
+                    'mobile_no' => $order->driver->mobile_no,
+                    'role' => 'Delivery Partner', // You can customize this
+                    // 'image' => $order->driver->image_url // Uncomment if you have images
+                ]
             ]);
 
         } catch (\Exception $e) {
             \Log::error("Tracking Error: " . $e->getMessage());
-            // Return a safe response even if Redis fails completely
             return response()->json(['success' => false, 'message' => 'Server Error'], 500);
         }
     }
