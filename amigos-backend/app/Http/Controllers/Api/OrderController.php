@@ -120,8 +120,8 @@ class OrderController extends Controller
     }
 
     // Add this method inside the class
-   public function userHistory(Request $request)
-{
+   public function userHistory(Request $request) 
+   {
     // 1. Get User ID
     $userId = $request->query('user_id'); 
 
@@ -162,7 +162,7 @@ class OrderController extends Controller
 
     // 4. Return as a clean list (re-indexed)
     // We slice(0, 10) to limit the horizontal list size
-    return response()->json(array_values($allItems));
+    return response()->json(array_slice(array_values($allItems), 0, 10));
 }
 
 }
