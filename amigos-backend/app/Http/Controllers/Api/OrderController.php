@@ -120,36 +120,49 @@ class OrderController extends Controller
     }
 
     // Add this method inside the class
-    public function userHistory(Request $request)
-    {
-        // 1. Get User ID (Assuming you pass ?user_id=123 or use Auth)
-        // For now, we use the ID passed in the request
-        $userId = $request->query('user_id'); 
+   public function userHistory(Request $request)
+{
+    // 1. Get User ID
+    $userId = $request->query('user_id'); 
 
-        if (!$userId) {
-            return response()->json([]);
-        }
+    if (!$userId) {
+        return response()->json([]);
+    }
 
-        // 2. Fetch last 5 orders for this user
-        $orders = \App\Models\Order::where('user_id', $userId)
-                    ->orderBy('created_at', 'desc')
-                    ->take(5)
-                    ->get();
+    // 2. Fetch last 10 orders with their items
+    $orders = \App\Models\Order::with('items') // <--- Eager load the relationship
+                ->where('user_id', $userId)
+                ->orderBy('created_at', 'desc')
+                ->take(10)
+                ->get();
 
-        // 3. Extract unique items from these orders
-        $allItems = [];
-        foreach ($orders as $order) {
-            // Since 'items' is cast to array in your Model, we can loop directly
-            if (is_array($order->items)) {
-                foreach ($order->items as $item) {
-                    // Add to array using ID as key to prevent duplicates
-                    $allItems[$item['id']] = $item; 
-                }
+    // 3. Extract unique items
+    $allItems = [];
+
+    foreach ($orders as $order) {
+        foreach ($order->items as $item) {
+            
+            // We use 'product_id' (or name) as the key to prevent duplicates.
+            // If I ordered "Burger" yesterday and today, I only want to see it once.
+            
+            $key = $item->product_id ?? $item->name; 
+
+            // Only add if we haven't added this product yet
+            if (!isset($allItems[$key])) {
+                $allItems[$key] = [
+                    'id'        => $item->product_id ?? $item->id, // Prefer Product ID for reordering
+                    'name'      => $item->name,
+                    'price'     => $item->price,
+                    'image_url' => $item->image_url ?? null, // Ensure your OrderItem table stores this, or fetch from Product model
+                    'is_veg'    => $item->is_veg ?? false,
+                ];
             }
         }
-
-        // 4. Return as a clean list (re-indexed)
-        return response()->json(array_values($allItems));
     }
+
+    // 4. Return as a clean list (re-indexed)
+    // We slice(0, 10) to limit the horizontal list size
+    return response()->json(array_values($allItems));
+}
 
 }
