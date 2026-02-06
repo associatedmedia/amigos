@@ -36,31 +36,49 @@ class DriverLocationController extends Controller
     // ✅ 2. CUSTOMER APP CALLS THIS (To Track Order)
     public function show($orderId)
     {
-        // Find the driver assigned to this order
-        $order = Order::select('id', 'driver_id', 'status')->find($orderId);
+        // 1. Find the driver assigned to this order
+        $order = \App\Models\Order::select('id', 'driver_id', 'status')->find($orderId);
 
-        if (!$order || !$order->driver_id) {
-            return response()->json(['success' => false, 'message' => 'No driver assigned']);
+        // Check if order exists and has a driver
+        if (!$order) {
+            return response()->json(['success' => false, 'message' => 'Order not found']);
+        }
+        if (!$order->driver_id) {
+            return response()->json(['success' => false, 'message' => 'No driver assigned yet']);
         }
 
-        // Get Live Location from Redis
-        $position = Redis::geopos('drivers_live', $order->driver_id);
+        try {
+            // 2. Get Live Location from Redis
+            $position = Redis::geopos('drivers_live', $order->driver_id);
 
-        if (empty($position)) {
-            return response()->json(['success' => false, 'message' => 'Waiting for driver GPS...']);
+            // 🛑 CRASH FIX: Check if Redis returned [null]
+            // If the driver hasn't sent location yet, $position[0] will be null.
+            if (empty($position) || !isset($position[0])) {
+                return response()->json([
+                    'success' => true,
+                    'status' => $order->status,
+                    'message' => 'Driver location waiting...',
+                    'driver_location' => null // Return null safely instead of crashing
+                ]);
+            }
+
+            // 3. Extract Coordinates (Only if we passed the check above)
+            $lng = $position[0][0];
+            $lat = $position[0][1];
+
+            return response()->json([
+                'success' => true,
+                'driver_location' => [
+                    'latitude' => (float)$lat,
+                    'longitude' => (float)$lng
+                ],
+                'status' => $order->status
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error("Tracking Error: " . $e->getMessage());
+            // Return a safe response even if Redis fails completely
+            return response()->json(['success' => false, 'message' => 'Server Error'], 500);
         }
-
-        // Redis returns [[lng, lat]]
-        $lng = $position[0][0];
-        $lat = $position[0][1];
-
-        return response()->json([
-            'success' => true,
-            'driver_location' => [
-                'latitude' => (float)$lat,
-                'longitude' => (float)$lng
-            ],
-            'status' => $order->status
-        ]);
     }
 }
