@@ -9,6 +9,8 @@ use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\ContentController;
 use App\Http\Controllers\Api\AdminDashController;
 use App\Http\Controllers\BannerController;
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\ProductController;
 
 /*
 |--------------------------------------------------------------------------
@@ -31,6 +33,10 @@ Route::get('/products', [MenuController::class, 'index']); // Fallback
 
 // Banners/Sliders
 Route::get('/banners', [BannerController::class, 'index']);
+
+// Content (Legacy - Optional)
+Route::get('/categories', [CategoryController::class, 'index']);
+Route::get('/products', [ProductController::class, 'index']);
 
 // ==========================================
 // 2. CUSTOMER ROUTES (Requires Token)
