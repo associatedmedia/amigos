@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\AdminDashController;
 use App\Http\Controllers\BannerController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\DriverLocationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -54,6 +55,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [ProfileController::class, 'show']);
     Route::post('/user/update', [ProfileController::class, 'update']);
     Route::get('/user/history', [OrderController::class, 'userHistory']);
+
+    // Driver Location Tracking
+    Route::post('/driver/location', [DriverLocationController::class, 'update']);
+    Route::get('/orders/{id}/track', [DriverLocationController::class, 'show']);
 });
 
 // ==========================================
