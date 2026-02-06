@@ -37,6 +37,13 @@ class Order extends Model
         return $this->belongsTo(User::class);
     }
 
+    // ✅ ADD THIS RELATIONSHIP
+    public function driver()
+    {
+        // This says: "The 'driver_id' column belongs to a User"
+        return $this->belongsTo(User::class, 'driver_id');
+    }
+
     // Helper for Order Number
     public static function generateOrderNumber()
     {
