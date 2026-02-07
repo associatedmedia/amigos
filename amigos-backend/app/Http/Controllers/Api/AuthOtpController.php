@@ -12,41 +12,60 @@ use Illuminate\Support\Facades\Log;
 
 class AuthOtpController extends Controller {
 
-    public function sendOtp(Request $request) {
-        $request->validate(['phone' => 'required']);
-        
-        $otp = rand(1000, 9999); // Generate 4-digit OTP
-        
-        // Save to Database
-        VerificationCode::updateOrCreate(
-            ['mobile_no' => $request->phone],
-            ['otp' => $otp, 'expire_at' => Carbon::now()->addMinutes(10)]
-        );
+   public function sendOtp(Request $request) {
+    // 1. Validate Input
+    $request->validate(['phone' => 'required']);
+    
+    // ---------------------------------------------------------
+    // 🔧 CONFIG: TEST NUMBERS (Skip SMS for these)
+    // ---------------------------------------------------------
+    $testNumbers = [
+        '9876543210',  // Apple/Google Reviewer Number
+        '9906667444',  // Your Personal Testing Number
+        '1234567890'   // Another Test Number
+    ];
 
-        // TODO: Integration with WhatsApp/SMS API here
-        // Example: Http::post('https://whatsapp-api...', ['message' => "Your Amigos OTP is $otp"]);
+    // Check if the input phone is in our test list
+    $isTestAccount = in_array((string)$request->phone, $testNumbers);
 
-       // ---------------------------------------------------------
-        // ✅ CORRECTED INTEGRATION: TrustSignal SMS API
-        // ---------------------------------------------------------
+    // ---------------------------------------------------------
+    // 🎲 GENERATE OTP
+    // ---------------------------------------------------------
+    if ($isTestAccount) {
+        $otp = 1234; // ✅ Fixed OTP for Testing/Reviewers
+    } else {
+        $otp = rand(1000, 9999); // 🔀 Random OTP for Real Users
+    }
+    
+    // ---------------------------------------------------------
+    // 💾 SAVE TO DATABASE (Required for Login)
+    // ---------------------------------------------------------
+    VerificationCode::updateOrCreate(
+        ['mobile_no' => $request->phone],
+        ['otp' => $otp, 'expire_at' => Carbon::now()->addMinutes(10)]
+    );
+
+    // ---------------------------------------------------------
+    // 📨 SEND SMS (ONLY if NOT a test account)
+    // ---------------------------------------------------------
+    if (! $isTestAccount) {
         try {
-            // 1. Construct the URL with the API Key
+            // 1. Construct URL
             $url = env('TRUSTSIGNAL_URL') . '?api_key=' . env('TRUSTSIGNAL_API_KEY');
 
-            // 2. Prepare the Message (Must match your DLT Template exactly!)
-            // Example DLT Template: "Your Amigos OTP is {#var#}"
+            // 2. Prepare Message (Must match DLT Template)
             $messageContent = "Your Amigos OTP is $otp"; 
 
             // 3. Send Request
             $response = Http::post($url, [
                 "sender_id"   => env('TRUSTSIGNAL_SENDER_ID'),
-                "to"          => [ (int)$request->phone ], // ⚠️ Must be an Array
+                "to"          => [ (int)$request->phone ], // ⚠️ Must be an Array of Integers
                 "route"       => "transactional",
                 "message"     => $messageContent,
                 "template_id" => env('TRUSTSIGNAL_TEMPLATE_ID')
             ]);
 
-            // Debugging
+            // 4. Logging
             if ($response->failed()) {
                 Log::error('TrustSignal SMS Failed: ' . $response->body());
             } else {
@@ -56,9 +75,16 @@ class AuthOtpController extends Controller {
         } catch (\Exception $e) {
             Log::error('SMS Integration Exception: ' . $e->getMessage());
         }
-        return response()->json(['success' => true, 'message' => 'OTP sent successfully']);
-        // return response()->json(['success' => true, 'message' => $otp]);
     }
+
+    // ---------------------------------------------------------
+    // 🏁 RETURN RESPONSE
+    // ---------------------------------------------------------
+    return response()->json([
+        'success' => true, 
+        'message' => $isTestAccount ? 'OTP sent (Test Mode)' : 'OTP sent successfully'
+    ]);
+}
 
    public function verifyOtp(Request $request) 
     {
