@@ -136,49 +136,56 @@ class OrderController extends Controller
     }
 
     // Add this method inside the class
-   public function userHistory(Request $request) 
-   {
+ public function userHistory(Request $request) 
+{
     // 1. Get User ID
-    $userId = $request->query('user_id'); 
+    $userId = $request->query('user_id'); // Ensure your route passes this, or use auth()->id()
 
     if (!$userId) {
         return response()->json([]);
     }
 
-    // 2. Fetch last 10 orders with their items
-    $orders = \App\Models\Order::with('items') // <--- Eager load the relationship
+    // 2. Fetch last 10 orders with items AND their related Product details
+    // ✅ FIX: Use dot notation 'items.product' to load the Product table data
+    $orders = \App\Models\Order::with('items.product') 
                 ->where('user_id', $userId)
                 ->orderBy('created_at', 'desc')
                 ->take(10)
                 ->get();
 
-    // 3. Extract unique items
-    $allItems = [];
+    // 3. Extract unique products
+    $uniqueProducts = [];
 
     foreach ($orders as $order) {
         foreach ($order->items as $item) {
             
-            // We use 'product_id' (or name) as the key to prevent duplicates.
-            // If I ordered "Burger" yesterday and today, I only want to see it once.
-            
-            $key = $item->product_id ?? $item->name; 
+            // ✅ FIX: Access the related product model
+            $product = $item->product;
 
-            // Only add if we haven't added this product yet
-            if (!isset($allItems[$key])) {
-                $allItems[$key] = [
-                    'id'        => $item->product_id ?? $item->id, // Prefer Product ID for reordering
-                    'name'      => $item->name,
-                    'price'     => $item->price,
-                    'image_url' => $item->image_url ?? null, // Ensure your OrderItem table stores this, or fetch from Product model
-                    'is_veg'    => $item->is_veg ?? false,
+            // Safety check: If product was deleted from admin, skip it
+            if (!$product) continue;
+
+            // Use Product ID as key to prevent duplicates
+            $productId = $product->id;
+
+            // Only add if not already in our list
+            if (!isset($uniqueProducts[$productId])) {
+                $uniqueProducts[$productId] = [
+                    'id'          => $product->id,
+                    'name'        => $product->name,       // ✅ Get Name from Product table
+                    'price'       => $product->price,      // Get current price (or $item->price for paid price)
+                    'image'       => $product->image,      // ✅ Get Image from Product table
+                    'description' => $product->description,
+                    'is_veg'      => $product->is_veg,
+                    'category_name' => $product->category->name ?? '', // Optional: if you need category
                 ];
             }
         }
     }
 
-    // 4. Return as a clean list (re-indexed)
-    // We slice(0, 10) to limit the horizontal list size
-    return response()->json(array_slice(array_values($allItems), 0, 10));
+    // 4. Return clean array (reset keys)
+    // Limit to top 10 unique items to show horizontally
+    return response()->json(array_values(array_slice($uniqueProducts, 0, 10)));
 }
 
 }
