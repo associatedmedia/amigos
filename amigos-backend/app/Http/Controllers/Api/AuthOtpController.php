@@ -60,7 +60,7 @@ class AuthOtpController extends Controller {
             $response = Http::post($url, [
                 "sender_id"   => env('TRUSTSIGNAL_SENDER_ID'),
                 "to"          => [ (int)$request->phone ], // ⚠️ Must be an Array of Integers
-                "route"       => "transactional",
+                "route"       => "promotional", //transactional
                 "message"     => $messageContent,
                 "template_id" => env('TRUSTSIGNAL_TEMPLATE_ID')
             ]);
