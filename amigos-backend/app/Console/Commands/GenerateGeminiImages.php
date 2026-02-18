@@ -85,7 +85,7 @@ class GenerateGeminiImages extends Command
             // STEP 2: Try to fetch image (Strategy Pattern)
             $success = false;
             
-            // Strategy A: Pollinations (Standard Endpoint)
+            // Strategy A: Pollinations (Standard with Curl)
             if (!$success) {
                 $this->info("      🌍 Attempt 1: Pollinations (Standard)...");
                 $encodedPrompt = urlencode($creativePrompt);
@@ -93,21 +93,12 @@ class GenerateGeminiImages extends Command
                 $success = $this->downloadWithCurl($url, $fullPath);
             }
 
-            // Strategy B: Pollinations (Alternative Endpoint / Simple)
+            // Strategy B: Pollinations (Redirect with Wget - often handles Cloudflare differently)
             if (!$success) {
-                $this->info("      🌍 Attempt 2: Pollinations (Simple)...");
-                // Simplified prompt
-                $simplePrompt = urlencode($model->name . " food photography 4k");
-                $url = "https://image.pollinations.ai/prompt/{$simplePrompt}?nologo=true";
-                $success = $this->downloadWithCurl($url, $fullPath);
-            }
-
-            // Strategy C: LoremFlickr (Fallback)
-            if (!$success) {
-                $this->warn("      ⚠️  All AI failed. Falling back to LoremFlickr...");
-                $keyword = $this->extractKeyword($model->name);
-                $url = "https://loremflickr.com/800/800/" . urlencode($keyword);
-                $success = $this->downloadWithCurl($url, $fullPath);
+                $this->info("      🌍 Attempt 2: Pollinations (Wget Fallback)...");
+                $encodedPrompt = urlencode($creativePrompt);
+                $url = "https://pollinations.ai/p/{$encodedPrompt}?width=1024&height=1024&seed=" . rand(1, 9999);
+                $success = $this->downloadWithWget($url, $fullPath);
             }
 
             if ($success && file_exists($fullPath) && filesize($fullPath) > 1000) {
@@ -118,7 +109,7 @@ class GenerateGeminiImages extends Command
                  $model->save();
                  $this->info("      🔗 Linked to DB: $dbPath");
             } else {
-                 $this->error("      ❌ Failed to save a valid image.");
+                 $this->error("      ❌ Failed to generate AI image. Skipping...");
             }
 
         } catch (\Exception $e) {
@@ -128,32 +119,36 @@ class GenerateGeminiImages extends Command
 
     private function downloadWithCurl($url, $path)
     {
-        // Rotating User Agents
-        $agents = [
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15',
-            'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36'
-        ];
-        $agent = $agents[array_rand($agents)];
+        // Random Sleep to avoid rate limits
+        usleep(rand(500000, 1000000));
 
-        $cmd = "curl -L -s -D - ";
-        $cmd .= "-A '$agent' ";
-        $cmd .= "-H 'Referer: https://google.com/' "; // Generic Referer
-        $cmd .= "'$url' -o '$path' --max-time 60";
+        $cmd = "curl -L -s ";
+        $cmd .= "-A 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' ";
+        $cmd .= "-H 'Referer: https://pollinations.ai/' ";
+        $cmd .= "'$url' -o '$path' --max-time 120";
 
         exec($cmd, $output, $returnCode);
 
-        // Check file size (Pollinations often returns small text error files)
         if ($returnCode === 0 && file_exists($path) && filesize($path) > 2000) {
             return true;
         }
+        if (file_exists($path)) unlink($path);
+        return false;
+    }
+
+    private function downloadWithWget($url, $path)
+    {
+        // Wget user agent
+        $ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
         
-        // If failed, delete the partial/error file
-        if (file_exists($path)) {
-            // Optional: read error content
-            // $content = file_get_contents($path);
-            unlink($path);
+        $cmd = "wget -q --header='User-Agent: $ua' --header='Referer: https://pollinations.ai/' '$url' -O '$path' --timeout=120";
+        
+        exec($cmd, $output, $returnCode);
+
+        if ($returnCode === 0 && file_exists($path) && filesize($path) > 2000) {
+            return true;
         }
+        if (file_exists($path)) unlink($path);
         return false;
     }
 
