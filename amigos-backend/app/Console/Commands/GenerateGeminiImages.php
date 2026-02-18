@@ -69,18 +69,10 @@ class GenerateGeminiImages extends Command
         $this->info("   🎨 Processing: {$model->name}...");
 
         try {
-            // STEP 1: Generate a Creative Prompt using Gemini (Text Model)
+            // STEP 1: Generate a Creative Prompt using Gemini
             $creativePrompt = $this->getGeminiPrompt($model->name, $apiKey);
             $this->info("      ✨ Prompt: \"{$creativePrompt}\"");
 
-            // STEP 2: Generate Image using Pollinations.ai (Flux Model)
-            // URL: https://image.pollinations.ai/prompt/{prompt}
-            $encodedPrompt = urlencode($creativePrompt);
-            $url = "https://image.pollinations.ai/prompt/{$encodedPrompt}?width=1024&height=1024&model=flux&seed=" . rand(1, 9999) . "&nologo=true";
-
-            $this->info("      🌍 Fetching Image from Pollinations...");
-
-            // Use Curl directly to bypass Cloudflare 530/403 errors (more robust than Http facade)
             $filename = $folder . '/' . Str::slug($model->name) . '-' . time() . '.jpg';
             $fullPath = storage_path('app/public/' . $filename);
             
@@ -90,55 +82,79 @@ class GenerateGeminiImages extends Command
                 mkdir($directory, 0755, true);
             }
 
-            // Use Curl with FULL browser headers to bypass Cloudflare 530/403
-            // Pollinations often blocks non-browser User-Agents or persistent datacenter IPs
-            $filename = $folder . '/' . Str::slug($model->name) . '-' . time() . '.jpg';
-            $fullPath = storage_path('app/public/' . $filename);
+            // STEP 2: Try to fetch image (Strategy Pattern)
+            $success = false;
             
-            // Ensure directory exists
-            $directory = dirname($fullPath);
-            if (!file_exists($directory)) {
-                mkdir($directory, 0755, true);
+            // Strategy A: Pollinations (Standard Endpoint)
+            if (!$success) {
+                $this->info("      🌍 Attempt 1: Pollinations (Standard)...");
+                $encodedPrompt = urlencode($creativePrompt);
+                $url = "https://image.pollinations.ai/prompt/{$encodedPrompt}?width=1024&height=1024&model=flux&nologo=true&seed=" . rand(1, 9999);
+                $success = $this->downloadWithCurl($url, $fullPath);
             }
 
-            // Enhanced Curl Command with Headers
-            $cmd = "curl -L -s -D - "; // -D - outputs headers to stdout for debug
-            $cmd .= "-A 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36' ";
-            $cmd .= "-H 'Referer: https://pollinations.ai/' ";
-            $cmd .= "-H 'Accept: image/avif,image/webp,image/apng,image/*,*/*;q=0.8' ";
-            $cmd .= "-H 'Accept-Language: en-US,en;q=0.9' ";
-            $cmd .= "'$url' -o '$fullPath' --max-time 120"; // Increased timeout
+            // Strategy B: Pollinations (Alternative Endpoint / Simple)
+            if (!$success) {
+                $this->info("      🌍 Attempt 2: Pollinations (Simple)...");
+                // Simplified prompt
+                $simplePrompt = urlencode($model->name . " food photography 4k");
+                $url = "https://image.pollinations.ai/prompt/{$simplePrompt}?nologo=true";
+                $success = $this->downloadWithCurl($url, $fullPath);
+            }
 
-            $this->info("      📡 Executing Curl...");
-            exec($cmd, $output, $returnCode);
+            // Strategy C: LoremFlickr (Fallback)
+            if (!$success) {
+                $this->warn("      ⚠️  All AI failed. Falling back to LoremFlickr...");
+                $keyword = $this->extractKeyword($model->name);
+                $url = "https://loremflickr.com/800/800/" . urlencode($keyword);
+                $success = $this->downloadWithCurl($url, $fullPath);
+            }
 
-            // Check if file seems valid (size > 1KB)
-            if ($returnCode !== 0 || !file_exists($fullPath) || filesize($fullPath) < 1000) {
-                 $this->error("      ❌ Failed. Exit Code: $returnCode");
-                 
-                 // Debug: Show why it failed (read first 200 chars of file if it exists)
-                 if (file_exists($fullPath)) {
-                     $content = file_get_contents($fullPath, false, null, 0, 200);
-                     $this->error("      ⚠️ Response content: " . substr($content, 0, 200));
-                 }
-
-                 // Fallback to LoremFlickr if Pollinations fails
-                 $this->downloadLoremFlickr($model, $fullPath);
-            } else {
+            if ($success && file_exists($fullPath) && filesize($fullPath) > 1000) {
                  $this->info("      ✅ Image Saved! (" . round(filesize($fullPath)/1024) . " KB)");
+                 
+                 $dbPath = 'storage/' . $filename; 
+                 $model->image_url = $dbPath;
+                 $model->save();
+                 $this->info("      🔗 Linked to DB: $dbPath");
+            } else {
+                 $this->error("      ❌ Failed to save a valid image.");
             }
-
-            $dbPath = 'storage/' . $filename; 
-
-            // Update Database
-            $model->image_url = $dbPath;
-            $model->save();
-
-            $this->info("      🔗 Linked to DB: $dbPath");
 
         } catch (\Exception $e) {
             $this->error("      ❌ Exception: " . $e->getMessage());
         }
+    }
+
+    private function downloadWithCurl($url, $path)
+    {
+        // Rotating User Agents
+        $agents = [
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15',
+            'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36'
+        ];
+        $agent = $agents[array_rand($agents)];
+
+        $cmd = "curl -L -s -D - ";
+        $cmd .= "-A '$agent' ";
+        $cmd .= "-H 'Referer: https://google.com/' "; // Generic Referer
+        $cmd .= "'$url' -o '$path' --max-time 60";
+
+        exec($cmd, $output, $returnCode);
+
+        // Check file size (Pollinations often returns small text error files)
+        if ($returnCode === 0 && file_exists($path) && filesize($path) > 2000) {
+            return true;
+        }
+        
+        // If failed, delete the partial/error file
+        if (file_exists($path)) {
+            // Optional: read error content
+            // $content = file_get_contents($path);
+            unlink($path);
+        }
+        return false;
     }
 
     private function getGeminiPrompt($productName, $apiKey)
@@ -167,15 +183,7 @@ class GenerateGeminiImages extends Command
         return "Delicious {$productName}, cinematic lighting, photorealistic food photography, 8k resolution";
     }
 
-    private function downloadLoremFlickr($model, $path)
-    {
-        $this->warn("      ⚠️  Falling back to LoremFlickr...");
-        $keyword = $this->extractKeyword($model->name);
-        $url = "https://loremflickr.com/800/800/" . urlencode($keyword);
-        
-        $command = "curl -L '$url' -o '$path'";
-        exec($command);
-    }
+
 
     private function extractKeyword($name)
     {
