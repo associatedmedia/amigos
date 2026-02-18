@@ -66,34 +66,41 @@ class GenerateGeminiImages extends Command
 
     private function generateAndSave($model, $prompt, $folder, $apiKey)
     {
-        $this->info("   🎨 Fetching for: {$model->name}...");
+        $this->info("   🎨 Processing: {$model->name}...");
 
         try {
-            // Using LoremFlickr for real food photography (Reliable, No Key, No Blocking)
-            // URL: https://loremflickr.com/800/800/{keyword}
-            
-            // Clean the name to get a good keyword (e.g. "Special Chicken Pizza" -> "Pizza")
-            $keyword = $this->extractKeyword($model->name);
-            $url = "https://loremflickr.com/800/800/" . urlencode($keyword);
+            // STEP 1: Generate a Creative Prompt using Gemini (Text Model)
+            $creativePrompt = $this->getGeminiPrompt($model->name, $apiKey);
+            $this->info("      ✨ Prompt: \"{$creativePrompt}\"");
 
-            $this->info("      🌍 Fetching from LoremFlickr ({$keyword})...");
-            
-            // Add User-Agent just in case
-            $response = Http::withHeaders([
-                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
-            ])->timeout(60)->get($url);
+            // STEP 2: Generate Image using Pollinations.ai (Flux Model)
+            // URL: https://image.pollinations.ai/prompt/{prompt}
+            $encodedPrompt = urlencode($creativePrompt);
+            $url = "https://image.pollinations.ai/prompt/{$encodedPrompt}?width=1024&height=1024&model=flux&seed=" . rand(1, 9999) . "&nologo=true";
 
-            if ($response->failed()) {
-                $this->error("      ❌ API Error: " . $response->status());
-                return;
+            $this->info("      🌍 Fetching Image from Pollinations...");
+
+            // Use Curl directly to bypass Cloudflare 530/403 errors (more robust than Http facade)
+            $filename = $folder . '/' . Str::slug($model->name) . '-' . time() . '.jpg';
+            $fullPath = storage_path('app/public/' . $filename);
+            
+            // Ensure directory exists
+            $directory = dirname($fullPath);
+            if (!file_exists($directory)) {
+                mkdir($directory, 0755, true);
             }
 
-            $imageData = $response->body();
-
-            // Save to Public Storage
-            $filename = $folder . '/' . Str::slug($model->name) . '-' . time() . '.jpg';
+            $command = "curl -L -A 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' '$url' -o '$fullPath' --max-time 60";
             
-            Storage::disk('public')->put($filename, $imageData);
+            exec($command, $output, $returnCode);
+
+            if ($returnCode !== 0 || !file_exists($fullPath) || filesize($fullPath) < 1000) {
+                 $this->error("      ❌ Failed to download image. Curl Exit Code: $returnCode");
+                 // Fallback to LoremFlickr if Pollinations fails
+                 $this->downloadLoremFlickr($model, $fullPath);
+            } else {
+                 $this->info("      ✅ Image Saved!");
+            }
 
             $dbPath = 'storage/' . $filename; 
 
@@ -101,11 +108,47 @@ class GenerateGeminiImages extends Command
             $model->image_url = $dbPath;
             $model->save();
 
-            $this->info("      ✅ Saved & Linked: $dbPath");
+            $this->info("      🔗 Linked to DB: $dbPath");
 
         } catch (\Exception $e) {
             $this->error("      ❌ Exception: " . $e->getMessage());
         }
+    }
+
+    private function getGeminiPrompt($productName, $apiKey)
+    {
+        // Use Gemini Flash for fast, cheap prompt generation
+        $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$apiKey}";
+
+        $body = [
+            'contents' => [
+                'parts' => [
+                    ['text' => "Write a short, highly descriptive, appetizing AI image generation prompt for a food item named '{$productName}'. Focus on lighting, texture, and 4k quality. Max 30 words. No introduction."]
+                ]
+            ]
+        ];
+
+        try {
+            $response = Http::post($url, $body);
+            if ($response->successful()) {
+                $data = $response->json();
+                return $data['candidates'][0]['content']['parts'][0]['text'] ?? "Delicious {$productName}, professional food photography, 4k";
+            }
+        } catch (\Exception $e) {
+            // Fallback
+        }
+
+        return "Delicious {$productName}, cinematic lighting, photorealistic food photography, 8k resolution";
+    }
+
+    private function downloadLoremFlickr($model, $path)
+    {
+        $this->warn("      ⚠️  Falling back to LoremFlickr...");
+        $keyword = $this->extractKeyword($model->name);
+        $url = "https://loremflickr.com/800/800/" . urlencode($keyword);
+        
+        $command = "curl -L '$url' -o '$path'";
+        exec($command);
     }
 
     private function extractKeyword($name)
