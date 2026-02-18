@@ -69,37 +69,25 @@ class GenerateGeminiImages extends Command
         $this->info("   🎨 Generating: {$model->name}...");
 
         try {
-            // Call Gemini/Imagen API (Fallback to image-generation-001 if imagen-3 is not available)
-            $url = "https://generativelanguage.googleapis.com/v1beta/models/image-generation-001:predict?key={$apiKey}";
+            // Using Pollinations.ai (Free, Reliable, No Key)
+            // URL: https://image.pollinations.ai/prompt/{prompt}
+            $encodedPrompt = urlencode($prompt);
+            $url = "https://image.pollinations.ai/prompt/{$encodedPrompt}?width=1024&height=1024&model=flux&seed=" . rand(1, 9999);
 
-            $response = Http::post($url, [
-                'instances' => [
-                    ['prompt' => $prompt]
-                ],
-                'parameters' => [
-                    'sampleCount' => 1,
-                    'aspectRatio' => '1:1',
-                    'outputFormat' => 'image/png'
-                ]
-            ]);
+            $this->info("      🌍 Fetching from Pollinations.ai...");
+            
+            $response = Http::timeout(60)->get($url);
 
             if ($response->failed()) {
-                $this->error("      ❌ API Error: " . $response->body());
+                $this->error("      ❌ API Error: " . $response->status());
                 return;
             }
 
-            $data = $response->json();
-
-            if (!isset($data['predictions'][0]['bytesBase64Encoded'])) {
-                $this->error("      ⚠️ No image data returned.");
-                return;
-            }
-
-            $imageData = base64_decode($data['predictions'][0]['bytesBase64Encoded']);
+            $imageData = $response->body();
 
             // Save to Public Storage
             // Filename: slug-timestamp.png
-            $filename = $folder . '/' . Str::slug($model->name) . '-' . time() . '.png';
+            $filename = $folder . '/' . Str::slug($model->name) . '-' . time() . '.jpg'; // Pollinations returns JPEG/PNG usually, safer to save as file content
             
             // Save to 'public' disk (storage/app/public/...)
             Storage::disk('public')->put($filename, $imageData);
