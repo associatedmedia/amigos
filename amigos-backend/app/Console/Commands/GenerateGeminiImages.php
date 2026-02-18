@@ -66,40 +66,35 @@ class GenerateGeminiImages extends Command
 
     private function generateAndSave($model, $prompt, $folder, $apiKey)
     {
-        $this->info("   🎨 Generating: {$model->name}...");
+        $this->info("   🎨 Fetching for: {$model->name}...");
 
         try {
-            // Using Pollinations.ai (Free, Reliable, No Key)
-            // URL: https://image.pollinations.ai/prompt/{prompt}
-            $encodedPrompt = urlencode($prompt);
-            $url = "https://image.pollinations.ai/prompt/{$encodedPrompt}?width=1024&height=1024&model=flux&seed=" . rand(1, 9999);
-
-            $this->info("      🌍 Fetching from Pollinations.ai...");
+            // Using LoremFlickr for real food photography (Reliable, No Key, No Blocking)
+            // URL: https://loremflickr.com/800/800/{keyword}
             
-            // Add User-Agent to mimic a browser and avoid 530/403 errors
+            // Clean the name to get a good keyword (e.g. "Special Chicken Pizza" -> "Pizza")
+            $keyword = $this->extractKeyword($model->name);
+            $url = "https://loremflickr.com/800/800/" . urlencode($keyword);
+
+            $this->info("      🌍 Fetching from LoremFlickr ({$keyword})...");
+            
+            // Add User-Agent just in case
             $response = Http::withHeaders([
-                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
             ])->timeout(60)->get($url);
 
             if ($response->failed()) {
-                $this->error("      ❌ API Error: " . $response->status() . " - " . $response->body());
+                $this->error("      ❌ API Error: " . $response->status());
                 return;
             }
 
             $imageData = $response->body();
 
             // Save to Public Storage
-            // Filename: slug-timestamp.png
-            $filename = $folder . '/' . Str::slug($model->name) . '-' . time() . '.jpg'; // Pollinations returns JPEG/PNG usually, safer to save as file content
+            $filename = $folder . '/' . Str::slug($model->name) . '-' . time() . '.jpg';
             
-            // Save to 'public' disk (storage/app/public/...)
             Storage::disk('public')->put($filename, $imageData);
 
-            // Access URL (e.g., /storage/products/pizza.png)
-            // Note: In DB we save the relative path 'storage/products/pizza.png'
-            // or just the filename if your accessor handles 'storage/'.
-            // Based on standard Laravel: asset('storage/filename')
-            
             $dbPath = 'storage/' . $filename; 
 
             // Update Database
@@ -111,5 +106,23 @@ class GenerateGeminiImages extends Command
         } catch (\Exception $e) {
             $this->error("      ❌ Exception: " . $e->getMessage());
         }
+    }
+
+    private function extractKeyword($name)
+    {
+        // Simple heuristic to get the main food item
+        $name = strtolower($name);
+        if (Str::contains($name, 'pizza')) return 'pizza';
+        if (Str::contains($name, 'burger')) return 'burger';
+        if (Str::contains($name, 'pasta')) return 'pasta';
+        if (Str::contains($name, 'salad')) return 'salad';
+        if (Str::contains($name, 'chicken')) return 'fried chicken';
+        if (Str::contains($name, 'cake')) return 'cake';
+        if (Str::contains($name, 'coffee')) return 'coffee';
+        if (Str::contains($name, 'shake')) return 'milkshake';
+        if (Str::contains($name, 'biryani')) return 'biryani';
+        
+        // Fallback: Use the first word or the whole name
+        return explode(' ', $name)[0];
     }
 }
