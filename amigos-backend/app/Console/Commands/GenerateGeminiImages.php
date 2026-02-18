@@ -69,8 +69,8 @@ class GenerateGeminiImages extends Command
         $this->info("   🎨 Generating: {$model->name}...");
 
         try {
-            // Call Gemini/Imagen API
-            $url = "https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key={$apiKey}";
+            // Call Gemini/Imagen API (Fallback to image-generation-001 if imagen-3 is not available)
+            $url = "https://generativelanguage.googleapis.com/v1beta/models/image-generation-001:predict?key={$apiKey}";
 
             $response = Http::post($url, [
                 'instances' => [
