@@ -76,10 +76,13 @@ class GenerateGeminiImages extends Command
 
             $this->info("      🌍 Fetching from Pollinations.ai...");
             
-            $response = Http::timeout(60)->get($url);
+            // Add User-Agent to mimic a browser and avoid 530/403 errors
+            $response = Http::withHeaders([
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'
+            ])->timeout(60)->get($url);
 
             if ($response->failed()) {
-                $this->error("      ❌ API Error: " . $response->status());
+                $this->error("      ❌ API Error: " . $response->status() . " - " . $response->body());
                 return;
             }
 
