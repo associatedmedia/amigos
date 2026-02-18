@@ -54,7 +54,7 @@ class AuthOtpController extends Controller {
             $url = env('TRUSTSIGNAL_URL') . '?api_key=' . env('TRUSTSIGNAL_API_KEY');
 
             // 2. Prepare Message (Must match DLT Template)
-            $messageContent = "Your Amigos OTP is $otp"; 
+            $messageContent = "Welcome to Amigos Foods App! Your OTP for login is '.$otp.'. It is valid for 10 minutes. Please do not share this code with anyone."; 
 
             // 3. Send Request
             $response = Http::post($url, [
