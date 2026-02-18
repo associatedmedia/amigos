@@ -90,16 +90,42 @@ class GenerateGeminiImages extends Command
                 mkdir($directory, 0755, true);
             }
 
-            $command = "curl -L -A 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' '$url' -o '$fullPath' --max-time 60";
+            // Use Curl with FULL browser headers to bypass Cloudflare 530/403
+            // Pollinations often blocks non-browser User-Agents or persistent datacenter IPs
+            $filename = $folder . '/' . Str::slug($model->name) . '-' . time() . '.jpg';
+            $fullPath = storage_path('app/public/' . $filename);
             
-            exec($command, $output, $returnCode);
+            // Ensure directory exists
+            $directory = dirname($fullPath);
+            if (!file_exists($directory)) {
+                mkdir($directory, 0755, true);
+            }
 
+            // Enhanced Curl Command with Headers
+            $cmd = "curl -L -s -D - "; // -D - outputs headers to stdout for debug
+            $cmd .= "-A 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36' ";
+            $cmd .= "-H 'Referer: https://pollinations.ai/' ";
+            $cmd .= "-H 'Accept: image/avif,image/webp,image/apng,image/*,*/*;q=0.8' ";
+            $cmd .= "-H 'Accept-Language: en-US,en;q=0.9' ";
+            $cmd .= "'$url' -o '$fullPath' --max-time 120"; // Increased timeout
+
+            $this->info("      📡 Executing Curl...");
+            exec($cmd, $output, $returnCode);
+
+            // Check if file seems valid (size > 1KB)
             if ($returnCode !== 0 || !file_exists($fullPath) || filesize($fullPath) < 1000) {
-                 $this->error("      ❌ Failed to download image. Curl Exit Code: $returnCode");
+                 $this->error("      ❌ Failed. Exit Code: $returnCode");
+                 
+                 // Debug: Show why it failed (read first 200 chars of file if it exists)
+                 if (file_exists($fullPath)) {
+                     $content = file_get_contents($fullPath, false, null, 0, 200);
+                     $this->error("      ⚠️ Response content: " . substr($content, 0, 200));
+                 }
+
                  // Fallback to LoremFlickr if Pollinations fails
                  $this->downloadLoremFlickr($model, $fullPath);
             } else {
-                 $this->info("      ✅ Image Saved!");
+                 $this->info("      ✅ Image Saved! (" . round(filesize($fullPath)/1024) . " KB)");
             }
 
             $dbPath = 'storage/' . $filename; 
