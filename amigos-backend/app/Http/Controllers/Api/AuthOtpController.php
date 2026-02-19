@@ -20,9 +20,10 @@ class AuthOtpController extends Controller {
     // 🔧 CONFIG: TEST NUMBERS (Skip SMS for these)
     // ---------------------------------------------------------
     $testNumbers = [
-        '9876543210',  // Apple/Google Reviewer Number
+        '9876543210',  // Apple/Google Reviewer Number (Existing)
         '9906667444',  // Your Personal Testing Number
-        '1234567890'   // Another Test Number
+        '1234567890',  // Another Test Number
+        '9999999999'   // Google Play Reviewer (NEW)
     ];
 
     // Check if the input phone is in our test list
