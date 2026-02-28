@@ -40,7 +40,19 @@ Route::get('/categories', [CategoryController::class, 'index']);
 Route::get('/products', [ProductController::class, 'index']);
 
 // ==========================================
-// 2. CUSTOMER ROUTES (Requires Token)
+// 2. APP VERSION AND CONFIG (Public)
+// ==========================================
+Route::get('/app-version', function () {
+    return response()->json([
+        'success'         => true,
+        'minimum_version' => '1.0.0', // Update this when you want to force updates
+        'store_url_android' => 'https://play.google.com/store/apps/details?id=com.associatedmedia.amigospizza',
+        'store_url_ios'     => 'https://apps.apple.com/us/app/amigos-pizza/id123456789' // Replace with actual iOS ID if needed
+    ]);
+});
+
+// ==========================================
+// 3. CUSTOMER ROUTES (Requires Token)
 // ==========================================
 Route::middleware('auth:sanctum')->group(function () {
     
@@ -54,6 +66,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Profile
     Route::get('/user', [ProfileController::class, 'show']);
     Route::post('/user/update', [ProfileController::class, 'update']);
+    Route::delete('/user/delete', [ProfileController::class, 'destroy']);
     Route::get('/user/history', [OrderController::class, 'userHistory']);
 
     // Driver Location Tracking

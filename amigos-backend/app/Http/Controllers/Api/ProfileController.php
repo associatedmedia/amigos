@@ -69,4 +69,31 @@ class ProfileController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Delete the authenticated user's account.
+     */
+    public function destroy(Request $request)
+    {
+        $user = $request->user();
+
+        try {
+            // Revoke all tokens
+            $user->tokens()->delete();
+
+            // Delete the user
+            $user->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Account deleted successfully',
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Account deletion failed: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
