@@ -25,6 +25,20 @@ class OrderController extends Controller
         return view('webadmin.orders.show', compact('order'));
     }
 
+    public function updateStatus(Request $request, $id)
+    {
+        $order = Order::findOrFail($id);
+        
+        $request->validate([
+            'status' => 'required|string|in:pending,accepted,assigned,picked_up,delivered,cancelled,refunded',
+        ]);
+
+        $order->status = $request->input('status');
+        $order->save();
+
+        return redirect()->route('admin.orders.show', $order->id)->with('success', 'Order status updated successfully.');
+    }
+
     public function data()
     {
         $query = Order::with('user')->select('orders.*');

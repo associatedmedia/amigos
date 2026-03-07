@@ -70,15 +70,34 @@
         </div>
 
         <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white fw-bold">Update Order Status</div>
+            <div class="card-body">
+                <form action="{{ route('admin.orders.updateStatus', $order->id) }}" method="POST">
+                    @csrf
+                    @method('PUT')
+                    <div class="input-group">
+                        <select name="status" class="form-select" required>
+                            <option value="pending" {{ $order->status == 'pending' ? 'selected' : '' }}>Pending</option>
+                            <option value="accepted" {{ $order->status == 'accepted' ? 'selected' : '' }}>Accepted</option>
+                            <option value="assigned" {{ $order->status == 'assigned' ? 'selected' : '' }}>Assigned</option>
+                            <option value="picked_up" {{ $order->status == 'picked_up' ? 'selected' : '' }}>Picked Up</option>
+                            <option value="delivered" {{ $order->status == 'delivered' ? 'selected' : '' }}>Delivered</option>
+                            <option value="cancelled" {{ $order->status == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                            <option value="refunded" {{ $order->status == 'refunded' ? 'selected' : '' }}>Refunded</option>
+                        </select>
+                        <button class="btn btn-primary" type="submit">Update</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0 mb-4">
             <div class="card-header bg-white fw-bold">Delivery Location</div>
             <div class="card-body">
-                @if($order->location)
-                    @php $loc = is_string($order->location) ? json_decode($order->location, true) : $order->location; @endphp
-                    <p>{{ $loc['address'] ?? ($order->location_address ?? 'Address not found') }}</p>
-                @elseif($order->address)
-                    <p>{{ is_string($order->address) ? collect(json_decode($order->address, true))->implode(', ') : 'N/A' }}</p>
+                @if($order->address)
+                    <p class="mb-0">{{ is_string($order->address) ? collect(json_decode($order->address, true))->implode(', ') : $order->address }}</p>
                 @else
-                    <p class="text-muted">No specific location provided.</p>
+                    <p class="text-muted mb-0">No specific location provided.</p>
                 @endif
             </div>
         </div>

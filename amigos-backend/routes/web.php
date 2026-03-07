@@ -32,6 +32,7 @@ Route::prefix('admin')->group(function () {
         Route::get('orders/data', [OrderController::class, 'data'])->name('admin.orders.data');
         Route::get('orders/create', [OrderController::class, 'create'])->name('admin.orders.create');
         Route::get('orders/{id}', [OrderController::class, 'show'])->name('admin.orders.show');
+        Route::put('orders/{id}/status', [OrderController::class, 'updateStatus'])->name('admin.orders.updateStatus');
         
         // Products
         Route::get('products', [ProductController::class, 'index'])->name('admin.products.index');
