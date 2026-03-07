@@ -206,6 +206,75 @@
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 
+    @if(session('is_admin') || (auth()->check() && auth()->user()->role === 'admin'))
+    <script>
+        $(document).ready(function() {
+            let lastOrderId = null;
+            
+            // Get initial last order ID on page load
+            $.ajax({
+                url: "{{ route('admin.orders.latest_id') }}",
+                type: 'GET',
+                success: function(response) {
+                    lastOrderId = response.latest_id;
+                    // Start polling every 10 seconds
+                    setInterval(checkForNewOrders, 10000);
+                }
+            });
+
+            function checkForNewOrders() {
+                if (lastOrderId === null) return;
+
+                $.ajax({
+                    url: "{{ route('admin.orders.latest_id') }}",
+                    type: 'GET',
+                    success: function(response) {
+                        if (response.latest_id > lastOrderId) {
+                            lastOrderId = response.latest_id;
+                            playOrderBell();
+                            
+                            if (window.location.href.includes('/orders') && typeof table !== 'undefined' && table.ajax) {
+                                table.ajax.reload(null, false);
+                            } else {
+                                if (confirm("A new order (ID: #" + lastOrderId + ") has arrived! View it now?")) {
+                                    window.location.href = "{{ url('admin/orders') }}/" + lastOrderId;
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function playOrderBell() {
+                try {
+                    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    function playTone(freq, startTime, duration) {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + startTime);
+                        
+                        gain.gain.setValueAtTime(0, audioCtx.currentTime + startTime);
+                        gain.gain.linearRampToValueAtTime(1, audioCtx.currentTime + startTime + 0.05);
+                        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + startTime + duration);
+                        
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.start(audioCtx.currentTime + startTime);
+                        osc.stop(audioCtx.currentTime + startTime + duration);
+                    }
+                    
+                    // Notification doorbell "Ding-Dong" tone
+                    playTone(659.25, 0, 0.4);   // E5
+                    playTone(523.25, 0.4, 0.8);  // C5
+                } catch(e) {
+                    console.log("Audio play blocked or unsupported by browser", e);
+                }
+            }
+        });
+    </script>
+    @endif
+
     @stack('scripts')
 </body>
 </html>

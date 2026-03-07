@@ -19,6 +19,14 @@ class OrderController extends Controller
         return view('webadmin.orders.create');
     }
 
+    public function latestOrderId()
+    {
+        $latestOrder = Order::orderBy('id', 'desc')->first();
+        return response()->json([
+            'latest_id' => $latestOrder ? $latestOrder->id : 0
+        ]);
+    }
+
     public function show($id)
     {
         $order = Order::with(['user', 'items.product'])->findOrFail($id);
