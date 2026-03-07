@@ -28,7 +28,7 @@
 </head>
 <body>
 
-    @auth
+    @if(session('is_admin') || (auth()->check() && auth()->user()->role === 'admin'))
         <!-- Navbar -->
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
             <div class="container-fluid">
@@ -165,7 +165,7 @@
         <div class="bg-light" style="min-height: 100vh;">
             @yield('content')
         </div>
-    @endauth
+    @endif
 
     <!-- JavaScript Dependencies -->
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
