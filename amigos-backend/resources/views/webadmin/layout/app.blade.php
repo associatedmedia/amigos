@@ -207,6 +207,10 @@
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 
     @if(session('is_admin') || (auth()->check() && auth()->user()->role === 'admin'))
+    
+    <!-- Hidden audio element for new order notifications -->
+    <audio id="orderNotificationSound" src="https://actions.google.com/sounds/v1/alarms/store_door_chime.ogg" preload="auto"></audio>
+
     <script>
         $(document).ready(function() {
             let lastOrderId = null;
@@ -231,7 +235,14 @@
                     success: function(response) {
                         if (response.latest_id > lastOrderId) {
                             lastOrderId = response.latest_id;
-                            playOrderBell();
+                            
+                            // Play the chime sound
+                            let bell = document.getElementById('orderNotificationSound');
+                            if (bell) {
+                                bell.play().catch(function(error) {
+                                    console.log("Browser autoplay restriction prevented audio from playing. Ensure the user clicks explicitly onto the page first.", error);
+                                });
+                            }
                             
                             if (window.location.href.includes('/orders') && typeof table !== 'undefined' && table.ajax) {
                                 table.ajax.reload(null, false);
@@ -243,33 +254,6 @@
                         }
                     }
                 });
-            }
-
-            function playOrderBell() {
-                try {
-                    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                    function playTone(freq, startTime, duration) {
-                        const osc = audioCtx.createOscillator();
-                        const gain = audioCtx.createGain();
-                        osc.type = 'sine';
-                        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + startTime);
-                        
-                        gain.gain.setValueAtTime(0, audioCtx.currentTime + startTime);
-                        gain.gain.linearRampToValueAtTime(1, audioCtx.currentTime + startTime + 0.05);
-                        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + startTime + duration);
-                        
-                        osc.connect(gain);
-                        gain.connect(audioCtx.destination);
-                        osc.start(audioCtx.currentTime + startTime);
-                        osc.stop(audioCtx.currentTime + startTime + duration);
-                    }
-                    
-                    // Notification doorbell "Ding-Dong" tone
-                    playTone(659.25, 0, 0.4);   // E5
-                    playTone(523.25, 0.4, 0.8);  // C5
-                } catch(e) {
-                    console.log("Audio play blocked or unsupported by browser", e);
-                }
             }
         });
     </script>
