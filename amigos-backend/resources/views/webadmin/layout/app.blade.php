@@ -139,6 +139,25 @@
                                 </div>
                             </li>
 
+                            <!-- Banners Menu -->
+                            <li class="nav-item">
+                                <a class="nav-link py-3 border-bottom d-flex justify-content-between align-items-center {{ request()->routeIs('admin.banners.*') ? 'active bg-light fw-bold text-dark' : 'text-secondary' }}" 
+                                   data-bs-toggle="collapse" href="#bannersCollapse" role="button" aria-expanded="{{ request()->routeIs('admin.banners.*') ? 'true' : 'false' }}">
+                                    <span><i class="bi bi-images me-2"></i> Banners</span>
+                                    <i class="bi bi-chevron-down small"></i>
+                                </a>
+                                <div class="collapse {{ request()->routeIs('admin.banners.*') ? 'show' : '' }}" id="bannersCollapse" data-bs-parent="#sidebarMenu">
+                                    <ul class="nav flex-column mb-0 py-2 bg-light border-bottom">
+                                        <li class="nav-item">
+                                            <a class="nav-link {{ request()->routeIs('admin.banners.create') ? 'fw-bold text-primary' : 'text-secondary' }}" href="{{ route('admin.banners.create') }}">Add Banner</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link {{ request()->routeIs('admin.banners.index') ? 'fw-bold text-primary' : 'text-secondary' }}" href="{{ route('admin.banners.index') }}">List Banners</a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </li>
+
                         </ul>
 
                         <!-- Sidebar Logout -->

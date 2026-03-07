@@ -1,0 +1,49 @@
+@extends('webadmin.layout.app')
+
+@section('content')
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Banners</h1>
+    <a href="{{ route('admin.banners.create') }}" class="btn btn-sm btn-primary">
+        <i class="bi bi-plus-circle"></i> Add Banner
+    </a>
+</div>
+
+<div class="table-responsive bg-white p-3 rounded shadow-sm border">
+    <table class="table table-hover align-middle w-100" id="bannersTable">
+        <thead class="table-light">
+            <tr>
+                <th>ID</th>
+                <th>Image</th>
+                <th>Title</th>
+                <th>Subtitle</th>
+                <th>Target Screen</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+    </table>
+</div>
+
+@endsection
+
+@push('scripts')
+<script>
+    $(document).ready(function() {
+        $('#bannersTable').DataTable({
+            processing: true,
+            serverSide: true,
+            order: [[0, "desc"]],
+            ajax: "{{ route('admin.banners.data') }}",
+            columns: [
+                { data: 'id', name: 'id' },
+                { data: 'image_url', name: 'image_url', orderable: false, searchable: false },
+                { data: 'title', name: 'title' },
+                { data: 'subtitle', name: 'subtitle' },
+                { data: 'target_screen', name: 'target_screen' },
+                { data: 'is_active', name: 'is_active' },
+                { data: 'action', name: 'action', orderable: false, searchable: false }
+            ]
+        });
+    });
+</script>
+@endpush

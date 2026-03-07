@@ -43,5 +43,10 @@ Route::prefix('admin')->group(function () {
         Route::get('categories', [CategoryController::class, 'index'])->name('admin.categories.index');
         Route::get('categories/data', [CategoryController::class, 'data'])->name('admin.categories.data');
         Route::get('categories/create', [CategoryController::class, 'create'])->name('admin.categories.create');
+
+        // Banners
+        Route::get('banners', [\App\Http\Controllers\webadmin\BannerController::class, 'index'])->name('admin.banners.index');
+        Route::get('banners/data', [\App\Http\Controllers\webadmin\BannerController::class, 'data'])->name('admin.banners.data');
+        Route::get('banners/create', [\App\Http\Controllers\webadmin\BannerController::class, 'create'])->name('admin.banners.create');
     });
 });
