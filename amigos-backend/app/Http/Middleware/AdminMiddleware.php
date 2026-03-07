@@ -15,7 +15,11 @@ class AdminMiddleware
             return $next($request);
         }
 
-        // 2. If not, kick them out
-        return response()->json(['message' => 'Unauthorized. Admin access only.'], 403);
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return response()->json(['message' => 'Unauthorized. Admin access only.'], 403);
+        }
+
+        // 2. If not, kick them out to login page
+        return redirect()->route('admin.login')->withErrors('Unauthorized. Admin access only.');
     }
 }
