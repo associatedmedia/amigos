@@ -7,9 +7,22 @@
     <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <!-- DataTables CSS -->
+    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <style>
         .sidebar {
             min-height: calc(100vh - 56px);
+        }
+        .sidebar .nav-link {
+            transition: all 0.2s;
+        }
+        .sidebar .nav-link:hover {
+            background-color: #f8f9fa;
+        }
+        .sidebar .collapse .nav-link {
+            padding-left: 3rem;
+            font-size: 0.9rem;
         }
     </style>
 </head>
@@ -41,27 +54,91 @@
                 <!-- Sidebar -->
                 <nav class="col-md-3 col-lg-2 d-md-block bg-white border-end sidebar collapse px-0">
                     <div class="position-sticky pt-3">
-                        <ul class="nav flex-column">
+                        <ul class="nav flex-column" id="sidebarMenu">
+                            
+                            <!-- Dashboard -->
                             <li class="nav-item">
                                 <a class="nav-link py-3 border-bottom {{ request()->routeIs('admin.dashboard') ? 'active bg-light fw-bold text-dark' : 'text-secondary' }}" href="{{ route('admin.dashboard') }}">
                                     <i class="bi bi-speedometer2 me-2"></i> Dashboard
                                 </a>
                             </li>
+
+                            <!-- Customers Menu -->
                             <li class="nav-item">
-                                <a class="nav-link py-3 border-bottom {{ request()->routeIs('admin.orders.*') ? 'active bg-light fw-bold text-dark' : 'text-secondary' }}" href="{{ route('admin.orders.index') }}">
-                                    <i class="bi bi-receipt me-2"></i> Orders
+                                <a class="nav-link py-3 border-bottom d-flex justify-content-between align-items-center {{ request()->routeIs('admin.customers.*') ? 'active bg-light fw-bold text-dark' : 'text-secondary' }}" 
+                                   data-bs-toggle="collapse" href="#customersCollapse" role="button" aria-expanded="{{ request()->routeIs('admin.customers.*') ? 'true' : 'false' }}">
+                                    <span><i class="bi bi-people me-2"></i> Customers</span>
+                                    <i class="bi bi-chevron-down small"></i>
                                 </a>
+                                <div class="collapse {{ request()->routeIs('admin.customers.*') ? 'show' : '' }}" id="customersCollapse" data-bs-parent="#sidebarMenu">
+                                    <ul class="nav flex-column mb-0 py-2 bg-light border-bottom">
+                                        <li class="nav-item">
+                                            <a class="nav-link {{ request()->routeIs('admin.customers.create') ? 'fw-bold text-primary' : 'text-secondary' }}" href="{{ route('admin.customers.create') }}">Add Customer</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link {{ request()->routeIs('admin.customers.index') ? 'fw-bold text-primary' : 'text-secondary' }}" href="{{ route('admin.customers.index') }}">List Customers</a>
+                                        </li>
+                                    </ul>
+                                </div>
                             </li>
+
+                            <!-- Orders Menu -->
                             <li class="nav-item">
-                                <a class="nav-link py-3 border-bottom {{ request()->routeIs('admin.products.*') ? 'active bg-light fw-bold text-dark' : 'text-secondary' }}" href="{{ route('admin.products.index') }}">
-                                    <i class="bi bi-box-seam me-2"></i> Products
+                                <a class="nav-link py-3 border-bottom d-flex justify-content-between align-items-center {{ request()->routeIs('admin.orders.*') ? 'active bg-light fw-bold text-dark' : 'text-secondary' }}" 
+                                   data-bs-toggle="collapse" href="#ordersCollapse" role="button" aria-expanded="{{ request()->routeIs('admin.orders.*') ? 'true' : 'false' }}">
+                                    <span><i class="bi bi-receipt me-2"></i> Orders</span>
+                                    <i class="bi bi-chevron-down small"></i>
                                 </a>
+                                <div class="collapse {{ request()->routeIs('admin.orders.*') ? 'show' : '' }}" id="ordersCollapse" data-bs-parent="#sidebarMenu">
+                                    <ul class="nav flex-column mb-0 py-2 bg-light border-bottom">
+                                        <li class="nav-item">
+                                            <a class="nav-link {{ request()->routeIs('admin.orders.create') ? 'fw-bold text-primary' : 'text-secondary' }}" href="{{ route('admin.orders.create') }}">Add Order</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link {{ request()->routeIs('admin.orders.index') ? 'fw-bold text-primary' : 'text-secondary' }}" href="{{ route('admin.orders.index') }}">List Orders</a>
+                                        </li>
+                                    </ul>
+                                </div>
                             </li>
+
+                            <!-- Products Menu -->
                             <li class="nav-item">
-                                <a class="nav-link py-3 border-bottom {{ request()->routeIs('admin.categories.*') ? 'active bg-light fw-bold text-dark' : 'text-secondary' }}" href="{{ route('admin.categories.index') }}">
-                                    <i class="bi bi-tags me-2"></i> Categories
+                                <a class="nav-link py-3 border-bottom d-flex justify-content-between align-items-center {{ request()->routeIs('admin.products.*') ? 'active bg-light fw-bold text-dark' : 'text-secondary' }}" 
+                                   data-bs-toggle="collapse" href="#productsCollapse" role="button" aria-expanded="{{ request()->routeIs('admin.products.*') ? 'true' : 'false' }}">
+                                    <span><i class="bi bi-box-seam me-2"></i> Products</span>
+                                    <i class="bi bi-chevron-down small"></i>
                                 </a>
+                                <div class="collapse {{ request()->routeIs('admin.products.*') ? 'show' : '' }}" id="productsCollapse" data-bs-parent="#sidebarMenu">
+                                    <ul class="nav flex-column mb-0 py-2 bg-light border-bottom">
+                                        <li class="nav-item">
+                                            <a class="nav-link {{ request()->routeIs('admin.products.create') ? 'fw-bold text-primary' : 'text-secondary' }}" href="{{ route('admin.products.create') }}">Add Product</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link {{ request()->routeIs('admin.products.index') ? 'fw-bold text-primary' : 'text-secondary' }}" href="{{ route('admin.products.index') }}">List Products</a>
+                                        </li>
+                                    </ul>
+                                </div>
                             </li>
+
+                            <!-- Categories Menu -->
+                            <li class="nav-item">
+                                <a class="nav-link py-3 border-bottom d-flex justify-content-between align-items-center {{ request()->routeIs('admin.categories.*') ? 'active bg-light fw-bold text-dark' : 'text-secondary' }}" 
+                                   data-bs-toggle="collapse" href="#categoriesCollapse" role="button" aria-expanded="{{ request()->routeIs('admin.categories.*') ? 'true' : 'false' }}">
+                                    <span><i class="bi bi-tags me-2"></i> Categories</span>
+                                    <i class="bi bi-chevron-down small"></i>
+                                </a>
+                                <div class="collapse {{ request()->routeIs('admin.categories.*') ? 'show' : '' }}" id="categoriesCollapse" data-bs-parent="#sidebarMenu">
+                                    <ul class="nav flex-column mb-0 py-2 bg-light border-bottom">
+                                        <li class="nav-item">
+                                            <a class="nav-link {{ request()->routeIs('admin.categories.create') ? 'fw-bold text-primary' : 'text-secondary' }}" href="{{ route('admin.categories.create') }}">Add Category</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link {{ request()->routeIs('admin.categories.index') ? 'fw-bold text-primary' : 'text-secondary' }}" href="{{ route('admin.categories.index') }}">List Categories</a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </li>
+
                         </ul>
                     </div>
                 </nav>
@@ -79,7 +156,12 @@
         </div>
     @endauth
 
-    <!-- Bootstrap JS Bundle -->
+    <!-- JavaScript Dependencies -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+    @stack('scripts')
 </body>
 </html>

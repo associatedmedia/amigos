@@ -3,10 +3,13 @@
 @section('content')
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">Products</h1>
+    <a href="{{ route('admin.products.create') }}" class="btn btn-sm btn-primary">
+        <i class="bi bi-plus-circle"></i> Add Product
+    </a>
 </div>
 
 <div class="table-responsive bg-white p-3 rounded shadow-sm border">
-    <table class="table table-hover align-middle">
+    <table class="table table-hover align-middle w-100" id="productsTable">
         <thead class="table-light">
             <tr>
                 <th>ID</th>
@@ -19,46 +22,29 @@
                 <th>Action</th>
             </tr>
         </thead>
-        <tbody>
-            @forelse($products as $product)
-                <tr>
-                    <td>{{ $product->id }}</td>
-                    <td>
-                        @if($product->image_url)
-                            <img src="{{ $product->image_url }}" alt="{{ $product->name }}" class="img-thumbnail" style="width: 50px; height: 50px; object-fit: cover;">
-                        @else
-                            <div class="bg-light text-muted d-flex align-items-center justify-content-center border rounded" style="width: 50px; height: 50px;">
-                                <i class="bi bi-image"></i>
-                            </div>
-                        @endif
-                    </td>
-                    <td><strong>{{ $product->name }}</strong></td>
-                    <td>{{ $product->category ? $product->category->name : 'Uncategorized' }}</td>
-                    <td>₹{{ number_format($product->price, 2) }}</td>
-                    <td>
-                        <span class="badge bg-{{ $product->type === 'veg' ? 'success' : 'danger' }}">
-                            {{ strtoupper($product->type) }}
-                        </span>
-                    </td>
-                    <td>
-                         <span class="badge bg-{{ $product->is_available ? 'primary' : 'secondary' }}">
-                            {{ $product->is_available ? 'Available' : 'Unavailable' }}
-                        </span>
-                    </td>
-                    <td>
-                        <a href="{{ route('admin.products.show', $product->id) }}" class="btn btn-sm btn-outline-primary">View</a>
-                    </td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="8" class="text-center text-muted py-4">No products available.</td>
-                </tr>
-            @endforelse
-        </tbody>
     </table>
 </div>
-
-<div class="mt-4">
-    {{ $products->links('pagination::bootstrap-5') }}
-</div>
 @endsection
+
+@push('scripts')
+<script>
+    $(document).ready(function() {
+        $('#productsTable').DataTable({
+            processing: true,
+            serverSide: true,
+            order: [[0, "desc"]],
+            ajax: "{{ route('admin.products.data') }}",
+            columns: [
+                { data: 'id', name: 'id' },
+                { data: 'image_url', name: 'image_url', orderable: false, searchable: false },
+                { data: 'name', name: 'name' },
+                { data: 'category_name', name: 'category.name' },
+                { data: 'price', name: 'price' },
+                { data: 'type', name: 'type' },
+                { data: 'is_available', name: 'is_available' },
+                { data: 'action', name: 'action', orderable: false, searchable: false }
+            ]
+        });
+    });
+</script>
+@endpush

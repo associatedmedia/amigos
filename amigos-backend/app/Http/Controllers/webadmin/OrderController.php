@@ -5,18 +5,56 @@ namespace App\Http\Controllers\webadmin;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use Illuminate\Http\Request;
+use Yajra\DataTables\Facades\DataTables;
 
 class OrderController extends Controller
 {
     public function index()
     {
-        $orders = Order::with('user')->orderBy('created_at', 'desc')->paginate(15);
-        return view('webadmin.orders.index', compact('orders'));
+        return view('webadmin.orders.index');
+    }
+
+    public function create()
+    {
+        return view('webadmin.orders.create');
     }
 
     public function show($id)
     {
         $order = Order::with(['user', 'items.product'])->findOrFail($id);
         return view('webadmin.orders.show', compact('order'));
+    }
+
+    public function data()
+    {
+        $query = Order::with('user')->select('orders.*');
+
+        return DataTables::of($query)
+            ->addColumn('customer_name', function ($order) {
+                return $order->user ? $order->user->name : 'Guest';
+            })
+            ->addColumn('customer_phone', function ($order) {
+                return $order->user ? $order->user->phone : 'N/A';
+            })
+            ->editColumn('total_amount', function ($order) {
+                return '₹' . number_format($order->total_amount, 2);
+            })
+            ->editColumn('payment_status', function ($order) {
+                $color = $order->payment_status === 'paid' ? 'success' : 'warning';
+                return '<span class="badge bg-' . $color . '">' . ucfirst(str_replace('_', ' ', $order->payment_status)) . '</span>';
+            })
+            ->editColumn('status', function ($order) {
+                $color = $order->status === 'completed' ? 'success' : ($order->status === 'pending' ? 'warning' : 'secondary');
+                return '<span class="badge bg-' . $color . '">' . ucfirst($order->status) . '</span>';
+            })
+            ->editColumn('created_at', function ($order) {
+                return $order->created_at->format('M d, Y h:i A');
+            })
+            ->addColumn('action', function ($order) {
+                $url = route('admin.orders.show', $order->id);
+                return '<a href="' . $url . '" class="btn btn-sm btn-outline-primary">View</a>';
+            })
+            ->rawColumns(['payment_status', 'status', 'action'])
+            ->make(true);
     }
 }
