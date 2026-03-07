@@ -33,10 +33,10 @@
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
             <div class="container-fluid">
                 <a class="navbar-brand fw-bold" href="{{ route('admin.dashboard') }}">Amigos Admin</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <button class="navbar-toggler d-md-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenuWrapper" aria-controls="sidebarMenuWrapper" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="collapse navbar-collapse" id="navbarNav">
+                <div class="collapse navbar-collapse d-none d-lg-block" id="navbarNav">
                     <ul class="navbar-nav ms-auto">
                         <li class="nav-item">
                             <form action="{{ route('admin.logout') }}" method="POST" class="d-inline">
@@ -52,9 +52,9 @@
         <div class="container-fluid">
             <div class="row">
                 <!-- Sidebar -->
-                <nav class="col-md-3 col-lg-2 d-md-block bg-white border-end sidebar collapse px-0">
-                    <div class="position-sticky pt-3">
-                        <ul class="nav flex-column" id="sidebarMenu">
+                <nav id="sidebarMenuWrapper" class="col-md-3 col-lg-2 d-md-block bg-white border-end sidebar collapse px-0">
+                    <div class="position-sticky pt-3 d-flex flex-column" style="height: calc(100vh - 56px);">
+                        <ul class="nav flex-column mb-auto" id="sidebarMenu">
                             
                             <!-- Dashboard -->
                             <li class="nav-item">
@@ -140,6 +140,17 @@
                             </li>
 
                         </ul>
+
+                        <!-- Sidebar Logout -->
+                        <div class="mt-auto px-3 py-3 border-top">
+                            <form action="{{ route('admin.logout') }}" method="POST">
+                                @csrf
+                                <button type="submit" class="btn btn-outline-danger w-100 text-start fw-bold">
+                                    <i class="bi bi-box-arrow-right me-2"></i> Logout
+                                </button>
+                            </form>
+                        </div>
+
                     </div>
                 </nav>
 
