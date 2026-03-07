@@ -56,15 +56,18 @@
         <tbody>
             @forelse($recentOrders as $order)
                 <tr>
-                    <td><strong>#{{ $order->id }}</strong></td>
-                    <td>{{ $order->user ? $order->user->name : 'Guest' }}</td>
+                    <td><strong>#{{ $order->order_number ?? $order->id }}</strong></td>
+                    <td>
+                        {{ $order->user ? $order->user->name : 'Guest' }}<br>
+                        <small class="text-muted">{{ $order->user ? $order->user->mobile_no : 'N/A' }}</small>
+                    </td>
                     <td>₹{{ number_format($order->total_amount, 2) }}</td>
                     <td>
                         <span class="badge bg-{{ $order->status === 'completed' ? 'success' : ($order->status === 'pending' ? 'warning' : 'secondary') }}">
                             {{ ucfirst($order->status) }}
                         </span>
                     </td>
-                    <td>{{ $order->created_at->format('M d, Y') }}</td>
+                    <td>{{ $order->created_at->format('M d, Y h:i A') }}</td>
                     <td>
                         <a href="{{ route('admin.orders.show', $order->id) }}" class="btn btn-sm btn-outline-primary">View</a>
                     </td>
