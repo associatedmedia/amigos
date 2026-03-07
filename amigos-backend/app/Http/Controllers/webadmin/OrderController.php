@@ -34,7 +34,7 @@ class OrderController extends Controller
                 return $order->user ? $order->user->name : 'Guest';
             })
             ->addColumn('customer_phone', function ($order) {
-                return $order->user ? $order->user->phone : 'N/A';
+                return $order->user ? $order->user->mobile_no : 'N/A';
             })
             ->editColumn('total_amount', function ($order) {
                 return '₹' . number_format($order->total_amount, 2);

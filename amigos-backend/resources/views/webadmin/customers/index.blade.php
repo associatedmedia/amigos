@@ -37,7 +37,7 @@
                 { data: 'id', name: 'id' },
                 { data: 'name', name: 'name' },
                 { data: 'email', name: 'email' },
-                { data: 'phone', name: 'phone' },
+                { data: 'mobile_no', name: 'mobile_no' },
                 { data: 'role', name: 'role' },
                 { data: 'created_at', name: 'created_at', render: function(data){ return new Date(data).toDateString(); } },
                 { data: 'action', name: 'action', orderable: false, searchable: false }

@@ -37,7 +37,7 @@
             columns: [
                 { data: 'id', name: 'id' },
                 { data: 'customer_name', name: 'user.name' },
-                { data: 'customer_phone', name: 'user.phone' },
+                { data: 'customer_phone', name: 'user.mobile_no' },
                 { data: 'total_amount', name: 'total_amount' },
                 { data: 'payment_status', name: 'payment_status' },
                 { data: 'status', name: 'status' },

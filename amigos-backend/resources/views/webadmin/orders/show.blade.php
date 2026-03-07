@@ -63,9 +63,9 @@
         <div class="card shadow-sm border-0 mb-4">
             <div class="card-header bg-white fw-bold">Customer Information</div>
             <div class="card-body">
-                <p><strong>Name:</strong> {{ $order->user ? $order->user->name : 'Guest' }}</p>
-                <p><strong>Phone:</strong> {{ $order->user ? $order->user->phone : 'N/A' }}</p>
+                <p><strong>Name:</strong> {{ $order->user ? $order->user->name : 'N/A' }}</p>
                 <p><strong>Email:</strong> {{ $order->user ? $order->user->email : 'N/A' }}</p>
+                <p><strong>Phone:</strong> {{ $order->user ? $order->user->mobile_no : 'N/A' }}</p>
             </div>
         </div>
 
