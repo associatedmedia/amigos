@@ -1,5 +1,9 @@
 @extends('webadmin.layout.app')
 
+@push('scripts')
+<meta name="csrf-token" content="{{ csrf_token() }}">
+@endpush
+
 @section('content')
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">Banners</h1>
@@ -28,8 +32,9 @@
 
 @push('scripts')
 <script>
+    let table;
     $(document).ready(function() {
-        $('#bannersTable').DataTable({
+        table = $('#bannersTable').DataTable({
             processing: true,
             serverSide: true,
             order: [[0, "desc"]],
@@ -45,5 +50,27 @@
             ]
         });
     });
+
+    function confirmDelete(url) {
+        if (confirm('Are you certain you wish to delete this banner?')) {
+            $.ajax({
+                url: url,
+                type: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(result) {
+                    if(result.success) {
+                        table.ajax.reload();
+                    } else {
+                        alert(result.message || 'Error deleting banner.');
+                    }
+                },
+                error: function(err) {
+                    alert('Server Error deleting banner.');
+                }
+            });
+        }
+    }
 </script>
 @endpush
