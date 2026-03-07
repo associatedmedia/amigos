@@ -10,8 +10,8 @@ class AdminMiddleware
 {
     public function handle(Request $request, Closure $next): Response
     {
-        // 1. Check if user is logged in AND is an admin
-        if ($request->user() && $request->user()->role === 'admin') {
+        // 1. Check if user is logged in via static session OR actual db admin
+        if ($request->session()->get('is_admin') === true || ($request->user() && $request->user()->role === 'admin')) {
             return $next($request);
         }
 

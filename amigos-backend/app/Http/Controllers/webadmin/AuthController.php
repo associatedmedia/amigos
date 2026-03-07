@@ -10,7 +10,8 @@ class AuthController extends Controller
 {
     public function showLoginForm()
     {
-        if (Auth::check() && Auth::user()->role === 'admin') {
+        // Allow static admin or traditional authenticated admin
+        if (session('is_admin') || (Auth::check() && Auth::user()->role === 'admin')) {
             return redirect()->route('admin.dashboard');
         }
         return view('webadmin.auth.login');
@@ -18,39 +19,33 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        $credentials = $request->validate([
-            'email' => ['required', 'email'],
+        $request->validate([
+            'username' => ['required'],
             'password' => ['required'],
         ]);
 
-        if (Auth::attempt($credentials)) {
+        if ($request->username === 'admin' && $request->password === '5656') {
             $request->session()->regenerate();
+            $request->session()->put('is_admin', true);
             
-            if (Auth::user()->role === 'admin') {
-                return redirect()->intended('/admin/dashboard');
-            }
-
-            // Not an admin
-            Auth::logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-
-            return back()->withErrors([
-                'email' => 'Unauthorized access. Admins only.',
-            ])->onlyInput('email');
+            return redirect()->intended('/admin/dashboard');
         }
 
         return back()->withErrors([
-            'email' => 'The provided credentials do not match our records.',
-        ])->onlyInput('email');
+            'username' => 'The provided credentials do not match our records.',
+        ])->onlyInput('username');
     }
 
     public function logout(Request $request)
     {
-        Auth::logout();
-
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        $request->session()->forget('is_admin');
+        
+        // Also log out regular Auth if it was used
+        if (Auth::check()) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
 
         return redirect('/admin/login');
     }

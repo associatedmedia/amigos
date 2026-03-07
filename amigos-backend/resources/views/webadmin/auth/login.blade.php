@@ -24,10 +24,10 @@
                     <form action="{{ route('admin.login.submit') }}" method="POST">
                         @csrf
                         <div class="mb-3">
-                            <label for="email" class="form-label">Email Address</label>
+                            <label for="username" class="form-label">Username</label>
                             <div class="input-group">
-                                <span class="input-group-text bg-white"><i class="bi bi-envelope"></i></span>
-                                <input type="email" class="form-control" name="email" id="email" value="{{ old('email') }}" required autofocus placeholder="admin@example.com">
+                                <span class="input-group-text bg-white"><i class="bi bi-person"></i></span>
+                                <input type="text" class="form-control" name="username" id="username" value="{{ old('username') }}" required autofocus placeholder="admin">
                             </div>
                         </div>
 

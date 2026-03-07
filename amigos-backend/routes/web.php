@@ -17,7 +17,7 @@ Route::prefix('admin')->group(function () {
     Route::post('login', [AuthController::class, 'login'])->name('admin.login.submit');
     Route::post('logout', [AuthController::class, 'logout'])->name('admin.logout');
 
-    Route::middleware(['auth', 'admin'])->group(function () {
+    Route::middleware(['admin'])->group(function () {
         Route::get('dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
         
         Route::get('orders', [OrderController::class, 'index'])->name('admin.orders.index');
