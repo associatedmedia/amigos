@@ -19,6 +19,36 @@ class BannerController extends Controller
         return view('webadmin.banners.create');
     }
 
+    public function store(Request $request)
+    {
+        $request->validate([
+            'title' => 'nullable|string|max:255',
+            'subtitle' => 'nullable|string|max:255',
+            'target_screen' => 'nullable|string|max:255',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image_url' => 'nullable|url',
+        ]);
+
+        $banner = new Banner();
+        $banner->title = $request->input('title');
+        $banner->subtitle = $request->input('subtitle');
+        $banner->target_screen = $request->input('target_screen');
+        $banner->is_active = $request->has('is_active');
+        
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('banners', 'public');
+            $banner->image_url = 'storage/' . $path;
+        } elseif ($request->filled('image_url')) {
+            $banner->image_url = $request->input('image_url');
+        } else {
+            return back()->withErrors(['image' => 'Please provide an image file or an image URL'])->withInput();
+        }
+
+        $banner->save();
+
+        return redirect()->route('admin.banners.index')->with('success', 'Banner created successfully.');
+    }
+
     public function data()
     {
         $query = Banner::query();

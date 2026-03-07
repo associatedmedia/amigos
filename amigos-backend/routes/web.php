@@ -48,6 +48,7 @@ Route::prefix('admin')->group(function () {
         Route::get('banners', [\App\Http\Controllers\webadmin\BannerController::class, 'index'])->name('admin.banners.index');
         Route::get('banners/data', [\App\Http\Controllers\webadmin\BannerController::class, 'data'])->name('admin.banners.data');
         Route::get('banners/create', [\App\Http\Controllers\webadmin\BannerController::class, 'create'])->name('admin.banners.create');
+        Route::post('banners', [\App\Http\Controllers\webadmin\BannerController::class, 'store'])->name('admin.banners.store');
         Route::get('banners/{id}', [\App\Http\Controllers\webadmin\BannerController::class, 'show'])->name('admin.banners.show');
         Route::get('banners/{id}/edit', [\App\Http\Controllers\webadmin\BannerController::class, 'edit'])->name('admin.banners.edit');
         Route::put('banners/{id}', [\App\Http\Controllers\webadmin\BannerController::class, 'update'])->name('admin.banners.update');
