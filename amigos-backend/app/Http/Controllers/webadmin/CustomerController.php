@@ -92,6 +92,9 @@ class CustomerController extends Controller
             ->addColumn('address', function ($user) {
                 return $user->address ?? 'Not Available';
             })
+            ->filterColumn('address', function($query, $keyword) {
+                $query->whereRaw("address like ?", ["%{$keyword}%"]);
+            })
             ->addColumn('action', function ($user) {
                 $viewUrl = route('admin.customers.show', $user->id);
                 $editUrl = route('admin.customers.edit', $user->id);
