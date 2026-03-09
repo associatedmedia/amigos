@@ -40,8 +40,8 @@
                 { data: 'name', name: 'name' },
                 { data: 'category', name: 'category' },
                 { data: 'price', name: 'price' },
-                { data: 'type', name: 'type' },
-                { data: 'is_available', name: 'is_available' },
+                { data: 'type', name: 'type', searchable: false },
+                { data: 'is_available', name: 'is_available', searchable: false },
                 { data: 'action', name: 'action', orderable: false, searchable: false }
             ]
         });

@@ -121,7 +121,7 @@ class CategoryController extends Controller
                        '<a href="' . $editUrl . '" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></a>' .
                        '<button onclick="confirmDelete(\'' . $deleteUrl . '\')" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>';
             })
-            ->rawColumns(['image_url', 'action'])
+            ->rawColumns(['image_url', 'is_active', 'action'])
             ->make(true);
     }
 }
