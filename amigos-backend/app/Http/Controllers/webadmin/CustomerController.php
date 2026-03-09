@@ -21,9 +21,14 @@ class CustomerController extends Controller
 
     public function data()
     {
-        $query = User::query();
+        $query = User::where('role', 'customer');
 
         return DataTables::of($query)
+            ->addColumn('address', function ($user) {
+                // If address is stored directly on user, use it. Otherwise, fetch from a relation if it exists.
+                // Fallback to 'Not Available'
+                return $user->address ?? 'Not Available';
+            })
             ->addColumn('action', function ($user) {
                 return '<a href="#" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i> View</a>';
             })
