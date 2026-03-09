@@ -233,6 +233,27 @@
     <script>
         $(document).ready(function() {
             let lastOrderId = null;
+            let audioUnlocked = false;
+            let bell = document.getElementById('orderNotificationSound');
+
+            // Modern Browsers block audio playback unless the user interacts with the DOM first.
+            // We listen for the VERY FIRST click anywhere on the page to silently unlock the audio context.
+            $('body').one('click', function() {
+                if (!audioUnlocked && bell) {
+                    bell.volume = 0; // Mute it
+                    let playPromise = bell.play();
+                    if (playPromise !== undefined) {
+                        playPromise.then(_ => {
+                            bell.pause();
+                            bell.currentTime = 0;
+                            bell.volume = 1; // Restore volume for the real notifications
+                            audioUnlocked = true;
+                        }).catch(error => {
+                            console.log("Audio unlock failed:", error);
+                        });
+                    }
+                }
+            });
             
             // Get initial last order ID on page load
             $.ajax({
@@ -256,8 +277,8 @@
                             lastOrderId = response.latest_id;
                             
                             // Play the chime sound
-                            let bell = document.getElementById('orderNotificationSound');
                             if (bell) {
+                                // If they still haven't clicked anywhere, volume is 1 by default anyway
                                 bell.play().catch(function(error) {
                                     console.log("Browser autoplay restriction prevented audio from playing. Ensure the user clicks explicitly onto the page first.", error);
                                 });
