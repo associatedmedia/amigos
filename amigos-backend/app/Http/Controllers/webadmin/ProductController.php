@@ -54,7 +54,7 @@ class ProductController extends Controller
 
     public function show($id)
     {
-        $product = Product::with('category')->findOrFail($id);
+        $product = Product::findOrFail($id);
         return view('webadmin.products.show', compact('product'));
     }
 
@@ -120,7 +120,7 @@ class ProductController extends Controller
 
     public function data()
     {
-        $query = Product::with('category')->select('products.*');
+        $query = Product::select('products.*');
 
         return DataTables::of($query)
             ->editColumn('image_url', function ($product) {
@@ -129,8 +129,8 @@ class ProductController extends Controller
                 }
                 return '<span class="text-muted">None</span>';
             })
-            ->addColumn('category_name', function ($product) {
-                return $product->category ? $product->category->name : 'Uncategorized';
+            ->editColumn('category', function ($product) {
+                return $product->category ? $product->category : 'Uncategorized';
             })
             ->editColumn('price', function ($product) {
                 return '₹' . number_format($product->price, 2);

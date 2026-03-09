@@ -38,7 +38,7 @@
                 { data: 'id', name: 'id' },
                 { data: 'image_url', name: 'image_url', orderable: false, searchable: false },
                 { data: 'name', name: 'name' },
-                { data: 'category_name', name: 'category.name' },
+                { data: 'category', name: 'category' },
                 { data: 'price', name: 'price' },
                 { data: 'type', name: 'type' },
                 { data: 'is_available', name: 'is_available' },

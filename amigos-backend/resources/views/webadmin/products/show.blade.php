@@ -30,12 +30,12 @@
                 
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="text-muted">Type:</span>
-                    <span class="badge bg-{{ $product->type === 'veg' ? 'success' : 'danger' }}">{{ strtoupper($product->type) }}</span>
+                    <span class="badge bg-{{ $product->is_veg ? 'success' : 'danger' }}">{{ $product->is_veg ? 'VEG' : 'NON-VEG' }}</span>
                 </div>
 
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="text-muted">Category:</span>
-                    <span class="badge bg-secondary">{{ $product->category ? $product->category->name : 'Uncategorized' }}</span>
+                    <span class="badge bg-secondary">{{ $product->category ? $product->category : 'Uncategorized' }}</span>
                 </div>
 
                 <div class="d-flex justify-content-between align-items-center">
