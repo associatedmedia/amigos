@@ -167,7 +167,10 @@
             <div class="card-header bg-white fw-bold">Delivery Location</div>
             <div class="card-body">
                 @if($order->address)
-                    <p class="mb-3">{{ is_string($order->address) ? collect(json_decode($order->address, true))->implode(', ') : $order->address }}</p>
+                    @php
+                        $decodedAddress = json_decode($order->address, true);
+                    @endphp
+                    <p class="mb-3">{{ is_array($decodedAddress) ? collect($decodedAddress)->implode(', ') : $order->address }}</p>
                 @else
                     <p class="text-muted mb-3">No specific textual address provided.</p>
                 @endif
