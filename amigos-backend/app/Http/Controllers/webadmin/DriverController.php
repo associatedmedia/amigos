@@ -49,8 +49,8 @@ class DriverController extends Controller
                 
                 return '
                     <div class="d-flex gap-1 justify-content-center">
-                        <a href="'.$editUrl.'" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="bi bi-pencil"></i></a>
-                        <button type="button" class="btn btn-sm btn-outline-danger" title="Delete" onclick="confirmDelete(\''.$deleteUrl.'\')"><i class="bi bi-trash"></i></button>
+                        <a href="' . $editUrl . '" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i> Edit</a>' .
+                        '<button onclick="confirmDelete(\'' . $deleteUrl . '\')" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Delete</button>
                     </div>
                 ';
             })

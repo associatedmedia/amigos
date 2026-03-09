@@ -72,9 +72,9 @@ class BannerController extends Controller
                 
                 return '
                     <div class="d-flex gap-1 justify-content-center">
-                        <a href="'.$viewUrl.'" class="btn btn-sm btn-outline-primary" title="View"><i class="bi bi-eye"></i></a>
-                        <a href="'.$editUrl.'" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="bi bi-pencil"></i></a>
-                        <button type="button" class="btn btn-sm btn-outline-danger" title="Delete" onclick="confirmDelete(\''.$deleteUrl.'\')"><i class="bi bi-trash"></i></button>
+                        <a href="' . $viewUrl . '" class="btn btn-sm btn-outline-info me-1"><i class="bi bi-eye"></i> View</a>
+                        <a href="' . $editUrl . '" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i> Edit</a>
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmDelete(\'' . $deleteUrl . '\')"><i class="bi bi-trash"></i> Delete</button>
                     </div>
                 ';
             })

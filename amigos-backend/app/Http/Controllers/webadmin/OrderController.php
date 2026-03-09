@@ -91,7 +91,7 @@ class OrderController extends Controller
             })
             ->addColumn('action', function ($order) {
                 $url = route('admin.orders.show', $order->id);
-                return '<a href="' . $url . '" class="btn btn-sm btn-outline-primary">View</a>';
+                return '<a href="' . $url . '" class="btn btn-sm btn-outline-info"><i class="bi bi-eye"></i> View</a>';
             })
             ->rawColumns(['payment_status', 'status', 'action'])
             ->make(true);
