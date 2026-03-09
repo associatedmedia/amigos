@@ -158,6 +158,25 @@
                                 </div>
                             </li>
 
+                            <!-- Delivery Boys Menu -->
+                            <li class="nav-item">
+                                <a class="nav-link py-3 border-bottom d-flex justify-content-between align-items-center {{ request()->routeIs('admin.drivers.*') ? 'active bg-light fw-bold text-dark' : 'text-secondary' }}" 
+                                   data-bs-toggle="collapse" href="#driversCollapse" role="button" aria-expanded="{{ request()->routeIs('admin.drivers.*') ? 'true' : 'false' }}">
+                                    <span><i class="bi bi-bicycle me-2"></i> Delivery Boys</span>
+                                    <i class="bi bi-chevron-down small"></i>
+                                </a>
+                                <div class="collapse {{ request()->routeIs('admin.drivers.*') ? 'show' : '' }}" id="driversCollapse" data-bs-parent="#sidebarMenu">
+                                    <ul class="nav flex-column mb-0 py-2 bg-light border-bottom">
+                                        <li class="nav-item">
+                                            <a class="nav-link {{ request()->routeIs('admin.drivers.create') ? 'fw-bold text-primary' : 'text-secondary' }}" href="{{ route('admin.drivers.create') }}">Add Driver</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link {{ request()->routeIs('admin.drivers.index') ? 'fw-bold text-primary' : 'text-secondary' }}" href="{{ route('admin.drivers.index') }}">List Drivers</a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </li>
+
                         </ul>
 
                         <!-- Sidebar Logout -->

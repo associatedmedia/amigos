@@ -92,6 +92,27 @@
         </div>
 
         <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white fw-bold">Assign Delivery Boy</div>
+            <div class="card-body">
+                <form action="{{ route('admin.orders.assignDriver', $order->id) }}" method="POST">
+                    @csrf
+                    @method('PUT')
+                    <div class="input-group">
+                        <select name="driver_id" class="form-select" required>
+                            <option value="">-- Select Delivery Boy --</option>
+                            @foreach($drivers as $driver)
+                                <option value="{{ $driver->id }}" {{ $order->driver_id == $driver->id ? 'selected' : '' }}>
+                                    {{ $driver->name }} ({{ $driver->mobile_no }})
+                                </option>
+                            @endforeach
+                        </select>
+                        <button class="btn btn-success" type="submit">Assign</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0 mb-4">
             <div class="card-header bg-white fw-bold">Delivery Location</div>
             <div class="card-body">
                 @if($order->address)

@@ -34,6 +34,7 @@ Route::prefix('admin')->group(function () {
         Route::get('orders/create', [OrderController::class, 'create'])->name('admin.orders.create');
         Route::get('orders/{id}', [OrderController::class, 'show'])->name('admin.orders.show');
         Route::put('orders/{id}/status', [OrderController::class, 'updateStatus'])->name('admin.orders.updateStatus');
+        Route::put('orders/{id}/assign-driver', [OrderController::class, 'assignDriver'])->name('admin.orders.assignDriver');
         
         // Products
         Route::get('products', [ProductController::class, 'index'])->name('admin.products.index');
@@ -55,5 +56,13 @@ Route::prefix('admin')->group(function () {
         Route::get('banners/{id}/edit', [\App\Http\Controllers\webadmin\BannerController::class, 'edit'])->name('admin.banners.edit');
         Route::put('banners/{id}', [\App\Http\Controllers\webadmin\BannerController::class, 'update'])->name('admin.banners.update');
         Route::delete('banners/{id}', [\App\Http\Controllers\webadmin\BannerController::class, 'destroy'])->name('admin.banners.destroy');
+        // Drivers
+        Route::get('drivers', [\App\Http\Controllers\webadmin\DriverController::class, 'index'])->name('admin.drivers.index');
+        Route::get('drivers/data', [\App\Http\Controllers\webadmin\DriverController::class, 'data'])->name('admin.drivers.data');
+        Route::get('drivers/create', [\App\Http\Controllers\webadmin\DriverController::class, 'create'])->name('admin.drivers.create');
+        Route::post('drivers', [\App\Http\Controllers\webadmin\DriverController::class, 'store'])->name('admin.drivers.store');
+        Route::get('drivers/{id}/edit', [\App\Http\Controllers\webadmin\DriverController::class, 'edit'])->name('admin.drivers.edit');
+        Route::put('drivers/{id}', [\App\Http\Controllers\webadmin\DriverController::class, 'update'])->name('admin.drivers.update');
+        Route::delete('drivers/{id}', [\App\Http\Controllers\webadmin\DriverController::class, 'destroy'])->name('admin.drivers.destroy');
     });
 });

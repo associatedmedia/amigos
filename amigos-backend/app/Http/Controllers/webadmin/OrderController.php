@@ -29,8 +29,9 @@ class OrderController extends Controller
 
     public function show($id)
     {
-        $order = Order::with(['user', 'items.product'])->findOrFail($id);
-        return view('webadmin.orders.show', compact('order'));
+        $order = Order::with(['user', 'items.product', 'driver'])->findOrFail($id);
+        $drivers = \App\Models\User::where('role', 'driver')->get();
+        return view('webadmin.orders.show', compact('order', 'drivers'));
     }
 
     public function updateStatus(Request $request, $id)
@@ -45,6 +46,22 @@ class OrderController extends Controller
         $order->save();
 
         return redirect()->route('admin.orders.show', $order->id)->with('success', 'Order status updated successfully.');
+    }
+
+    public function assignDriver(Request $request, $id)
+    {
+        $order = Order::findOrFail($id);
+
+        $request->validate([
+            'driver_id' => 'required|exists:users,id',
+        ]);
+
+        $order->driver_id = $request->input('driver_id');
+        // Optionally update status to 'assigned' automatically when a driver is picked
+        $order->status = 'assigned'; 
+        $order->save();
+
+        return redirect()->route('admin.orders.show', $order->id)->with('success', 'Delivery boy assigned successfully.');
     }
 
     public function data()
