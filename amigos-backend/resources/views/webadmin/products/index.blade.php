@@ -46,5 +46,38 @@
             ]
         });
     });
+
+    function confirmDelete(url) {
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "This product will be permanently deleted!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: url,
+                    type: 'DELETE',
+                    data: {
+                        _token: '{{ csrf_token() }}'
+                    },
+                    success: function(response) {
+                        if(response.success) {
+                            Swal.fire('Deleted!', 'The product has been deleted.', 'success');
+                            $('#productsTable').DataTable().ajax.reload();
+                        } else {
+                            Swal.fire('Error!', 'Something went wrong.', 'error');
+                        }
+                    },
+                    error: function() {
+                        Swal.fire('Error!', 'Failed to delete the product.', 'error');
+                    }
+                });
+            }
+        });
+    }
 </script>
 @endpush

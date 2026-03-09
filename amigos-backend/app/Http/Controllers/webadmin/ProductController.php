@@ -16,13 +16,106 @@ class ProductController extends Controller
 
     public function create()
     {
-        return view('webadmin.products.create');
+        $categories = \App\Models\Category::all();
+        return view('webadmin.products.create', compact('categories'));
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'category' => 'nullable|string|max:255',
+            'price' => 'required|numeric|min:0',
+            'old_db_code' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
+            'is_veg' => 'boolean',
+            'is_available' => 'boolean',
+            'image' => 'nullable|image|max:2048'
+        ]);
+
+        $product = new Product();
+        $product->name = $request->name;
+        $product->category = $request->category;
+        $product->price = $request->price;
+        $product->old_db_code = $request->old_db_code;
+        $product->description = $request->description;
+        $product->is_veg = $request->has('is_veg');
+        $product->is_available = $request->has('is_available');
+
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('products', 'public');
+            $product->image_url = 'storage/' . $imagePath;
+        }
+
+        $product->save();
+
+        return redirect()->route('admin.products.index')->with('success', 'Product created successfully.');
     }
 
     public function show($id)
     {
         $product = Product::with('category')->findOrFail($id);
         return view('webadmin.products.show', compact('product'));
+    }
+
+    public function edit($id)
+    {
+        $product = Product::findOrFail($id);
+        $categories = \App\Models\Category::all();
+        return view('webadmin.products.edit', compact('product', 'categories'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $product = Product::findOrFail($id);
+        
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'category' => 'nullable|string|max:255',
+            'price' => 'required|numeric|min:0',
+            'old_db_code' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
+            'is_veg' => 'boolean',
+            'is_available' => 'boolean',
+            'image' => 'nullable|image|max:2048'
+        ]);
+
+        $product->name = $request->name;
+        $product->category = $request->category;
+        $product->price = $request->price;
+        $product->old_db_code = $request->old_db_code;
+        $product->description = $request->description;
+        $product->is_veg = $request->has('is_veg');
+        $product->is_available = $request->has('is_available');
+
+        if ($request->hasFile('image')) {
+            // Delete old image if it exists safely
+            if ($product->image_url && !str_starts_with($product->image_url, 'http')) {
+                $oldPath = str_replace('storage/', '', $product->image_url);
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($oldPath);
+            }
+            
+            $imagePath = $request->file('image')->store('products', 'public');
+            $product->image_url = 'storage/' . $imagePath;
+        }
+
+        $product->save();
+
+        return redirect()->route('admin.products.index')->with('success', 'Product updated successfully.');
+    }
+
+    public function destroy($id)
+    {
+        $product = Product::findOrFail($id);
+        
+        if ($product->image_url && !str_starts_with($product->image_url, 'http')) {
+            $oldPath = str_replace('storage/', '', $product->image_url);
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($oldPath);
+        }
+        
+        $product->delete();
+
+        return response()->json(['success' => true]);
     }
 
     public function data()
@@ -43,8 +136,9 @@ class ProductController extends Controller
                 return '₹' . number_format($product->price, 2);
             })
             ->editColumn('type', function ($product) {
-                $color = $product->type === 'veg' ? 'success' : 'danger';
-                return '<span class="badge bg-' . $color . '">' . strtoupper($product->type) . '</span>';
+                $color = $product->is_veg ? 'success' : 'danger';
+                $text = $product->is_veg ? 'VEG' : 'NON-VEG';
+                return '<span class="badge bg-' . $color . '">' . $text . '</span>';
             })
             ->editColumn('is_available', function ($product) {
                 $color = $product->is_available ? 'primary' : 'secondary';
@@ -52,8 +146,13 @@ class ProductController extends Controller
                 return '<span class="badge bg-' . $color . '">' . $text . '</span>';
             })
             ->addColumn('action', function ($product) {
-                $url = route('admin.products.show', $product->id);
-                return '<a href="' . $url . '" class="btn btn-sm btn-outline-primary">View</a>';
+                $viewUrl = route('admin.products.show', $product->id);
+                $editUrl = route('admin.products.edit', $product->id);
+                $deleteUrl = route('admin.products.destroy', $product->id);
+                
+                return '<a href="' . $viewUrl . '" class="btn btn-sm btn-outline-info me-1"><i class="bi bi-eye"></i></a>' .
+                       '<a href="' . $editUrl . '" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></a>' .
+                       '<button onclick="confirmDelete(\'' . $deleteUrl . '\')" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>';
             })
             ->rawColumns(['image_url', 'type', 'is_available', 'action'])
             ->make(true);
