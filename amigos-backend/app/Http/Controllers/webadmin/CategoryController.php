@@ -23,13 +23,11 @@ class CategoryController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'is_active' => 'boolean',
             'image' => 'nullable|image|max:2048'
         ]);
 
         $category = new Category();
         $category->name = $request->name;
-        $category->is_active = $request->has('is_active');
 
         if ($request->hasFile('image')) {
             $imagePath = $request->file('image')->store('categories', 'public');
@@ -59,12 +57,10 @@ class CategoryController extends Controller
         
         $request->validate([
             'name' => 'required|string|max:255',
-            'is_active' => 'boolean',
             'image' => 'nullable|image|max:2048'
         ]);
 
         $category->name = $request->name;
-        $category->is_active = $request->has('is_active');
 
         if ($request->hasFile('image')) {
             // Delete old image if it exists securely via Storage
@@ -107,11 +103,6 @@ class CategoryController extends Controller
                 }
                 return '<span class="text-muted">No Image</span>';
             })
-            ->editColumn('is_active', function ($category) {
-                $color = $category->is_active ? 'success' : 'secondary';
-                $text = $category->is_active ? 'Active' : 'Inactive';
-                return '<span class="badge bg-' . $color . '">' . $text . '</span>';
-            })
             ->addColumn('action', function ($category) {
                 $viewUrl = route('admin.categories.show', $category->id);
                 $editUrl = route('admin.categories.edit', $category->id);
@@ -121,7 +112,7 @@ class CategoryController extends Controller
                        '<a href="' . $editUrl . '" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></a>' .
                        '<button onclick="confirmDelete(\'' . $deleteUrl . '\')" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>';
             })
-            ->rawColumns(['image_url', 'is_active', 'action'])
+            ->rawColumns(['image_url', 'action'])
             ->make(true);
     }
 }

@@ -18,7 +18,7 @@
                     <input type="text" name="name" class="form-control" value="{{ old('name', $category->name) }}" required>
                 </div>
                 
-                <div class="col-md-6 mb-3">
+                <div class="col-md-6 mb-4">
                     <label class="form-label fw-bold">Category Image</label>
                     <input type="file" name="image" class="form-control" accept="image/*">
                     @if($category->image_url)
@@ -27,13 +27,6 @@
                             <img src="{{ str_starts_with($category->image_url, 'http') ? $category->image_url : asset($category->image_url) }}" style="height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd;">
                         </div>
                     @endif
-                </div>
-            </div>
-
-            <div class="mb-4 d-flex align-items-end pb-2">
-                <div class="form-check form-switch fs-5">
-                    <input class="form-check-input" type="checkbox" role="switch" name="is_active" id="isActiveSwitch" value="1" {{ old('is_active', $category->is_active) ? 'checked' : '' }}>
-                    <label class="form-check-label ms-2 mt-1 fs-6" for="isActiveSwitch">Active</label>
                 </div>
             </div>
 

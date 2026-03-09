@@ -19,11 +19,6 @@
             @endif
             <div class="card-body">
                 <h5 class="card-title fw-bold">{{ $category->name }}</h5>
-                <hr>
-                <div class="d-flex justify-content-between align-items-center">
-                    <span class="text-muted">Status:</span>
-                    <span class="badge bg-{{ $category->is_active ? 'success' : 'secondary' }}">{{ $category->is_active ? 'Active' : 'Inactive' }}</span>
-                </div>
             </div>
             <div class="card-footer bg-white border-top-0 pb-3">
                  <a href="{{ route('admin.categories.edit', $category->id) }}" class="btn btn-primary w-100"><i class="bi bi-pencil"></i> Edit Category</a>

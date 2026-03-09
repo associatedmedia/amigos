@@ -11,11 +11,9 @@ class Category extends Model
 
     protected $table = 'categories';
 
-    // Allow these fields to be mass-assigned
     protected $fillable = [
         'name', 
         'image_url', // If you add category icons later
-        'is_active'
     ];
 
     /**
