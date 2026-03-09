@@ -1,14 +1,60 @@
 @extends('webadmin.layout.app')
 
+@push('scripts')
+<style>
+    /* Styling for the Print KOT explicitly */
+    @media print {
+        /* Hide everything by default */
+        body { visibility: hidden; }
+        
+        /* Only show the Items Ordered card */
+        .print-section, .print-section * {
+            visibility: visible;
+        }
+        
+        /* Position the Items card at the top left of the printed page */
+        .print-section {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+            border: none !important;
+        }
+
+        /* Hide the card header, as it's not needed for a KOT */
+        .print-section .card-header {
+            display: none !important;
+        }
+
+        /* Add a KOT Header */
+        .print-section::before {
+            content: "AMIGOS PIZZA KOT - Order #{{ $order->id }}\A Date: {{ $order->created_at->format('M d, Y h:i A') }}";
+            white-space: pre-wrap;
+            display: block;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+        }
+    }
+</style>
+@endpush
+
 @section('content')
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom d-print-none">
     <h1 class="h2">Order #{{ $order->id }} Details</h1>
-    <a href="{{ route('admin.orders.index') }}" class="btn btn-secondary btn-sm"><i class="bi bi-arrow-left"></i> Back to Orders</a>
+    <div>
+        <button onclick="window.print()" class="btn btn-primary btn-sm me-2"><i class="bi bi-printer"></i> Print KOT</button>
+        <a href="{{ route('admin.orders.index') }}" class="btn btn-secondary btn-sm"><i class="bi bi-arrow-left"></i> Back to Orders</a>
+    </div>
 </div>
 
 <div class="row">
     <div class="col-md-8">
-        <div class="card shadow-sm border-0 mb-4">
+        <div class="card shadow-sm border-0 mb-4 print-section">
             <div class="card-header bg-white fw-bold">Items Ordered</div>
             <div class="card-body p-0">
                 <table class="table table-hover mb-0">
@@ -59,7 +105,7 @@
         </div>
     </div>
     
-    <div class="col-md-4">
+    <div class="col-md-4 d-print-none">
         <div class="card shadow-sm border-0 mb-4">
             <div class="card-header bg-white fw-bold">Customer Information</div>
             <div class="card-body">
@@ -116,9 +162,25 @@
             <div class="card-header bg-white fw-bold">Delivery Location</div>
             <div class="card-body">
                 @if($order->address)
-                    <p class="mb-0">{{ is_string($order->address) ? collect(json_decode($order->address, true))->implode(', ') : $order->address }}</p>
+                    <p class="mb-3">{{ is_string($order->address) ? collect(json_decode($order->address, true))->implode(', ') : $order->address }}</p>
                 @else
-                    <p class="text-muted mb-0">No specific location provided.</p>
+                    <p class="text-muted mb-3">No specific textual address provided.</p>
+                @endif
+
+                @if($order->latitude && $order->longitude)
+                    <h6 class="fw-bold fs-6 mt-3">GPS Coordinates:</h6>
+                    <div class="d-flex align-items-center justify-content-between p-2 bg-light rounded border">
+                        <div class="small font-monospace text-muted">
+                            {{ $order->latitude }}, {{ $order->longitude }}
+                        </div>
+                        <a href="https://maps.google.com/?q={{ $order->latitude }},{{ $order->longitude }}" target="_blank" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-geo-alt-fill"></i> View on Maps
+                        </a>
+                    </div>
+                @else
+                    <div class="alert alert-warning py-2 mb-0 mt-3 small">
+                        <i class="bi bi-exclamation-circle"></i> No GPS Coordinates tracked for this order.
+                    </div>
                 @endif
             </div>
         </div>
