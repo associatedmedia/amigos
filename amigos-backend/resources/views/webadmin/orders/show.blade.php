@@ -45,7 +45,7 @@
 
 @section('content')
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom d-print-none">
-    <h1 class="h2">Order #{{ $order->id }} Details</h1>
+    <h1 class="h2">Order #{{ $order->order_number ?? $order->id }} Details</h1>
     <div>
         <button onclick="window.print()" class="btn btn-primary btn-sm me-2"><i class="bi bi-printer"></i> Print KOT</button>
         <a href="{{ route('admin.orders.index') }}" class="btn btn-secondary btn-sm"><i class="bi bi-arrow-left"></i> Back to Orders</a>
@@ -81,7 +81,7 @@
                     <tfoot class="table-light">
                         <tr>
                             <td colspan="4" class="text-end fw-bold">Subtotal:</td>
-                            <td class="text-end fw-bold">₹{{ number_format($order->subtotal ?? $order->total_amount, 2) }}</td>
+                            <td class="text-end fw-bold">₹{{ number_format($order->total_amount, 2) }}</td>
                         </tr>
                         @if($order->gst_amount > 0)
                         <tr>
@@ -110,8 +110,15 @@
             <div class="card-header bg-white fw-bold">Customer Information</div>
             <div class="card-body">
                 <p><strong>Name:</strong> {{ $order->user ? $order->user->name : 'N/A' }}</p>
-                <p><strong>Email:</strong> {{ $order->user ? $order->user->email : 'N/A' }}</p>
                 <p><strong>Phone:</strong> {{ $order->user ? $order->user->mobile_no : 'N/A' }}</p>
+                <hr>
+                <p class="mb-0"><strong>Store:</strong> 
+                    @if($order->store_id == 0)
+                        Srinagar
+                    @else
+                        Anantnag
+                    @endif
+                </p>
             </div>
         </div>
 
@@ -190,8 +197,10 @@
             <div class="card-body">
                 <p><strong>Method:</strong> <span class="badge bg-info text-dark">{{ strtoupper(str_replace('_', ' ', $order->payment_method)) }}</span></p>
                 <p><strong>Status:</strong> <span class="badge bg-{{ $order->payment_status === 'paid' ? 'success' : 'warning' }}">{{ ucfirst($order->payment_status) }}</span></p>
-                @if($order->payment_id)
-                <p><strong>Transaction ID:</strong> <br><small class="text-muted">{{ $order->payment_id }}</small></p>
+                @if($order->payment_id && $order->payment_method === 'razorpay')
+                <p><strong>Razorpay Payment ID:</strong> <br><small class="text-muted font-monospace">{{ $order->payment_id }}</small></p>
+                @elseif($order->payment_id)
+                <p><strong>Transaction ID:</strong> <br><small class="text-muted font-monospace">{{ $order->payment_id }}</small></p>
                 @endif
             </div>
         </div>
