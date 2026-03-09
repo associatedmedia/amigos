@@ -78,23 +78,23 @@
                     </tbody>
                     <tfoot class="table-light">
                         <tr>
-                            <td colspan="4" class="text-end fw-bold">Subtotal:</td>
+                            <td colspan="3" class="text-end fw-bold">Subtotal:</td>
                             <td class="text-end fw-bold">₹{{ number_format($order->total_amount, 2) }}</td>
                         </tr>
                         @if($order->gst_amount > 0)
                         <tr>
-                            <td colspan="4" class="text-end">GST:</td>
+                            <td colspan="3" class="text-end">GST:</td>
                             <td class="text-end">₹{{ number_format($order->gst_amount, 2) }}</td>
                         </tr>
                         @endif
                         @if($order->delivery_fee > 0)
                         <tr>
-                            <td colspan="4" class="text-end">Delivery Fee:</td>
+                            <td colspan="3" class="text-end">Delivery Fee:</td>
                             <td class="text-end">₹{{ number_format($order->delivery_fee, 2) }}</td>
                         </tr>
                         @endif
                         <tr>
-                            <td colspan="4" class="text-end fw-bold fs-5">Grand Total:</td>
+                            <td colspan="3" class="text-end fw-bold fs-5">Grand Total:</td>
                             <td class="text-end fw-bold text-success fs-5">₹{{ number_format($order->total_amount, 2) }}</td>
                         </tr>
                     </tfoot>
