@@ -17,21 +17,48 @@
     <div class="col-md-3 mb-3">
         <div class="card text-white bg-success shadow-sm h-100 border-0">
             <div class="card-body">
-                <h5 class="card-title"><i class="bi bi-currency-rupee"></i> Total Sales</h5>
-                <h2 class="card-text fw-bold">₹{{ number_format($totalSales, 2) }}</h2>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3 mb-3">
-        <div class="card text-white bg-warning shadow-sm h-100 border-0">
-            <div class="card-body">
-                <h5 class="card-title"><i class="bi bi-box-seam"></i> Products</h5>
-                <h2 class="card-text fw-bold text-dark">{{ $totalProducts }}</h2>
+                <h5 class="card-title"><i class="bi bi-currency-rupee"></i> Today's Sales</h5>
+                <h2 class="card-text fw-bold">₹{{ number_format($todaySales, 2) }}</h2>
             </div>
         </div>
     </div>
     <div class="col-md-3 mb-3">
         <div class="card text-white bg-info shadow-sm h-100 border-0">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-graph-up"></i> Weekly Sales</h5>
+                <h2 class="card-text fw-bold">₹{{ number_format($weeklySales, 2) }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-white bg-secondary shadow-sm h-100 border-0">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-wallet2"></i> Total Sales</h5>
+                <h2 class="card-text fw-bold">₹{{ number_format($totalSales, 2) }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row text-center mb-4">
+    <div class="col-md-4 mb-3">
+        <div class="card text-dark bg-warning shadow-sm h-100 border-0">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-box-seam"></i> Products</h5>
+                <h2 class="card-text fw-bold">{{ $totalProducts }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card text-white bg-danger shadow-sm h-100 border-0">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-tags"></i> Categories</h5>
+                <h2 class="card-text fw-bold">{{ $totalCategories }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card text-white bg-dark shadow-sm h-100 border-0">
             <div class="card-body">
                 <h5 class="card-title"><i class="bi bi-people"></i> Users</h5>
                 <h2 class="card-text fw-bold">{{ $totalUsers }}</h2>
