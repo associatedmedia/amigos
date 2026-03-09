@@ -18,6 +18,8 @@ class Order extends Model
         'customer_name',
         'store_id',
         'payment_method',
+        'payment_id',
+        'payment_status',
         'total_amount',
         'status',
         'latitude',

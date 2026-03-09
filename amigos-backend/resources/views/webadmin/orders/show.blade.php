@@ -62,7 +62,6 @@
                         <tr>
                             <th>Item</th>
                             <th>Variety</th>
-                            <th>Cost</th>
                             <th>Qty</th>
                             <th class="text-end">Total</th>
                         </tr>
@@ -70,11 +69,10 @@
                     <tbody>
                         @foreach($order->items as $item)
                             <tr>
-                                <td>{{ $item->product ? $item->product->name : 'Unknown Product' }}</td>
+                                <td>{{ $item->product ? $item->product->name : 'Unknown Product' }} - {{ $item->old_db_code }}</td>
                                 <td>{{ $item->variety_name ?? 'Regular' }}</td>
-                                <td>₹{{ number_format($item->variety_price, 2) }}</td>
                                 <td>{{ $item->quantity }}</td>
-                                <td class="text-end fw-bold">₹{{ number_format($item->variety_price * $item->quantity, 2) }}</td>
+                                <td class="text-end fw-bold">₹{{ number_format($item->price * $item->quantity, 2) }}</td>
                             </tr>
                         @endforeach
                     </tbody>
