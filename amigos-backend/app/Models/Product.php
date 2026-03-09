@@ -17,6 +17,7 @@ class Product extends Model
         'category',      // Storing category name directly (based on your Excel import)
         'price',
         'image_url',
+        'old_db_code',    // To link with old order items
         'is_veg',        // boolean
         'description',
         'is_available'
