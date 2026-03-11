@@ -7,8 +7,9 @@ use App\Http\Controllers\webadmin\DashboardController;
 use App\Http\Controllers\webadmin\OrderController;
 use App\Http\Controllers\webadmin\ProductController;
 use App\Http\Controllers\webadmin\CategoryController;
-
 use App\Http\Controllers\webadmin\CustomerController;
+use App\Http\Controllers\webadmin\OfferBannerController;
+use App\Http\Controllers\webadmin\SettingController;
 
 Route::get('/', function () {
     return view('welcome');
