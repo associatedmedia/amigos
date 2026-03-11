@@ -23,8 +23,8 @@ Route::prefix('admin')->group(function () {
         Route::get('dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
         
         // Settings (Online/Offline Toggle)
-        Route::resource('settings', SettingController::class)->only(['index', 'update']);
-        Route::post('settings/toggle-online', [SettingController::class, 'toggleOnline'])->name('settings.toggleOnline');
+        Route::resource('settings', SettingController::class)->names('admin.settings')->only(['index', 'update']);
+        Route::post('settings/toggle-online', [SettingController::class, 'toggleOnline'])->name('admin.settings.toggleOnline');
     
         // Web Admin - Offer Banners
         Route::get('offer-banners/data', [OfferBannerController::class, 'data'])->name('offer-banners.data');
