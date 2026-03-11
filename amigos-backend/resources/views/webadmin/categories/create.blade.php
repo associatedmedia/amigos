@@ -16,9 +16,23 @@
                     <label class="form-label fw-bold">Name</label>
                     <input type="text" name="name" class="form-control" placeholder="E.g., Pizza, Beverages" value="{{ old('name') }}" required>
                 </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Category Image URL (Optional)</label>
+                    <input type="url" name="image_url" class="form-control" placeholder="https://example.com/image.jpg" value="{{ old('image_url') }}">
+                    <small class="text-muted">Provide a direct link OR upload a file below.</small>
+                </div>
+
                  <div class="col-md-6 mb-4">
-                    <label class="form-label fw-bold">Category Image</label>
+                    <label class="form-label fw-bold">Upload Local Image</label>
                     <input type="file" name="image" class="form-control" accept="image/*">
+                </div>
+
+                <div class="col-md-6 mb-4 d-flex align-items-center">
+                    <div class="form-check form-switch fs-5 mt-4">
+                        <input class="form-check-input" type="checkbox" role="switch" id="is_active" name="is_active" checked>
+                        <label class="form-check-label fs-6 ms-2" for="is_active">Category is Active</label>
+                    </div>
                 </div>
             </div>
 

@@ -15,6 +15,7 @@
                 <th>ID</th>
                 <th>Image</th>
                 <th>Name</th>
+                <th>Status</th>
                 <th>Action</th>
             </tr>
         </thead>
@@ -35,6 +36,7 @@
                 { data: 'id', name: 'id' },
                 { data: 'image_url', name: 'image_url', orderable: false, searchable: false },
                 { data: 'name', name: 'name' },
+                { data: 'is_active', name: 'is_active' },
                 { data: 'action', name: 'action', orderable: false, searchable: false }
             ]
         });
