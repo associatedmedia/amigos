@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Support\Facades\Cache;
 
 class CategoryController extends Controller
 {
@@ -48,6 +49,7 @@ class CategoryController extends Controller
         }
 
         $category->save();
+        Cache::forget('app_menu_data');
 
         return redirect()->route('admin.categories.index')->with('success', 'Category created successfully.');
     }
@@ -96,6 +98,7 @@ class CategoryController extends Controller
         }
 
         $category->save();
+        Cache::forget('app_menu_data');
 
         return redirect()->route('admin.categories.index')->with('success', 'Category updated successfully.');
     }
@@ -109,6 +112,7 @@ class CategoryController extends Controller
         }
         
         $category->delete();
+        Cache::forget('app_menu_data');
 
         return response()->json(['success' => true]);
     }

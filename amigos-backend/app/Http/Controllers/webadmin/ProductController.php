@@ -7,6 +7,7 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Cache;
 
 
 class ProductController extends Controller
@@ -56,6 +57,7 @@ class ProductController extends Controller
         }
 
         $product->save();
+        Cache::forget('app_menu_data');
 
         return redirect()->route('admin.products.index')->with('success', 'Product created successfully.');
     }
@@ -111,6 +113,7 @@ class ProductController extends Controller
     }
 
         $product->save();
+        Cache::forget('app_menu_data');
 
         return redirect()->route('admin.products.index')->with('success', 'Product updated successfully.');
     }
@@ -124,6 +127,7 @@ class ProductController extends Controller
         }
         
         $product->delete();
+        Cache::forget('app_menu_data');
 
         return response()->json(['success' => true]);
     }
