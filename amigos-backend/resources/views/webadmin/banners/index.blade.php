@@ -45,7 +45,7 @@
                 { data: 'title', name: 'title' },
                 { data: 'subtitle', name: 'subtitle' },
                 { data: 'target_screen', name: 'target_screen' },
-                { data: 'is_active', name: 'is_active' },
+                { data: 'is_active', name: 'is_active', searchable: false },
                 { data: 'action', name: 'action', orderable: false, searchable: false }
             ]
         });
