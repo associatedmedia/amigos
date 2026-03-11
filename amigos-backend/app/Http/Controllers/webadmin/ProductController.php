@@ -103,25 +103,13 @@ class ProductController extends Controller
             }
             $product->image_url = $request->image_url;
         } elseif ($request->hasFile('image')) {
-        //     if ($product->image_url && preg_match('/storage\/(products\/.*)$/', $product->image_url, $matches)) {
-        //         \Illuminate\Support\Facades\Storage::disk('public')->delete($matches[1]);
-        //     }
-            
-        //   //  $imagePath = $request->file('image')->store('products', 'public');
-            
-        //     // Forcefully read APP_URL directly from the .env to bypass NGINX reverse-proxy URI stripping
-        //     $baseUrl = rtrim(env('APP_URL', url('/')), '/');
-        //     $product->image_url =  asset('storage/' . $imagePath); //$baseUrl . '/storage/' . $imagePath;
-       
-          // store using disk
+            // store using disk
             $path = Storage::disk('public')->put('products', $request->file('image'));
-
             // generate url
             $product->image_url = Storage::disk('public')->url($path);
     
     }
 
-        dd($product->image_url);
         $product->save();
 
         return redirect()->route('admin.products.index')->with('success', 'Product updated successfully.');
