@@ -25,6 +25,9 @@ class DashboardController extends Controller
                             ->where('created_at', '>=', Carbon::now()->startOfWeek())
                             ->sum('total_amount') ?? 0;
 
+        $todayOrders = Order::whereDate('created_at', Carbon::today())->count();
+        $weeklyOrders = Order::where('created_at', '>=', Carbon::now()->startOfWeek())->count();
+
         $totalProducts = Product::count();
         $totalCategories = Category::count();
         $totalUsers = User::count();
@@ -32,7 +35,7 @@ class DashboardController extends Controller
         $recentOrders = Order::with('user')->orderBy('created_at', 'desc')->take(5)->get();
 
         return view('webadmin.dashboard', compact(
-            'totalOrders', 'totalSales', 'todaySales', 'weeklySales', 'totalProducts', 'totalCategories', 'totalUsers', 'recentOrders'
+            'totalOrders', 'todayOrders', 'weeklyOrders', 'totalSales', 'todaySales', 'weeklySales', 'totalProducts', 'totalCategories', 'totalUsers', 'recentOrders'
         ));
     }
 }

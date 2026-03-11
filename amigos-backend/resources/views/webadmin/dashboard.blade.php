@@ -5,16 +5,37 @@
     <h1 class="h2">Dashboard</h1>
 </div>
 
+<h4 class="mb-3 text-secondary"><i class="bi bi-cart"></i> Orders Overview</h4>
 <div class="row text-center mb-4">
-    <div class="col-md-3 mb-3">
+    <div class="col-md-4 mb-3">
+        <div class="card text-white bg-info shadow-sm h-100 border-0">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-cart"></i> Today's Orders</h5>
+                <h2 class="card-text fw-bold">{{ $todayOrders }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
         <div class="card text-white bg-primary shadow-sm h-100 border-0">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-cart-check"></i> Weekly Orders</h5>
+                <h2 class="card-text fw-bold">{{ $weeklyOrders }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card text-white bg-dark shadow-sm h-100 border-0">
             <div class="card-body">
                 <h5 class="card-title"><i class="bi bi-receipt"></i> Total Orders</h5>
                 <h2 class="card-text fw-bold">{{ $totalOrders }}</h2>
             </div>
         </div>
     </div>
-    <div class="col-md-3 mb-3">
+</div>
+
+<h4 class="mb-3 text-secondary"><i class="bi bi-currency-rupee"></i> Sales & Revenue</h4>
+<div class="row text-center mb-4">
+    <div class="col-md-4 mb-3">
         <div class="card text-white bg-success shadow-sm h-100 border-0">
             <div class="card-body">
                 <h5 class="card-title"><i class="bi bi-currency-rupee"></i> Today's Sales</h5>
@@ -22,15 +43,15 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3 mb-3">
-        <div class="card text-white bg-info shadow-sm h-100 border-0">
+    <div class="col-md-4 mb-3">
+        <div class="card text-dark bg-warning shadow-sm h-100 border-0">
             <div class="card-body">
                 <h5 class="card-title"><i class="bi bi-graph-up"></i> Weekly Sales</h5>
                 <h2 class="card-text fw-bold">₹{{ number_format($weeklySales, 2) }}</h2>
             </div>
         </div>
     </div>
-    <div class="col-md-3 mb-3">
+    <div class="col-md-4 mb-3">
         <div class="card text-white bg-secondary shadow-sm h-100 border-0">
             <div class="card-body">
                 <h5 class="card-title"><i class="bi bi-wallet2"></i> Total Sales</h5>
@@ -40,9 +61,10 @@
     </div>
 </div>
 
+<h4 class="mb-3 text-secondary"><i class="bi bi-database"></i> System Statistics</h4>
 <div class="row text-center mb-4">
     <div class="col-md-4 mb-3">
-        <div class="card text-dark bg-warning shadow-sm h-100 border-0">
+        <div class="card text-white bg-primary shadow-sm h-100 border-0" style="opacity: 0.9;">
             <div class="card-body">
                 <h5 class="card-title"><i class="bi bi-box-seam"></i> Products</h5>
                 <h2 class="card-text fw-bold">{{ $totalProducts }}</h2>
@@ -58,7 +80,7 @@
         </div>
     </div>
     <div class="col-md-4 mb-3">
-        <div class="card text-white bg-dark shadow-sm h-100 border-0">
+        <div class="card text-white bg-dark shadow-sm h-100 border-0" style="opacity: 0.9;">
             <div class="card-body">
                 <h5 class="card-title"><i class="bi bi-people"></i> Users</h5>
                 <h2 class="card-text fw-bold">{{ $totalUsers }}</h2>
