@@ -117,6 +117,18 @@
                         Anantnag
                     @endif
                 </p>
+                @if($order->platform)
+                <hr>
+                <p class="mb-0"><strong>Placed Via:</strong> 
+                    @if(strtolower($order->platform) === 'ios')
+                        <span class="badge bg-secondary"><i class="bi bi-apple"></i> iOS App</span>
+                    @elseif(strtolower($order->platform) === 'android')
+                        <span class="badge bg-success"><i class="bi bi-android2"></i> Android App</span>
+                    @else
+                        <span class="badge bg-secondary"><i class="bi bi-globe"></i> {{ ucfirst($order->platform) }}</span>
+                    @endif
+                </p>
+                @endif
             </div>
         </div>
 
