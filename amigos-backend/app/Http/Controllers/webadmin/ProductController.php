@@ -112,6 +112,7 @@ class ProductController extends Controller
             $product->image_url =  asset('storage/' . $imagePath); //$baseUrl . '/storage/' . $imagePath;
         }
 
+        dd($product->image_url);
         $product->save();
 
         return redirect()->route('admin.products.index')->with('success', 'Product updated successfully.');
