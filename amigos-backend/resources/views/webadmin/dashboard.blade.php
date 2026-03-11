@@ -90,44 +90,47 @@
 </div>
 
 <h4>Recent Orders</h4>
-<div class="table-responsive bg-white p-3 rounded shadow-sm border">
-    <table class="table table-hover align-middle">
-        <thead class="table-light">
-            <tr>
-                <th>Order #</th>
-                <th>Customer</th>
-                <th>Total</th>
-                <th>Status</th>
-                <th>Date</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse($recentOrders as $order)
-                <tr>
-                    <td><strong>#{{ $order->order_number ?? $order->id }}</strong></td>
-                    <td>
-                        {{ $order->user ? $order->user->name : 'Guest' }}<br>
-                        <small class="text-muted">{{ $order->user ? $order->user->mobile_no : 'N/A' }}</small>
-                    </td>
-                    <td>₹{{ number_format($order->total_amount, 2) }}</td>
-                    <td>
-                        <span class="badge bg-{{ $order->status === 'completed' ? 'success' : ($order->status === 'pending' ? 'warning' : 'secondary') }}">
-                            {{ ucfirst($order->status) }}
-                        </span>
-                    </td>
-                    <td>{{ $order->created_at->format('M d, Y h:i A') }}</td>
-                    <td>
-                        <a href="{{ route('admin.orders.show', $order->id) }}" class="btn btn-sm btn-outline-primary">View</a>
-                    </td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="6" class="text-center text-muted">No recent orders found.</td>
-                </tr>
-            @endforelse
-        </tbody>
-    </table>
+
+<ul class="nav nav-tabs mb-0" id="dashOrderTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#tab-all" type="button" role="tab">
+            <i class="bi bi-list-ul"></i> All <span class="badge bg-dark ms-1">{{ $orderCounts['all'] }}</span>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="pending-tab" data-bs-toggle="tab" data-bs-target="#tab-pending" type="button" role="tab">
+            <i class="bi bi-clock"></i> Pending <span class="badge bg-warning text-dark ms-1">{{ $orderCounts['pending'] }}</span>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="delivered-tab" data-bs-toggle="tab" data-bs-target="#tab-delivered" type="button" role="tab">
+            <i class="bi bi-check-circle"></i> Successful <span class="badge bg-success ms-1">{{ $orderCounts['delivered'] }}</span>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="cancelled-tab" data-bs-toggle="tab" data-bs-target="#tab-cancelled" type="button" role="tab">
+            <i class="bi bi-x-circle"></i> Failed <span class="badge bg-danger ms-1">{{ $orderCounts['cancelled'] }}</span>
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content">
+    {{-- All Orders Tab --}}
+    <div class="tab-pane fade show active" id="tab-all" role="tabpanel">
+        @include('webadmin.partials.dashboard_orders_table', ['orders' => $recentOrders])
+    </div>
+    {{-- Pending Tab --}}
+    <div class="tab-pane fade" id="tab-pending" role="tabpanel">
+        @include('webadmin.partials.dashboard_orders_table', ['orders' => $pendingOrders])
+    </div>
+    {{-- Delivered Tab --}}
+    <div class="tab-pane fade" id="tab-delivered" role="tabpanel">
+        @include('webadmin.partials.dashboard_orders_table', ['orders' => $deliveredOrders])
+    </div>
+    {{-- Cancelled Tab --}}
+    <div class="tab-pane fade" id="tab-cancelled" role="tabpanel">
+        @include('webadmin.partials.dashboard_orders_table', ['orders' => $cancelledOrders])
+    </div>
 </div>
 
 @endsection

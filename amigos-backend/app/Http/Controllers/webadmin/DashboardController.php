@@ -32,10 +32,20 @@ class DashboardController extends Controller
         $totalCategories = Category::count();
         $totalUsers = User::count();
         
-        $recentOrders = Order::with('user')->orderBy('created_at', 'desc')->take(5)->get();
+        $recentOrders = Order::with('user')->orderBy('created_at', 'desc')->take(10)->get();
+        $pendingOrders = Order::with('user')->where('status', 'pending')->orderBy('created_at', 'desc')->take(10)->get();
+        $deliveredOrders = Order::with('user')->whereIn('status', ['delivered', 'completed'])->orderBy('created_at', 'desc')->take(10)->get();
+        $cancelledOrders = Order::with('user')->whereIn('status', ['cancelled', 'refunded'])->orderBy('created_at', 'desc')->take(10)->get();
+
+        $orderCounts = [
+            'all' => Order::count(),
+            'pending' => Order::where('status', 'pending')->count(),
+            'delivered' => Order::whereIn('status', ['delivered', 'completed'])->count(),
+            'cancelled' => Order::whereIn('status', ['cancelled', 'refunded'])->count(),
+        ];
 
         return view('webadmin.dashboard', compact(
-            'totalOrders', 'todayOrders', 'weeklyOrders', 'totalSales', 'todaySales', 'weeklySales', 'totalProducts', 'totalCategories', 'totalUsers', 'recentOrders'
+            'totalOrders', 'todayOrders', 'weeklyOrders', 'totalSales', 'todaySales', 'weeklySales', 'totalProducts', 'totalCategories', 'totalUsers', 'recentOrders', 'pendingOrders', 'deliveredOrders', 'cancelledOrders', 'orderCounts'
         ));
     }
 }
