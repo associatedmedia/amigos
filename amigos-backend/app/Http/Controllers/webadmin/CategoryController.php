@@ -47,6 +47,8 @@ class CategoryController extends Controller
             $category->image_url = Storage::disk('public')->url($path);
         }
 
+        dd($category->image_url);
+
         $category->save();
 
         return redirect()->route('admin.categories.index')->with('success', 'Category created successfully.');
