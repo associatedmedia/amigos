@@ -37,7 +37,9 @@ class BannerController extends Controller
         
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('banners', 'public');
-            $banner->image_url = 'storage/' . $path;
+            // Forcefully read APP_URL directly from the .env to bypass NGINX reverse-proxy URI stripping
+            $baseUrl = rtrim(env('APP_URL', url('/')), '/');
+            $banner->image_url = $baseUrl . '/storage/' . $path;
         } elseif ($request->filled('image_url')) {
             $banner->image_url = $request->input('image_url');
         } else {

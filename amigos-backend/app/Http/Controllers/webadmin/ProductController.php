@@ -47,8 +47,9 @@ class ProductController extends Controller
             $product->image_url = $request->image_url;
         } elseif ($request->hasFile('image')) {
             $imagePath = $request->file('image')->store('products', 'public');
-            // Hardcode to strictly append the path independently of environmental `asset()` root issues
-            $product->image_url = rtrim(url('/'), '/') . '/storage/' . $imagePath;
+            // Forcefully read APP_URL directly from the .env to bypass NGINX reverse-proxy URI stripping
+            $baseUrl = rtrim(env('APP_URL', url('/')), '/');
+            $product->image_url = $baseUrl . '/storage/' . $imagePath;
         }
 
         $product->save();
@@ -104,7 +105,9 @@ class ProductController extends Controller
             }
             
             $imagePath = $request->file('image')->store('products', 'public');
-            $product->image_url = rtrim(url('/'), '/') . '/storage/' . $imagePath;
+            // Forcefully read APP_URL directly from the .env to bypass NGINX reverse-proxy URI stripping
+            $baseUrl = rtrim(env('APP_URL', url('/')), '/');
+            $product->image_url = $baseUrl . '/storage/' . $imagePath;
         }
 
         $product->save();
