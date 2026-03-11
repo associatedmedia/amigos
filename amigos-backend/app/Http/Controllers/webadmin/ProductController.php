@@ -97,7 +97,7 @@ class ProductController extends Controller
         $product->is_veg = $request->has('is_veg');
         $product->is_available = $request->has('is_available');
 
-        dd($request->all());
+      //  dd($request->all());
 
         if ($request->filled('image_url')) {
             if ($product->image_url && preg_match('/storage\/(products\/.*)$/', $product->image_url, $matches)) {
