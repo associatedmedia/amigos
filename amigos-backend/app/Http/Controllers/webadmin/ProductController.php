@@ -121,9 +121,10 @@ class ProductController extends Controller
             // generate url
             $product->image_url = Storage::disk('public')->url($path);
     
+            dd($product->image_url);
+
     }
 
-        dd($product->image_url);
         $product->save();
 
         return redirect()->route('admin.products.index')->with('success', 'Product updated successfully.');
