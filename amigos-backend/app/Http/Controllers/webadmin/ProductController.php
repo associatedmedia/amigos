@@ -50,7 +50,7 @@ class ProductController extends Controller
             
             // Forcefully read APP_URL directly from the .env to bypass NGINX reverse-proxy URI stripping
             $baseUrl = rtrim(env('APP_URL', url('/')), '/');
-            $product->image_url = $baseUrl . '/storage/' . $imagePath;
+            $product->image_url =  asset('storage/' . $imagePath); //$baseUrl . '/storage/' . $imagePath;
         }
 
         $product->save();
@@ -109,7 +109,7 @@ class ProductController extends Controller
             
             // Forcefully read APP_URL directly from the .env to bypass NGINX reverse-proxy URI stripping
             $baseUrl = rtrim(env('APP_URL', url('/')), '/');
-            $product->image_url = $baseUrl . '/storage/' . $imagePath;
+            $product->image_url =  asset('storage/' . $imagePath); //$baseUrl . '/storage/' . $imagePath;
         }
 
         $product->save();
