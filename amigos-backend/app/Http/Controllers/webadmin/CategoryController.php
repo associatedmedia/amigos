@@ -34,11 +34,17 @@ class CategoryController extends Controller
         if ($request->filled('image_url')) {
             $category->image_url = $request->image_url;
         } elseif ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('categories', 'public');
+           // $imagePath = $request->file('image')->store('categories', 'public');
             
             // Forcefully read APP_URL directly from the .env to bypass NGINX reverse-proxy URI stripping
             // $baseUrl = rtrim(env('APP_URL', url('/')), '/');
-            $category->image_url = asset('storage/' . $imagePath);  //$baseUrl . '/storage/' . $imagePath;
+            //$category->image_url = asset('storage/' . $imagePath);  //$baseUrl . '/storage/' . $imagePath;
+
+             // store using disk
+            $path = Storage::disk('public')->put('categories', $request->file('image'));
+
+            // generate url
+            $category->image_url = Storage::disk('public')->url($path);
         }
 
         $category->save();
