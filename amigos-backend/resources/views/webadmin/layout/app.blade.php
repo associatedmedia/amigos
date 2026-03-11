@@ -173,6 +173,25 @@
                                 </div>
                             </li>
 
+                            <!-- Offer Banners Menu -->
+                            <li class="nav-item">
+                                <a class="nav-link py-3 border-bottom d-flex justify-content-between align-items-center {{ request()->routeIs('admin.offer-banners.*') ? 'active bg-light fw-bold text-dark' : 'text-secondary' }}" 
+                                   data-bs-toggle="collapse" href="#offerBannersCollapse" role="button" aria-expanded="{{ request()->routeIs('admin.offer-banners.*') ? 'true' : 'false' }}">
+                                    <span><i class="bi bi-star me-2"></i> Offer Banners</span>
+                                    <i class="bi bi-chevron-down small"></i>
+                                </a>
+                                <div class="collapse {{ request()->routeIs('admin.offer-banners.*') ? 'show' : '' }}" id="offerBannersCollapse" data-bs-parent="#sidebarMenu">
+                                    <ul class="nav flex-column mb-0 py-2 bg-light border-bottom">
+                                        <li class="nav-item">
+                                            <a class="nav-link {{ request()->routeIs('admin.offer-banners.create') ? 'fw-bold text-primary' : 'text-secondary' }}" href="{{ route('admin.offer-banners.create') }}">Add Offer Banner</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link {{ request()->routeIs('admin.offer-banners.index') ? 'fw-bold text-primary' : 'text-secondary' }}" href="{{ route('admin.offer-banners.index') }}">List Offer Banners</a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </li>
+
                             <!-- Delivery Boys Menu -->
                             <li class="nav-item">
                                 <a class="nav-link py-3 border-bottom d-flex justify-content-between align-items-center {{ request()->routeIs('admin.drivers.*') ? 'active bg-light fw-bold text-dark' : 'text-secondary' }}" 
