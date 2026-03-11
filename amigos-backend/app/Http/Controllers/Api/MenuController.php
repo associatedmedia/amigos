@@ -16,8 +16,8 @@ class MenuController extends Controller
         // Get all available products
         $products = Product::where('is_available', true)->get()->map(function ($product) {
             if ($product->image_url) {
-                // Determine if it is already a full external URL, else wrap it in asset()
-                $product->image_url = str_starts_with($product->image_url, 'http') ? $product->image_url : asset($product->image_url);
+                // Determine if it is already a full external URL, else explicitly inject the root URL
+                $product->image_url = str_starts_with($product->image_url, 'http') ? $product->image_url : rtrim(url('/'), '/') . '/' . ltrim($product->image_url, '/');
             }
             return $product;
         });
@@ -30,8 +30,8 @@ class MenuController extends Controller
             // Format Image URL securely
             $imageUrl = $category->image_url;
             if ($imageUrl) {
-                // If the URL does not start with http, wrap it in asset
-                $imageUrl = str_starts_with($imageUrl, 'http') ? $imageUrl : asset($imageUrl);
+                // If the URL does not start with http, explicitly inject the root URL
+                $imageUrl = str_starts_with($imageUrl, 'http') ? $imageUrl : rtrim(url('/'), '/') . '/' . ltrim($imageUrl, '/');
             }
 
             return [

@@ -35,7 +35,7 @@ class CategoryController extends Controller
             $category->image_url = $request->image_url;
         } elseif ($request->hasFile('image')) {
             $imagePath = $request->file('image')->store('categories', 'public');
-            $category->image_url = asset('storage/' . $imagePath);
+            $category->image_url = rtrim(url('/'), '/') . '/storage/' . $imagePath;
         }
 
         $category->save();
@@ -81,7 +81,7 @@ class CategoryController extends Controller
             }
             
             $imagePath = $request->file('image')->store('categories', 'public');
-            $category->image_url = asset('storage/' . $imagePath);
+            $category->image_url = rtrim(url('/'), '/') . '/storage/' . $imagePath;
         }
 
         $category->save();

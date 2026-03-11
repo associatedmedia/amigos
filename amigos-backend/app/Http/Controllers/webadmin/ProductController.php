@@ -47,7 +47,8 @@ class ProductController extends Controller
             $product->image_url = $request->image_url;
         } elseif ($request->hasFile('image')) {
             $imagePath = $request->file('image')->store('products', 'public');
-            $product->image_url = asset('storage/' . $imagePath);
+            // Hardcode to strictly append the path independently of environmental `asset()` root issues
+            $product->image_url = rtrim(url('/'), '/') . '/storage/' . $imagePath;
         }
 
         $product->save();
@@ -103,7 +104,7 @@ class ProductController extends Controller
             }
             
             $imagePath = $request->file('image')->store('products', 'public');
-            $product->image_url = asset('storage/' . $imagePath);
+            $product->image_url = rtrim(url('/'), '/') . '/storage/' . $imagePath;
         }
 
         $product->save();
