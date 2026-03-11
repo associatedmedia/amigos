@@ -27,8 +27,8 @@ Route::prefix('admin')->group(function () {
         Route::post('settings/toggle-online', [SettingController::class, 'toggleOnline'])->name('admin.settings.toggleOnline');
     
         // Web Admin - Offer Banners
-        Route::get('offer-banners/data', [OfferBannerController::class, 'data'])->name('offer-banners.data');
-        Route::resource('offer-banners', OfferBannerController::class)->except(['show']);
+        Route::get('offer-banners/data', [OfferBannerController::class, 'data'])->name('admin.offer-banners.data');
+        Route::resource('offer-banners', OfferBannerController::class)->names('admin.offer-banners')->except(['show']);
         
         // Customers
         Route::get('customers', [CustomerController::class, 'index'])->name('admin.customers.index');
