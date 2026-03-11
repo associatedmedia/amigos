@@ -14,7 +14,13 @@ class MenuController extends Controller
         $categories = \App\Models\Category::where('is_active', true)->get();
         
         // Get all available products
-        $products = Product::where('is_available', true)->get();
+        $products = Product::where('is_available', true)->get()->map(function ($product) {
+            if ($product->image_url) {
+                // Determine if it is already a full external URL, else wrap it in asset()
+                $product->image_url = str_starts_with($product->image_url, 'http') ? $product->image_url : asset($product->image_url);
+            }
+            return $product;
+        });
 
         // Group products by category string
         $groupedProducts = $products->groupBy('category');
