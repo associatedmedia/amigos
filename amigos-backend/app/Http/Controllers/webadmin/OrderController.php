@@ -82,6 +82,14 @@ class OrderController extends Controller
                 $color = $order->payment_status === 'paid' ? 'success' : 'warning';
                 return '<span class="badge bg-' . $color . '">' . ucfirst(str_replace('_', ' ', $order->payment_status)) . '</span>';
             })
+            ->addColumn('platform', function ($order) {
+                if (strtolower($order->platform) === 'ios') {
+                    return '<i class="bi bi-apple fs-5" title="iOS App"></i>';
+                } elseif (strtolower($order->platform) === 'android') {
+                    return '<i class="bi bi-android2 fs-5 text-success" title="Android App"></i>';
+                }
+                return '<i class="bi bi-globe fs-5 text-secondary" title="Web/Unknown"></i>';
+            })
             ->editColumn('status', function ($order) {
                 $color = $order->status === 'completed' ? 'success' : ($order->status === 'pending' ? 'warning' : 'secondary');
                 return '<span class="badge bg-' . $color . '">' . ucfirst($order->status) . '</span>';
@@ -93,7 +101,7 @@ class OrderController extends Controller
                 $url = route('admin.orders.show', $order->id);
                 return '<a href="' . $url . '" class="btn btn-sm btn-outline-info"><i class="bi bi-eye"></i> View</a>';
             })
-            ->rawColumns(['payment_status', 'status', 'action'])
+            ->rawColumns(['platform', 'payment_status', 'status', 'action'])
             ->make(true);
     }
 }

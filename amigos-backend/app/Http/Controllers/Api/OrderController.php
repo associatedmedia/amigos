@@ -45,6 +45,7 @@ class OrderController extends Controller
                     'total_amount' => $request->total_amount,
                     'latitude' => $request->latitude,
                     'longitude' => $request->longitude,
+                    'platform' => $request->platform,
                     'status' => 'pending' 
                 ]);
 

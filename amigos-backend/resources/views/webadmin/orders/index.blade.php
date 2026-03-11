@@ -13,6 +13,7 @@
         <thead class="table-light">
             <tr>
                 <th>Order #</th>
+                <th>Source</th>
                 <th>Customer Name</th>
                 <th>Phone</th>
                 <th>Total</th>
@@ -36,6 +37,7 @@
             ajax: "{{ route('admin.orders.data') }}",
             columns: [
                 { data: 'id', name: 'id' },
+                { data: 'platform', name: 'platform', orderable: false, searchable: false },
                 { data: 'customer_name', name: 'user.name' },
                 { data: 'customer_phone', name: 'user.mobile_no' },
                 { data: 'total_amount', name: 'total_amount' },

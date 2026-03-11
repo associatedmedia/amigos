@@ -23,7 +23,8 @@ class Order extends Model
         'total_amount',
         'status',
         'latitude',
-        'longitude'
+        'longitude',
+        'platform'
         // REMOVED 'items' from fillable because it is now a separate table
     ];
 
