@@ -37,7 +37,22 @@
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse d-none d-lg-block" id="navbarNav">
-                    <ul class="navbar-nav ms-auto">
+                    <ul class="navbar-nav ms-auto align-items-center">
+                        <li class="nav-item me-3">
+                            @php
+                                $setting = \App\Models\Setting::first() ?? \App\Models\Setting::create(['is_online' => true]);
+                            @endphp
+                            <form action="{{ route('admin.settings.toggleOnline') }}" method="POST" class="d-inline">
+                                @csrf
+                                <button type="submit" class="btn btn-sm fw-bold {{ $setting->is_online ? 'btn-success' : 'btn-outline-danger' }}">
+                                    @if($setting->is_online)
+                                        <i class="bi bi-broadcast"></i> Store Online
+                                    @else
+                                        <i class="bi bi-broadcast-off"></i> Store Offline
+                                    @endif
+                                </button>
+                            </form>
+                        </li>
                         <li class="nav-item">
                             <form action="{{ route('admin.logout') }}" method="POST" class="d-inline">
                                 @csrf

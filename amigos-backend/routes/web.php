@@ -22,6 +22,9 @@ Route::prefix('admin')->group(function () {
     Route::middleware(['admin'])->group(function () {
         Route::get('dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
         
+        // Settings (Online/Offline Toggle)
+        Route::post('settings/toggle-online', [\App\Http\Controllers\webadmin\SettingController::class, 'toggleOnline'])->name('admin.settings.toggleOnline');
+        
         // Customers
         Route::get('customers', [CustomerController::class, 'index'])->name('admin.customers.index');
         Route::get('customers/data', [CustomerController::class, 'data'])->name('admin.customers.data');

@@ -32,6 +32,9 @@ Route::post('/login-with-otp', [AuthOtpController::class, 'verifyOtp']); // Alia
 Route::get('/menu', [MenuController::class, 'index']);
 Route::get('/products', [MenuController::class, 'index']); // Fallback
 
+// Store Settings (Online/Offline)
+Route::get('/settings', [\App\Http\Controllers\Api\SettingController::class, 'index']);
+
 // Banners/Sliders
 Route::get('/banners', [BannerController::class, 'index']);
 
