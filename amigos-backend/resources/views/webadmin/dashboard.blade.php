@@ -93,17 +93,7 @@
 
 <ul class="nav nav-tabs mb-0" id="dashOrderTabs" role="tablist">
     <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#tab-all" type="button" role="tab">
-            <i class="bi bi-list-ul"></i> All <span class="badge bg-dark ms-1">{{ $orderCounts['all'] }}</span>
-        </button>
-    </li>
-    <li class="nav-item" role="presentation">
-        <button class="nav-link" id="pending-tab" data-bs-toggle="tab" data-bs-target="#tab-pending" type="button" role="tab">
-            <i class="bi bi-clock"></i> Pending <span class="badge bg-warning text-dark ms-1">{{ $orderCounts['pending'] }}</span>
-        </button>
-    </li>
-    <li class="nav-item" role="presentation">
-        <button class="nav-link" id="delivered-tab" data-bs-toggle="tab" data-bs-target="#tab-delivered" type="button" role="tab">
+        <button class="nav-link active" id="delivered-tab" data-bs-toggle="tab" data-bs-target="#tab-delivered" type="button" role="tab">
             <i class="bi bi-check-circle"></i> Successful <span class="badge bg-success ms-1">{{ $orderCounts['delivered'] }}</span>
         </button>
     </li>
@@ -112,24 +102,34 @@
             <i class="bi bi-x-circle"></i> Failed <span class="badge bg-danger ms-1">{{ $orderCounts['cancelled'] }}</span>
         </button>
     </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="pending-tab" data-bs-toggle="tab" data-bs-target="#tab-pending" type="button" role="tab">
+            <i class="bi bi-clock"></i> Pending <span class="badge bg-warning text-dark ms-1">{{ $orderCounts['pending'] }}</span>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="all-tab" data-bs-toggle="tab" data-bs-target="#tab-all" type="button" role="tab">
+            <i class="bi bi-list-ul"></i> All <span class="badge bg-dark ms-1">{{ $orderCounts['all'] }}</span>
+        </button>
+    </li>
 </ul>
 
 <div class="tab-content">
-    {{-- All Orders Tab --}}
-    <div class="tab-pane fade show active" id="tab-all" role="tabpanel">
-        @include('webadmin.partials.dashboard_orders_table', ['orders' => $recentOrders])
-    </div>
-    {{-- Pending Tab --}}
-    <div class="tab-pane fade" id="tab-pending" role="tabpanel">
-        @include('webadmin.partials.dashboard_orders_table', ['orders' => $pendingOrders])
-    </div>
     {{-- Delivered Tab --}}
-    <div class="tab-pane fade" id="tab-delivered" role="tabpanel">
+    <div class="tab-pane fade show active" id="tab-delivered" role="tabpanel">
         @include('webadmin.partials.dashboard_orders_table', ['orders' => $deliveredOrders])
     </div>
     {{-- Cancelled Tab --}}
     <div class="tab-pane fade" id="tab-cancelled" role="tabpanel">
         @include('webadmin.partials.dashboard_orders_table', ['orders' => $cancelledOrders])
+    </div>
+    {{-- Pending Tab --}}
+    <div class="tab-pane fade" id="tab-pending" role="tabpanel">
+        @include('webadmin.partials.dashboard_orders_table', ['orders' => $pendingOrders])
+    </div>
+    {{-- All Orders Tab --}}
+    <div class="tab-pane fade" id="tab-all" role="tabpanel">
+        @include('webadmin.partials.dashboard_orders_table', ['orders' => $recentOrders])
     </div>
 </div>
 
