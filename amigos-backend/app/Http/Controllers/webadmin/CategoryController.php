@@ -37,8 +37,8 @@ class CategoryController extends Controller
             $imagePath = $request->file('image')->store('categories', 'public');
             
             // Forcefully read APP_URL directly from the .env to bypass NGINX reverse-proxy URI stripping
-            $baseUrl = rtrim(env('APP_URL', url('/')), '/');
-            $category->image_url = $baseUrl . '/storage/' . $imagePath;
+            // $baseUrl = rtrim(env('APP_URL', url('/')), '/');
+            $category->image_url = asset('storage/' . $imagePath);  //$baseUrl . '/storage/' . $imagePath;
         }
 
         $category->save();
