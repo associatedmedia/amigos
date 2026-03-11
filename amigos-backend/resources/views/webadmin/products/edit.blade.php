@@ -41,7 +41,13 @@
 
             <div class="row mb-4">
                 <div class="col-md-4 mb-3">
-                    <label class="form-label fw-bold">Product Image</label>
+                    <label class="form-label fw-bold">Image URL (Optional)</label>
+                    <input type="url" name="image_url" class="form-control" placeholder="E.g., https://example.com/image.jpg" value="{{ old('image_url', str_starts_with($product->image_url ?? '', 'http') ? $product->image_url : '') }}">
+                    <small class="text-muted">Takes priority. Leave blank to upload a file.</small>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label fw-bold">Upload Local Image</label>
                     <input type="file" name="image" class="form-control" accept="image/*">
                     @if($product->image_url)
                         <div class="mt-2">

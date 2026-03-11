@@ -35,7 +35,7 @@ class CategoryController extends Controller
             $category->image_url = $request->image_url;
         } elseif ($request->hasFile('image')) {
             $imagePath = $request->file('image')->store('categories', 'public');
-            $category->image_url = 'storage/' . $imagePath;
+            $category->image_url = asset('storage/' . $imagePath);
         }
 
         $category->save();
@@ -69,21 +69,19 @@ class CategoryController extends Controller
         $category->is_active = $request->has('is_active') ? true : false;
 
         if ($request->filled('image_url')) {
-            // Delete old image if it exists securely via Storage
-            if ($category->image_url && !str_starts_with($category->image_url, 'http')) {
-                $oldPath = str_replace('storage/', '', $category->image_url);
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($oldPath);
+            // Delete old image if it exists securely via Storage Regex
+            if ($category->image_url && preg_match('/storage\/(categories\/.*)$/', $category->image_url, $matches)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($matches[1]);
             }
             $category->image_url = $request->image_url;
         } elseif ($request->hasFile('image')) {
-            // Delete old image if it exists securely via Storage
-            if ($category->image_url && !str_starts_with($category->image_url, 'http')) {
-                $oldPath = str_replace('storage/', '', $category->image_url);
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($oldPath);
+            // Delete old image if it exists securely via Storage Regex
+            if ($category->image_url && preg_match('/storage\/(categories\/.*)$/', $category->image_url, $matches)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($matches[1]);
             }
             
             $imagePath = $request->file('image')->store('categories', 'public');
-            $category->image_url = 'storage/' . $imagePath;
+            $category->image_url = asset('storage/' . $imagePath);
         }
 
         $category->save();
@@ -95,9 +93,8 @@ class CategoryController extends Controller
     {
         $category = Category::findOrFail($id);
         
-        if ($category->image_url && !str_starts_with($category->image_url, 'http')) {
-            $oldPath = str_replace('storage/', '', $category->image_url);
-            \Illuminate\Support\Facades\Storage::disk('public')->delete($oldPath);
+        if ($category->image_url && preg_match('/storage\/(categories\/.*)$/', $category->image_url, $matches)) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($matches[1]);
         }
         
         $category->delete();

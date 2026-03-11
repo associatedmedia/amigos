@@ -30,6 +30,7 @@ class ProductController extends Controller
             'description' => 'nullable|string',
             'is_veg' => 'boolean',
             'is_available' => 'boolean',
+            'image_url' => 'nullable|url',
             'image' => 'nullable|image|max:2048'
         ]);
 
@@ -42,9 +43,11 @@ class ProductController extends Controller
         $product->is_veg = $request->has('is_veg');
         $product->is_available = $request->has('is_available');
 
-        if ($request->hasFile('image')) {
+        if ($request->filled('image_url')) {
+            $product->image_url = $request->image_url;
+        } elseif ($request->hasFile('image')) {
             $imagePath = $request->file('image')->store('products', 'public');
-            $product->image_url = 'storage/' . $imagePath;
+            $product->image_url = asset('storage/' . $imagePath);
         }
 
         $product->save();
@@ -77,6 +80,7 @@ class ProductController extends Controller
             'description' => 'nullable|string',
             'is_veg' => 'boolean',
             'is_available' => 'boolean',
+            'image_url' => 'nullable|url',
             'image' => 'nullable|image|max:2048'
         ]);
 
@@ -88,15 +92,18 @@ class ProductController extends Controller
         $product->is_veg = $request->has('is_veg');
         $product->is_available = $request->has('is_available');
 
-        if ($request->hasFile('image')) {
-            // Delete old image if it exists safely
-            if ($product->image_url && !str_starts_with($product->image_url, 'http')) {
-                $oldPath = str_replace('storage/', '', $product->image_url);
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($oldPath);
+        if ($request->filled('image_url')) {
+            if ($product->image_url && preg_match('/storage\/(products\/.*)$/', $product->image_url, $matches)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($matches[1]);
+            }
+            $product->image_url = $request->image_url;
+        } elseif ($request->hasFile('image')) {
+            if ($product->image_url && preg_match('/storage\/(products\/.*)$/', $product->image_url, $matches)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($matches[1]);
             }
             
             $imagePath = $request->file('image')->store('products', 'public');
-            $product->image_url = 'storage/' . $imagePath;
+            $product->image_url = asset('storage/' . $imagePath);
         }
 
         $product->save();
@@ -108,9 +115,8 @@ class ProductController extends Controller
     {
         $product = Product::findOrFail($id);
         
-        if ($product->image_url && !str_starts_with($product->image_url, 'http')) {
-            $oldPath = str_replace('storage/', '', $product->image_url);
-            \Illuminate\Support\Facades\Storage::disk('public')->delete($oldPath);
+        if ($product->image_url && preg_match('/storage\/(products\/.*)$/', $product->image_url, $matches)) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($matches[1]);
         }
         
         $product->delete();
@@ -125,7 +131,8 @@ class ProductController extends Controller
         return DataTables::of($query)
             ->editColumn('image_url', function ($product) {
                 if ($product->image_url) {
-                    return '<img src="' . $product->image_url . '" style="height:40px; width:40px; object-fit:cover; border-radius:4px;" />';
+                    $url = str_starts_with($product->image_url, 'http') ? $product->image_url : asset($product->image_url);
+                    return '<img src="' . $url . '" style="height:40px; width:40px; object-fit:cover; border-radius:4px;" />';
                 }
                 return '<span class="text-muted">None</span>';
             })
