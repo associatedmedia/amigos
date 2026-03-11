@@ -46,9 +46,7 @@ class ProductController extends Controller
         if ($request->filled('image_url')) {
             $product->image_url = $request->image_url;
         } elseif ($request->hasFile('image')) {
-            $imageName = time() . '_' . uniqid() . '.' . $request->file('image')->extension();
-            $request->file('image')->move(public_path('storage/products'), $imageName);
-            $imagePath = 'products/' . $imageName;
+            $imagePath = $request->file('image')->store('products', 'public');
             
             // Forcefully read APP_URL directly from the .env to bypass NGINX reverse-proxy URI stripping
             $baseUrl = rtrim(env('APP_URL', url('/')), '/');
@@ -107,9 +105,7 @@ class ProductController extends Controller
                 \Illuminate\Support\Facades\Storage::disk('public')->delete($matches[1]);
             }
             
-            $imageName = time() . '_' . uniqid() . '.' . $request->file('image')->extension();
-            $request->file('image')->move(public_path('storage/products'), $imageName);
-            $imagePath = 'products/' . $imageName;
+            $imagePath = $request->file('image')->store('products', 'public');
             
             // Forcefully read APP_URL directly from the .env to bypass NGINX reverse-proxy URI stripping
             $baseUrl = rtrim(env('APP_URL', url('/')), '/');

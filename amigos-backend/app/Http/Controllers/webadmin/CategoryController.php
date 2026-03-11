@@ -34,9 +34,7 @@ class CategoryController extends Controller
         if ($request->filled('image_url')) {
             $category->image_url = $request->image_url;
         } elseif ($request->hasFile('image')) {
-            $imageName = time() . '_' . uniqid() . '.' . $request->file('image')->extension();
-            $request->file('image')->move(public_path('storage/categories'), $imageName);
-            $imagePath = 'categories/' . $imageName;
+            $imagePath = $request->file('image')->store('categories', 'public');
             
             // Forcefully read APP_URL directly from the .env to bypass NGINX reverse-proxy URI stripping
             $baseUrl = rtrim(env('APP_URL', url('/')), '/');
@@ -84,9 +82,7 @@ class CategoryController extends Controller
             if ($category->image_url && preg_match('/storage\/(categories\/.*)$/', $category->image_url, $matches)) {
                 \Illuminate\Support\Facades\Storage::disk('public')->delete($matches[1]);
             }
-            $imageName = time() . '_' . uniqid() . '.' . $request->file('image')->extension();
-            $request->file('image')->move(public_path('storage/categories'), $imageName);
-            $imagePath = 'categories/' . $imageName;
+            $imagePath = $request->file('image')->store('categories', 'public');
             
             // Forcefully read APP_URL directly from the .env to bypass NGINX reverse-proxy URI stripping
             $baseUrl = rtrim(env('APP_URL', url('/')), '/');
