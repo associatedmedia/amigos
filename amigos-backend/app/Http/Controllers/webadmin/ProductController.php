@@ -115,13 +115,14 @@ class ProductController extends Controller
         //     $baseUrl = rtrim(env('APP_URL', url('/')), '/');
         //     $product->image_url =  asset('storage/' . $imagePath); //$baseUrl . '/storage/' . $imagePath;
        
-          // store using disk
-             $path = $request->file('image')->store('products', 'public');
+           $file = $request->file('image');
 
+            $path = $file->store('products', 'public');
 
-            // generate url
+            var_dump($path); // should show products/filename.jpg
+
             $product->image_url = Storage::url($path);
-    
+
             dd($product->image_url);
 
     }
