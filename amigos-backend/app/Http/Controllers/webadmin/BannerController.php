@@ -36,7 +36,10 @@ class BannerController extends Controller
         $banner->is_active = $request->has('is_active');
         
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('banners', 'public');
+            $imageName = time() . '_' . uniqid() . '.' . $request->file('image')->extension();
+            $request->file('image')->move(public_path('storage/banners'), $imageName);
+            $path = 'banners/' . $imageName;
+            
             // Forcefully read APP_URL directly from the .env to bypass NGINX reverse-proxy URI stripping
             $baseUrl = rtrim(env('APP_URL', url('/')), '/');
             $banner->image_url = $baseUrl . '/storage/' . $path;
