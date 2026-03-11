@@ -97,8 +97,6 @@ class ProductController extends Controller
         $product->is_veg = $request->has('is_veg');
         $product->is_available = $request->has('is_available');
 
-      //  dd($request->all());
-
         if ($request->filled('image_url')) {
             if ($product->image_url && preg_match('/storage\/(products\/.*)$/', $product->image_url, $matches)) {
                 \Illuminate\Support\Facades\Storage::disk('public')->delete($matches[1]);
@@ -115,18 +113,15 @@ class ProductController extends Controller
         //     $baseUrl = rtrim(env('APP_URL', url('/')), '/');
         //     $product->image_url =  asset('storage/' . $imagePath); //$baseUrl . '/storage/' . $imagePath;
        
-           $file = $request->file('image');
+          // store using disk
+            $path = Storage::disk('public')->put('products', $request->file('image'));
 
-            $path = $file->store('products', 'public');
-
-            var_dump($path); // should show products/filename.jpg
-
-            $product->image_url = Storage::url($path);
-
-            dd($product->image_url);
-
+            // generate url
+            $product->image_url = Storage::disk('public')->url($path);
+    
     }
 
+        dd($product->image_url);
         $product->save();
 
         return redirect()->route('admin.products.index')->with('success', 'Product updated successfully.');
