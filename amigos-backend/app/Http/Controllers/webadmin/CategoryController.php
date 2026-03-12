@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Cache;
 
 class CategoryController extends Controller
@@ -35,17 +36,9 @@ class CategoryController extends Controller
         if ($request->filled('image_url')) {
             $category->image_url = $request->image_url;
         } elseif ($request->hasFile('image')) {
-           // $imagePath = $request->file('image')->store('categories', 'public');
-            
-            // Forcefully read APP_URL directly from the .env to bypass NGINX reverse-proxy URI stripping
-            // $baseUrl = rtrim(env('APP_URL', url('/')), '/');
-            //$category->image_url = asset('storage/' . $imagePath);  //$baseUrl . '/storage/' . $imagePath;
-
-             // store using disk
-            $path = Storage::disk('public')->put('categories', $request->file('image'));
-
-            // generate url
-            $category->image_url = Storage::disk('public')->url($path);
+            // Store the relative path, the model accessor will create the full URL
+            $path = $request->file('image')->store('categories', 'public');
+            $category->image_url = 'storage/' . $path;
         }
 
         $category->save();
@@ -80,21 +73,18 @@ class CategoryController extends Controller
         $category->is_active = $request->has('is_active') ? true : false;
 
         if ($request->filled('image_url')) {
-            // Delete old image if it exists securely via Storage Regex
-            if ($category->image_url && preg_match('/storage\/(categories\/.*)$/', $category->image_url, $matches)) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($matches[1]);
+            // Delete old image if it was a stored file
+            if ($category->image_url && !str_starts_with($category->image_url, 'http')) {
+                Storage::disk('public')->delete(str_replace('storage/', '', $category->image_url));
             }
             $category->image_url = $request->image_url;
         } elseif ($request->hasFile('image')) {
-            // Delete old image if it exists securely via Storage Regex
-            if ($category->image_url && preg_match('/storage\/(categories\/.*)$/', $category->image_url, $matches)) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($matches[1]);
+            // Delete old image if it was a stored file
+            if ($category->image_url && !str_starts_with($category->image_url, 'http')) {
+                Storage::disk('public')->delete(str_replace('storage/', '', $category->image_url));
             }
-            $imagePath = $request->file('image')->store('categories', 'public');
-            
-            // Forcefully read APP_URL directly from the .env to bypass NGINX reverse-proxy URI stripping
-            $baseUrl = rtrim(env('APP_URL', url('/')), '/');
-            $category->image_url = $baseUrl . '/storage/' . $imagePath;
+            $path = $request->file('image')->store('categories', 'public');
+            $category->image_url = 'storage/' . $path;
         }
 
         $category->save();
@@ -107,8 +97,8 @@ class CategoryController extends Controller
     {
         $category = Category::findOrFail($id);
         
-        if ($category->image_url && preg_match('/storage\/(categories\/.*)$/', $category->image_url, $matches)) {
-            \Illuminate\Support\Facades\Storage::disk('public')->delete($matches[1]);
+        if ($category->image_url && !str_starts_with($category->image_url, 'http')) {
+            Storage::disk('public')->delete(str_replace('storage/', '', $category->image_url));
         }
         
         $category->delete();
@@ -123,9 +113,8 @@ class CategoryController extends Controller
 
         return DataTables::of($query)
             ->editColumn('image_url', function ($category) {
-                if ($category->image_url) {
-                    $url = str_starts_with($category->image_url, 'http') ? $category->image_url : asset($category->image_url);
-                    return '<img src="' . $url . '" style="height:40px; border-radius:4px;" />';
+                if ($category->image_url) { // The accessor in the model handles the full URL
+                    return '<img src="' . $category->image_url . '" style="height:40px; border-radius:4px;" />';
                 }
                 return '<span class="text-muted">No Image</span>';
             })

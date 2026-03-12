@@ -35,8 +35,8 @@ class OfferBannerController extends Controller
         if ($request->filled('image_url')) {
             $banner->image_url = $request->image_url;
         } elseif ($request->hasFile('image')) {
-            $path = Storage::disk('public')->put('offer_banners', $request->file('image'));
-            $banner->image_url = Storage::disk('public')->url($path);
+            $path = $request->file('image')->store('offer_banners', 'public');
+            $banner->image_url = 'storage/' . $path;
         }
 
         $banner->save();
@@ -64,22 +64,16 @@ class OfferBannerController extends Controller
         $banner->is_active = $request->has('is_active');
 
         if ($request->filled('image_url')) {
-            if ($banner->image_url && preg_match('/storage\/(offer_banners\/.*)$/', $banner->image_url, $matches)) {
-                Storage::disk('public')->delete($matches[1]);
+            if ($banner->image_url && !str_starts_with($banner->image_url, 'http')) {
+                Storage::disk('public')->delete(str_replace('storage/', '', $banner->image_url));
             }
             $banner->image_url = $request->image_url;
         } elseif ($request->hasFile('image')) {
-            if ($banner->image_url && preg_match('/storage\/(offer_banners\/.*)$/', $banner->image_url, $matches)) {
-                Storage::disk('public')->delete($matches[1]);
+            if ($banner->image_url && !str_starts_with($banner->image_url, 'http')) {
+                Storage::disk('public')->delete(str_replace('storage/', '', $banner->image_url));
             }
-            $path = Storage::disk('public')->put('offer_banners', $request->file('image'));
-            $banner->image_url = Storage::disk('public')->url($path);
-            
-            // Ensure APP_URL override for Nginx Proxies
-            $baseUrl = rtrim(env('APP_URL', url('/')), '/');
-            if (!str_starts_with($banner->image_url, 'http')) {
-                $banner->image_url = $baseUrl . $banner->image_url;
-            }
+            $path = $request->file('image')->store('offer_banners', 'public');
+            $banner->image_url = 'storage/' . $path;
         }
 
         $banner->save();
@@ -91,8 +85,8 @@ class OfferBannerController extends Controller
     {
         $banner = OfferBanner::findOrFail($id);
         
-        if ($banner->image_url && preg_match('/storage\/(offer_banners\/.*)$/', $banner->image_url, $matches)) {
-            Storage::disk('public')->delete($matches[1]);
+        if ($banner->image_url && !str_starts_with($banner->image_url, 'http')) {
+            Storage::disk('public')->delete(str_replace('storage/', '', $banner->image_url));
         }
         
         $banner->delete();
@@ -106,9 +100,8 @@ class OfferBannerController extends Controller
 
         return DataTables::of($query)
             ->editColumn('image_url', function ($banner) {
-                if ($banner->image_url) {
-                    $url = str_starts_with($banner->image_url, 'http') ? $banner->image_url : asset($banner->image_url);
-                    return '<img src="' . $url . '" style="height:40px; border-radius:4px;" />';
+                if ($banner->image_url) { // The accessor in the model handles the full URL
+                    return '<img src="' . $banner->image_url . '" style="height:40px; border-radius:4px;" />';
                 }
                 return '<span class="text-muted">No Image</span>';
             })

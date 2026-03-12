@@ -10,8 +10,7 @@ class AuthController extends Controller
 {
     public function showLoginForm()
     {
-        // Allow static admin or traditional authenticated admin
-        if (session('is_admin') || (Auth::check() && Auth::user()->role === 'admin')) {
+        if (Auth::check() && Auth::user()->role === 'admin') {
             return redirect()->route('admin.dashboard');
         }
         return view('webadmin.auth.login');
@@ -20,14 +19,15 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'username' => ['required'],
+            'username' => ['required', 'string'], // Assuming admin logs in with mobile_no
             'password' => ['required'],
         ]);
 
-        if ($request->username === 'admin' && $request->password === '5656') {
+        // Attempt to log in the admin user from the database
+        $credentials = ['mobile_no' => $request->username, 'password' => $request->password, 'role' => 'admin'];
+
+        if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
-            $request->session()->put('is_admin', true);
-            
             return redirect()->intended('/admin/dashboard');
         }
 
@@ -38,14 +38,9 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        $request->session()->forget('is_admin');
-        
-        // Also log out regular Auth if it was used
-        if (Auth::check()) {
-            Auth::logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-        }
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
         return redirect('/admin/login');
     }

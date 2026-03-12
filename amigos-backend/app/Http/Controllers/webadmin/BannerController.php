@@ -5,6 +5,7 @@ namespace App\Http\Controllers\webadmin;
 use App\Http\Controllers\Controller;
 use App\Models\Banner;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
 
 class BannerController extends Controller
@@ -37,10 +38,7 @@ class BannerController extends Controller
         
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('banners', 'public');
-            
-            // Forcefully read APP_URL directly from the .env to bypass NGINX reverse-proxy URI stripping
-            $baseUrl = rtrim(env('APP_URL', url('/')), '/');
-            $banner->image_url = $baseUrl . '/storage/' . $path;
+            $banner->image_url = 'storage/' . $path;
         } elseif ($request->filled('image_url')) {
             $banner->image_url = $request->input('image_url');
         } else {
@@ -106,12 +104,25 @@ class BannerController extends Controller
             'subtitle' => 'nullable|string|max:255',
             'target_screen' => 'nullable|string|max:255',
             'is_active' => 'boolean',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image_url' => 'nullable|url',
         ]);
 
         $banner->title = $request->input('title');
         $banner->subtitle = $request->input('subtitle');
         $banner->target_screen = $request->input('target_screen');
         $banner->is_active = $request->has('is_active');
+
+        if ($request->hasFile('image')) {
+            if ($banner->image_url && !str_starts_with($banner->image_url, 'http')) {
+                Storage::disk('public')->delete(str_replace('storage/', '', $banner->image_url));
+            }
+            $path = $request->file('image')->store('banners', 'public');
+            $banner->image_url = 'storage/' . $path;
+        } elseif ($request->filled('image_url')) {
+            $banner->image_url = $request->input('image_url');
+        }
+
         $banner->save();
 
         return redirect()->route('admin.banners.index')->with('success', 'Banner updated successfully.');
@@ -120,6 +131,11 @@ class BannerController extends Controller
     public function destroy($id)
     {
         $banner = Banner::findOrFail($id);
+
+        if ($banner->image_url && !str_starts_with($banner->image_url, 'http')) {
+            Storage::disk('public')->delete(str_replace('storage/', '', $banner->image_url));
+        }
+
         $banner->delete();
         
         return response()->json(['success' => true, 'message' => 'Banner deleted successfully']);
