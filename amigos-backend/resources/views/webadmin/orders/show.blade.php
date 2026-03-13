@@ -41,6 +41,82 @@
         }
     }
 </style>
+<style>
+    /* Hide the receipt on the normal computer screen */
+    @media screen {
+        #thermal-receipt {
+            display: none;
+        }
+    }
+
+    /* Strict Thermal Printer Settings */
+    @media print {
+        /* 1. Hide the entire admin panel */
+        body * {
+            visibility: hidden;
+        }
+
+        /* 2. Set the exact paper size for 79mm/80mm rolls */
+        @page {
+            size: 79mm auto; /* 79mm width, auto length to prevent blank pages */
+            margin: 0; /* Remove default browser margins */
+        }
+
+        /* 3. Show ONLY the receipt and reset its position */
+        #thermal-receipt, #thermal-receipt * {
+            visibility: visible;
+        }
+
+        #thermal-receipt {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 79mm;
+            max-width: 79mm;
+            padding: 2mm 4mm; /* Slight padding so text doesn't touch the exact edge */
+            font-family: 'Courier New', Courier, monospace; /* Monospace is standard for POS */
+            font-size: 13px;
+            line-height: 1.2;
+            color: #000;
+            background: #fff;
+        }
+
+        /* 4. Receipt Specific Styling */
+        .text-center { text-align: center; }
+        .text-left { text-align: left; }
+        .text-right { text-align: right; }
+        .font-bold { font-weight: bold; }
+        
+        .divider {
+            border-bottom: 1px dashed #000;
+            margin: 5px 0;
+        }
+
+        h2, h3, h4, p {
+            margin: 2px 0;
+            padding: 0;
+        }
+
+        /* Table strict layout to prevent 79mm overflow */
+        .receipt-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .receipt-table th, .receipt-table td {
+            padding: 3px 0;
+            vertical-align: top;
+        }
+        .col-qty { width: 15%; }
+        .col-item { width: 60%; padding-right: 5px; word-wrap: break-word; }
+        .col-price { width: 25%; text-align: right; }
+
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2px;
+        }
+    }
+</style>
 @endpush
 
 @section('content')
@@ -219,4 +295,81 @@
         </div>
     </div>
 </div>
+
+<div id="thermal-receipt">
+    <div class="text-center font-bold">
+        <h2 style="font-size: 18px;">AMIGOS PIZZA</h2>
+        <h4>KITCHEN ORDER TICKET</h4>
+    </div>
+    <div class="divider"></div>
+    
+    <div>
+        <p><span class="font-bold">Order #:</span> {{ $order->order_number ?? $order->id }}</p>
+        <p><span class="font-bold">Date:</span> {{ $order->created_at->format('d/m/Y h:i A') }}</p>
+        <p><span class="font-bold">Type:</span> {{ ucfirst($order->platform ?? 'Walk-in') }}</p>
+        <p><span class="font-bold">Customer:</span> {{ $order->user ? $order->user->name : 'Guest' }}</p>
+        @if($order->user && $order->user->mobile_no)
+            <p><span class="font-bold">Phone:</span> {{ $order->user->mobile_no }}</p>
+        @endif
+    </div>
+    
+    <div class="divider"></div>
+    
+    <table class="receipt-table">
+        <thead>
+            <tr class="divider">
+                <th class="text-left col-qty">Qty</th>
+                <th class="text-left col-item">Item</th>
+                <th class="text-right col-price">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($order->items as $item)
+            <tr>
+                <td class="col-qty font-bold">{{ $item->quantity }}x</td>
+                <td class="col-item">
+                    {{ $item->product ? $item->product->name : 'Unknown' }}
+                    @if($item->variety_name)
+                        <br><small style="font-size: 11px;">- {{ $item->variety_name }}</small>
+                    @endif
+                </td>
+                <td class="col-price">₹{{ number_format($item->price * $item->quantity, 2) }}</td>
+            </tr>
+            @endforeach
+        </tbody>
+    </table>
+    
+    <div class="divider"></div>
+    
+    <div>
+        <div class="flex-between">
+            <span>Subtotal:</span>
+            <span>₹{{ number_format($order->total_amount, 2) }}</span>
+        </div>
+        @if($order->gst_amount > 0)
+        <div class="flex-between">
+            <span>GST:</span>
+            <span>₹{{ number_format($order->gst_amount, 2) }}</span>
+        </div>
+        @endif
+        @if($order->delivery_fee > 0)
+        <div class="flex-between">
+            <span>Delivery:</span>
+            <span>₹{{ number_format($order->delivery_fee, 2) }}</span>
+        </div>
+        @endif
+        <div class="divider"></div>
+        <div class="flex-between font-bold" style="font-size: 15px;">
+            <span>TOTAL:</span>
+            <span>₹{{ number_format($order->total_amount, 2) }}</span>
+        </div>
+    </div>
+    
+    <div class="divider"></div>
+    
+    <div class="text-center mt-2">
+        <p>*** END OF TICKET ***</p>
+        <br><br><br> </div>
+</div>
+
 @endsection
