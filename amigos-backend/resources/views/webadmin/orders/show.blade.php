@@ -130,7 +130,7 @@
 
 <div class="row">
     <div class="col-md-8">
-        <div class="card shadow-sm border-0 mb-4 print-section">
+        <div class="card shadow-sm border-0 mb-4 print-section---">
             <div class="card-header bg-white fw-bold">Items Ordered</div>
             <div class="card-body p-0">
                 <table class="table table-hover mb-0">
