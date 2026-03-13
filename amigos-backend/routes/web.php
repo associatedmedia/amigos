@@ -25,7 +25,10 @@ Route::prefix('admin')->group(function () {
         
         // Settings (Online/Offline Toggle)
         Route::resource('settings', SettingController::class)->names('admin.settings')->only(['index', 'update']);
+        Route::get('settings', [SettingController::class, 'index'])->name('admin.settings.index');
+        Route::get('settings', [SettingController::class, 'update'])->name('admin.settings.update');
         Route::post('settings/toggle-online', [SettingController::class, 'toggleOnline'])->name('admin.settings.toggleOnline');
+
     
         // Web Admin - Offer Banners
         Route::get('offer-banners/data', [OfferBannerController::class, 'data'])->name('admin.offer-banners.data');
