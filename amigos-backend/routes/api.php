@@ -128,3 +128,4 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
 
 // get settings
 Route::get('/app-settings', [SettingController::class, 'getAppSettings']);
+Route::post('/settings/update', [SettingController::class, 'updateSetting'])->middleware(['auth:sanctum', 'admin']);

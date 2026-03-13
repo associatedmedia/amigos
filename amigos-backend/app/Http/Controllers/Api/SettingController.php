@@ -10,14 +10,35 @@ class SettingController extends Controller
 {
     public function index()
     {
-        $setting = Setting::first();
-        if (!$setting) {
-            $setting = Setting::create(['is_online' => true]);
-        }
+        $settings = Setting::all();
         
         return response()->json([
             'success' => true,
-            'data' => $setting
+            'data' => $settings
         ]);
+    }
+
+    public function updateSetting(Request $request)
+    {
+        $request->validate([
+            'key' => 'required|string',
+            'value' => 'required|string'
+        ]);
+
+        $setting = Setting::updateOrCreate(
+            ['key' => $request->key],
+            ['value' => $request->value]
+        );
+
+        return response()->json([
+            'success' => true,
+            'setting' => $setting
+        ]);
+    }
+
+    public function getAppSettings()
+    {
+        // Alias for index or filtered settings if needed
+        return $this->index();
     }
 }
