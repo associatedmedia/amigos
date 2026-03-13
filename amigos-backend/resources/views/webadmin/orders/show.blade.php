@@ -296,6 +296,8 @@
     </div>
 </div>
 
+<!-- PRINTER SETUP --->
+
 <div id="thermal-receipt">
     <div class="text-center font-bold">
         <h2 style="font-size: 18px;">AMIGOS PIZZA</h2>
@@ -306,11 +308,11 @@
     <div>
         <p><span class="font-bold">Order #:</span> {{ $order->order_number ?? $order->id }}</p>
         <p><span class="font-bold">Date:</span> {{ $order->created_at->format('d/m/Y h:i A') }}</p>
-        <p><span class="font-bold">Type:</span> {{ ucfirst($order->platform ?? 'Walk-in') }}</p>
+        {{-- <p><span class="font-bold">Type:</span> {{ ucfirst($order->platform ?? 'Walk-in') }}</p> --}}
         <p><span class="font-bold">Customer:</span> {{ $order->user ? $order->user->name : 'Guest' }}</p>
-        @if($order->user && $order->user->mobile_no)
+        {{-- @if($order->user && $order->user->mobile_no)
             <p><span class="font-bold">Phone:</span> {{ $order->user->mobile_no }}</p>
-        @endif
+        @endif --}}
     </div>
     
     <div class="divider"></div>
