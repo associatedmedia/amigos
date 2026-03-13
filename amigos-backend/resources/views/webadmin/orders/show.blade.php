@@ -2,57 +2,53 @@
 
 @push('scripts')
 <style>
-    /* Retained fallback 80mm CSS for browser printing if ever needed */
+    /* Styling for the Print KOT explicitly */
     @media print {
-        @page {
-            margin: 0;
-            size: 80mm 297mm;
+        /* Hide everything by default */
+        body { visibility: hidden; }
+        
+        /* Only show the Items Ordered card */
+        .print-section, .print-section * {
+            visibility: visible;
         }
-        body { visibility: hidden; width: 80mm; margin: 0; padding: 0; }
-        .print-section, .print-section * { visibility: visible; }
+        
+        /* Position the Items card at the top left of the printed page */
         .print-section {
-            position: absolute; left: 0; top: 0; width: 100%;
-            margin: 0 !important; padding: 0 !important;
-            box-shadow: none !important; border: none !important;
-            font-family: monospace;
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+            border: none !important;
         }
-        .print-section .card-header { display: none !important; }
+
+        /* Hide the card header, as it's not needed for a KOT */
+        .print-section .card-header {
+            display: none !important;
+        }
+
+        /* Add a KOT Header */
         .print-section::before {
-            content: "AMIGOS PIZZA KOT - #{{ $order->id }}\A Date: {{ $order->created_at->format('M d, Y h:i A') }}";
-            white-space: pre-wrap; display: block; text-align: center;
-            font-weight: bold; font-size: 1.2rem; margin-bottom: 15px;
+            content: "AMIGOS PIZZA KOT - Order #{{ $order->id }}\A Date: {{ $order->created_at->format('M d, Y h:i A') }}";
+            white-space: pre-wrap;
+            display: block;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
         }
     }
 </style>
 @endpush
 
 @section('content')
-
-{{-- Display Success/Error Messages for Printing --}}
-@if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        {{ session('success') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-@endif
-
-@if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        {{ session('error') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-@endif
-
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom d-print-none">
     <h1 class="h2">Order #{{ $order->order_number ?? $order->id }} Details</h1>
     <div>
-        {{-- Updated Print Button: Now hits the direct print route --}}
-        <a href="{{ route('admin.orders.printKOT', $order->id) }}" class="btn btn-primary btn-sm me-2">
-            <i class="bi bi-printer"></i> Direct Print KOT
-        </a>
-        <a href="{{ route('admin.orders.index') }}" class="btn btn-secondary btn-sm">
-            <i class="bi bi-arrow-left"></i> Back to Orders
-        </a>
+        <button onclick="window.print()" class="btn btn-primary btn-sm me-2"><i class="bi bi-printer"></i> Print KOT</button>
+        <a href="{{ route('admin.orders.index') }}" class="btn btn-secondary btn-sm"><i class="bi bi-arrow-left"></i> Back to Orders</a>
     </div>
 </div>
 
@@ -73,7 +69,7 @@
                     <tbody>
                         @foreach($order->items as $item)
                             <tr>
-                                <td>{{ $item->product ? $item->product->name : 'Unknown Product' }}</td>
+                                <td>{{ $item->product ? $item->product->name : 'Unknown Product' }} - {{ $item->old_db_code }}</td>
                                 <td>{{ $item->variety_name ?? 'Regular' }}</td>
                                 <td>{{ $item->quantity }}</td>
                                 <td class="text-end fw-bold">₹{{ number_format($item->price * $item->quantity, 2) }}</td>
@@ -121,6 +117,18 @@
                         Anantnag
                     @endif
                 </p>
+                @if($order->platform)
+                <hr>
+                <p class="mb-0"><strong>Placed Via:</strong> 
+                    @if(strtolower($order->platform) === 'ios')
+                        <span class="badge bg-secondary"><i class="bi bi-apple"></i> iOS App</span>
+                    @elseif(strtolower($order->platform) === 'android')
+                        <span class="badge bg-success"><i class="bi bi-android2"></i> Android App</span>
+                    @else
+                        <span class="badge bg-secondary"><i class="bi bi-globe"></i> {{ ucfirst($order->platform) }}</span>
+                    @endif
+                </p>
+                @endif
             </div>
         </div>
 
@@ -138,6 +146,7 @@
                             <option value="picked_up" {{ $order->status == 'picked_up' ? 'selected' : '' }}>Picked Up</option>
                             <option value="delivered" {{ $order->status == 'delivered' ? 'selected' : '' }}>Delivered</option>
                             <option value="cancelled" {{ $order->status == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                            <option value="refunded" {{ $order->status == 'refunded' ? 'selected' : '' }}>Refunded</option>
                         </select>
                         <button class="btn btn-primary" type="submit">Update</button>
                     </div>
@@ -163,6 +172,49 @@
                         <button class="btn btn-success" type="submit">Assign</button>
                     </div>
                 </form>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white fw-bold">Delivery Location</div>
+            <div class="card-body">
+                @if($order->address)
+                    @php
+                        $decodedAddress = json_decode($order->address, true);
+                    @endphp
+                    <p class="mb-3">{{ is_array($decodedAddress) ? collect($decodedAddress)->implode(', ') : $order->address }}</p>
+                @else
+                    <p class="text-muted mb-3">No specific textual address provided.</p>
+                @endif
+
+                @if($order->latitude && $order->longitude)
+                    <h6 class="fw-bold fs-6 mt-3">GPS Coordinates:</h6>
+                    <div class="d-flex align-items-center justify-content-between p-2 bg-light rounded border">
+                        <div class="small font-monospace text-muted">
+                            {{ $order->latitude }}, {{ $order->longitude }}
+                        </div>
+                        <a href="https://maps.google.com/?q={{ $order->latitude }},{{ $order->longitude }}" target="_blank" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-geo-alt-fill"></i> View on Maps
+                        </a>
+                    </div>
+                @else
+                    <div class="alert alert-warning py-2 mb-0 mt-3 small">
+                        <i class="bi bi-exclamation-circle"></i> No GPS Coordinates tracked for this order.
+                    </div>
+                @endif
+            </div>
+        </div>
+        
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white fw-bold">Payment Details</div>
+            <div class="card-body">
+                <p><strong>Method:</strong> <span class="badge bg-info text-dark">{{ strtoupper(str_replace('_', ' ', $order->payment_method)) }}</span></p>
+                <p><strong>Status:</strong> <span class="badge bg-{{ $order->payment_status === 'paid' ? 'success' : 'warning' }}">{{ ucfirst($order->payment_status) }}</span></p>
+                @if($order->payment_id && $order->payment_method === 'razorpay')
+                <p><strong>Razorpay Payment ID:</strong> <br><small class="text-muted font-monospace">{{ $order->payment_id }}</small></p>
+                @elseif($order->payment_id)
+                <p><strong>Transaction ID:</strong> <br><small class="text-muted font-monospace">{{ $order->payment_id }}</small></p>
+                @endif
             </div>
         </div>
     </div>
