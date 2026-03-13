@@ -2,13 +2,19 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Setting extends Model
 {
-    protected $fillable = ['is_online'];
+    use HasFactory;
 
-    protected $casts = [
-        'is_online' => 'boolean',
+    protected $primaryKey = 'key';
+    public $incrementing = false;
+    protected $keyType = 'string';
+
+    protected $fillable = [
+        'key',
+        'value',
     ];
 }

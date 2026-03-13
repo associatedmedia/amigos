@@ -12,6 +12,8 @@ use App\Http\Controllers\BannerController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\DriverLocationController;
+use App\Http\Controllers\Api\SettingController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -123,3 +125,6 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::delete('/banner/{id}', [ContentController::class, 'deleteBanner']);
 
 });
+
+// get settings
+Route::get('/app-settings', [SettingController::class, 'getAppSettings']);
