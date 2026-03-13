@@ -40,12 +40,13 @@
                     <ul class="navbar-nav ms-auto align-items-center">
                         <li class="nav-item me-3">
                             @php
-                                $setting = \App\Models\Setting::first() ?? \App\Models\Setting::create(['is_online' => true]);
+                                $storeStatusSetting = \App\Models\Setting::where('key', 'is_store_online')->first();
+                                $isStoreOnline = $storeStatusSetting ? ($storeStatusSetting->value == '1') : true;
                             @endphp
                             <form action="{{ route('admin.settings.toggleOnline') }}" method="POST" class="d-inline">
                                 @csrf
-                                <button type="submit" class="btn btn-sm fw-bold {{ $setting->is_online ? 'btn-success' : 'btn-outline-danger' }}">
-                                    @if($setting->is_online)
+                                <button type="submit" class="btn btn-sm fw-bold {{ $isStoreOnline ? 'btn-success' : 'btn-outline-danger' }}">
+                                    @if($isStoreOnline)
                                         <i class="bi bi-broadcast"></i> Store Online
                                     @else
                                         <i class="bi bi-broadcast-off"></i> Store Offline
