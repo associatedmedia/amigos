@@ -4,9 +4,8 @@
  * It polls the backend API for pending print jobs and sends them to local printers.
  */
 
-const axios = require('axios');
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
 // Configuration
 const CONFIG = {
@@ -31,8 +30,11 @@ async function poll() {
     try {
         log('Polling for pending print jobs...', 'DEBUG');
         
-        const response = await axios.get(`${CONFIG.API_URL}/pending-jobs`);
-        const jobs = response.data.data;
+        const response = await fetch(`${CONFIG.API_URL}/pending-jobs`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        
+        const result = await response.json();
+        const jobs = result.data;
 
         if (jobs && jobs.length > 0) {
             log(`Found ${jobs.length} pending print jobs.`);
@@ -82,12 +84,6 @@ async function processJob(job) {
  */
 async function simulatePrint(job) {
     // This is where you would interface with the OS printers.
-    // Example using node-thermal-printer logic:
-    // const printer = new ThermalPrinter({...});
-    // printer.setPrinterDriver(job.printer_id);
-    // printer.println(job.print_data.order_text);
-    // await printer.execute();
-    
     return true; 
 }
 
@@ -96,10 +92,18 @@ async function simulatePrint(job) {
  */
 async function updateJobStatus(id, status, errorMessage = null) {
     try {
-        await axios.post(`${CONFIG.API_URL}/jobs/${id}/status`, {
-            status,
-            error_message: errorMessage
+        const response = await fetch(`${CONFIG.API_URL}/jobs/${id}/status`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                status,
+                error_message: errorMessage
+            })
         });
+        
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     } catch (error) {
         log(`Failed to update status for job ${id}: ${error.message}`, 'ERROR');
     }
