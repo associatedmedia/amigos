@@ -14,6 +14,7 @@ class PrinterService
      */
     public function queuePrintJobs(Order $order)
     {
+        \Log::info("Starting queuePrintJobs for order ID: {$order->id}");
         $order->load(['items.product']);
         
         // 1. Queue Kitchen Jobs (KOT)
@@ -31,9 +32,13 @@ class PrinterService
         $itemsByOperation = [];
 
         foreach ($order->items as $item) {
-            if (!$item->product) continue;
+            if (!$item->product) {
+                \Log::warning("Order item {$item->id} has no associated product.");
+                continue;
+            }
 
             $operationType = strtoupper($item->product->category);
+            \Log::info("Processing item: {$item->product->name}, Category: {$item->product->category} -> Operation Type: $operationType");
             
             if (!isset($itemsByOperation[$operationType])) {
                 $itemsByOperation[$operationType] = [];
@@ -50,7 +55,13 @@ class PrinterService
             // Check if a printer setup exists for this operation
             $setup = PrinterSetup::where('operation_type', $operation)->first();
             
+            if (!$setup) {
+                \Log::warning("No PrinterSetup found for operation_type: '$operation'");
+                continue;
+            }
+
             if ($setup && $setup->kitchen_printing_yes_no) {
+                \Log::info("Creating PrintJob for order {$order->id}, printer: $operation");
                 PrintJob::create([
                     'order_id' => $order->id,
                     'printer_type' => $operation,
@@ -77,11 +88,13 @@ class PrinterService
         $setup = PrinterSetup::where('operation_type', 'BILLING')->first();
         
         if (!$setup) {
+            \Log::info("No specific 'BILLING' setup found, looking for fallback billing printer.");
             // Fallback: search for any printer with bill_print_through_printer_object enabled
             $setup = PrinterSetup::where('bill_print_through_printer_object', true)->first();
         }
 
         if ($setup) {
+            \Log::info("Found billing printer: {$setup->operation_type}. Creating billing job for order {$order->id}");
             PrintJob::create([
                 'order_id' => $order->id,
                 'printer_type' => $setup->operation_type,
