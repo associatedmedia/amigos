@@ -147,4 +147,12 @@ Route::group(['prefix' => 'printer'], function () {
         }
         return response('No log file found.', 404);
     });
+
+    // TEMPORARY: Expose DB contents to check if jobs are saving
+    Route::get('/debug-db', function () {
+        return response()->json([
+            'total_jobs' => \App\Models\PrintJob::count(),
+            'all_jobs' => \App\Models\PrintJob::all()
+        ]);
+    });
 });
