@@ -58,6 +58,14 @@ class OrderController extends Controller
                         'price' => $item['price'], // Saving price at time of purchase
                     ]);
                 }
+                
+                // Auto queue print jobs for the new order
+                try {
+                    app(\App\Services\PrinterService::class)->queuePrintJobs($order);
+                } catch (\Exception $e) {
+                    // Log error but don't fail the order placement
+                    \Log::error("Printing failed for order {$order->id}: " . $e->getMessage());
+                }
 
                 return response()->json([
                     'success' => true,
