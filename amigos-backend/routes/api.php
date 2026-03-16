@@ -135,4 +135,16 @@ Route::group(['prefix' => 'printer'], function () {
     Route::get('/configs', [PrinterApiController::class, 'getConfigs']);
     Route::get('/pending-jobs', [PrinterApiController::class, 'getPendingJobs']);
     Route::post('/jobs/{id}/status', [PrinterApiController::class, 'updateJobStatus']);
+    
+    // TEMPORARY: Expose logs to debug missing print jobs on AWS
+    Route::get('/debug-logs', function () {
+        $logFile = storage_path('logs/laravel.log');
+        if (file_exists($logFile)) {
+            // Get the last 500 lines for faster loading
+            $lines = file($logFile);
+            $lastLines = array_slice($lines, -500);
+            return response(implode("", $lastLines))->header('Content-Type', 'text/plain');
+        }
+        return response('No log file found.', 404);
+    });
 });
