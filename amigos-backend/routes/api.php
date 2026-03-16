@@ -13,7 +13,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\DriverLocationController;
 use App\Http\Controllers\Api\SettingController;
-
+use App\Http\Controllers\Api\PrinterApiController;
 
 /*
 |--------------------------------------------------------------------------

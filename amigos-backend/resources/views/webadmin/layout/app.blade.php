@@ -113,6 +113,9 @@
                                         <li class="nav-item">
                                             <a class="nav-link {{ request()->routeIs('admin.orders.index') ? 'fw-bold text-primary' : 'text-secondary' }}" href="{{ route('admin.orders.index') }}">List Orders</a>
                                         </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link {{ request()->routeIs('admin.printer-setups.*') ? 'fw-bold text-primary' : 'text-secondary' }}" href="{{ route('admin.printer-setups.index') }}">Printer Setup</a>
+                                        </li>
                                     </ul>
                                 </div>
                             </li>

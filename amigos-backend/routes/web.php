@@ -10,6 +10,7 @@ use App\Http\Controllers\webadmin\CategoryController;
 use App\Http\Controllers\webadmin\CustomerController;
 use App\Http\Controllers\webadmin\OfferBannerController;
 use App\Http\Controllers\webadmin\SettingController;
+use App\Http\Controllers\webadmin\PrinterSetupController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -54,6 +55,9 @@ Route::prefix('admin')->group(function () {
         Route::put('orders/{id}/assign-driver', [OrderController::class, 'assignDriver'])->name('admin.orders.assignDriver');
 
         Route::get('/admin/orders/{id}/print-kot', [App\Http\Controllers\webadmin\OrderController::class, 'printKOT'])->name('admin.orders.printKOT');
+
+        // Printer Setup
+        Route::resource('printer-setups', PrinterSetupController::class)->names('admin.printer-setups');
         
         // Products
         Route::get('products', [ProductController::class, 'index'])->name('admin.products.index');
