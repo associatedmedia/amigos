@@ -56,7 +56,15 @@ class AuthOtpController extends Controller {
 
             // 2. Prepare Message (Must match DLT Template)
             $messageContent = "Welcome to Amigos Foods App! Your OTP for login is $otp . It is valid for 10 minutes. Please do not share this code with anyone."; 
-
+            
+            // 2.1 Set limit max 3 otps per mobile no in 10 minutes
+            $check = VerificationCode::where('mobile_no', $request->phone)
+                                ->where('expire_at', '>', Carbon::now())
+                                ->count();
+            if($check >= 3){
+                return response()->json(['success' => false, 'message' => 'Too many OTP requests. Please try again later.'], 429);
+            }
+            
             // 3. Send Request
             $response = Http::post($url, [
                 "sender_id"   => env('TRUSTSIGNAL_SENDER_ID'),

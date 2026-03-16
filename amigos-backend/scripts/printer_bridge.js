@@ -9,7 +9,7 @@ import path from 'path';
 
 // Configuration
 const CONFIG = {
-    API_URL: 'https://api.amigospizza.co/api/printer', // Updated to localhost for local testing
+    API_URL: 'https://api.amigospizza.co/api/printer', // Update to your backend URL
     POLL_INTERVAL: 5000, // 5 seconds
     DEBUG: true
 };

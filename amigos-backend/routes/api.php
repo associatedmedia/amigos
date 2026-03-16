@@ -57,7 +57,7 @@ Route::get('/products', [ProductController::class, 'index']);
 Route::get('/app-version', function () {
     return response()->json([
         'success'         => true,
-        'minimum_version' => '1.0.0', // Update this when you want to force updates
+        'minimum_version' => '19.0.1', // Update this when you want to force updates
         'store_url_android' => 'https://play.google.com/store/apps/details?id=com.associatedmedia.amigospizza',
         'store_url_ios'     => 'https://apps.apple.com/us/app/amigos-pizza/id123456789' // Replace with actual iOS ID if needed
     ]);
@@ -129,3 +129,10 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
 // get settings
 Route::get('/app-settings', [SettingController::class, 'getAppSettings']);
 Route::post('/settings/update', [SettingController::class, 'updateSetting'])->middleware(['auth:sanctum', 'admin']);
+
+// Printer API (For Local Bridge)
+Route::group(['prefix' => 'printer'], function () {
+    Route::get('/configs', [PrinterApiController::class, 'getConfigs']);
+    Route::get('/pending-jobs', [PrinterApiController::class, 'getPendingJobs']);
+    Route::post('/jobs/{id}/status', [PrinterApiController::class, 'updateJobStatus']);
+});
