@@ -17,10 +17,13 @@ class PrinterService
         \Log::info("Starting queuePrintJobs for order ID: {$order->id}");
         $order->load(['items.product']);
         
-        // 1. Queue Kitchen Jobs (KOT)
+        // 1. Queue Kitchen Jobs (KOT - Category grouped)
         $this->queueKitchenJobs($order);
         
-        // 2. Queue Billing Job
+        // 2. Queue Full Order Print (Order As Inputted)
+        $this->queueFullOrderJob($order);
+
+        // 3. Queue Billing Job
         $this->queueBillingJob($order);
     }
 
@@ -64,23 +67,83 @@ class PrinterService
             // Check if a printer setup exists for this operation (CASE INSENSITIVE)
             $setup = PrinterSetup::whereRaw('UPPER(operation_type) = ?', [$operation])->first();
             
-            if ($setup) {
-                \Log::info("Printer Setup found for '$operation'. Kitchen Print enabled: " . ($setup->kitchen_printing_yes_no ? 'Yes' : 'No'));
-            } else {
+            if (!$setup) {
                 \Log::error("CRITICAL: No Printer Setup found for operation type: '$operation'. Please create a Printer Setup with Operation Type '$operation' in the admin panel.");
                 continue;
             }
 
-            if ($setup && $setup->kitchen_printing_yes_no) {
-                \Log::info("Creating PrintJob for order {$order->id}, printer: $operation");
+            // Check if kitchen printing is enabled for this category
+            if ($setup->kitchen_printing_yes_no || $setup->order_kitchen) {
+                // Determine number of copies
+                $copies = 1;
+                if ($setup->kitchen_triplicate) {
+                    $copies = 3;
+                } elseif ($setup->kitchen_duplicate) {
+                    $copies = 2;
+                }
+                
+                \Log::info("Creating $copies KOT PrintJob(s) for order {$order->id}, printer: $operation");
+                
+                for ($i = 1; $i <= $copies; $i++) {
+                    PrintJob::create([
+                        'order_id' => $order->id,
+                        'printer_type' => $operation,
+                        'print_data' => [
+                            'type' => 'KOT',
+                            'order_number' => $order->id,
+                            'customer' => $order->user ? $order->user->name : ($order->customer_name ?? 'Guest'),
+                            'items' => $items,
+                            'copy_number' => $i,
+                            'total_copies' => $copies,
+                            'timestamp' => now()->toDateTimeString(),
+                        ],
+                        'status' => 'pending'
+                    ]);
+                }
+            }
+        }
+    }
+
+    /**
+     * Create a full order print job if "Order As Inputted" is enabled.
+     */
+    protected function queueFullOrderJob(Order $order)
+    {
+        // Find any printer configured to print the full order
+        $setups = PrinterSetup::where('order_as_inputted', true)
+            ->orWhere('order_print_through_printer_object', true)
+            ->get();
+            
+        if ($setups->isEmpty()) {
+            \Log::info("No printer configured for 'Order As Inputted' full order printing.");
+            return;
+        }
+        
+        // Prepare all items
+        $allItems = [];
+        foreach ($order->items as $item) {
+            $allItems[] = [
+                'name' => $item->product ? $item->product->name : 'Unknown',
+                'quantity' => $item->quantity,
+                'variety' => $item->variety_name ?? 'Regular',
+            ];
+        }
+
+        foreach ($setups as $setup) {
+            $copies = $setup->order_duplicate ? 2 : 1;
+            \Log::info("Creating $copies Full Order PrintJob(s) for order {$order->id}, printer: {$setup->operation_type}");
+            
+            for ($i = 1; $i <= $copies; $i++) {
                 PrintJob::create([
                     'order_id' => $order->id,
-                    'printer_type' => $operation,
+                    'printer_type' => $setup->operation_type,
                     'print_data' => [
-                        'type' => 'KOT',
+                        'type' => 'FULL_ORDER',
                         'order_number' => $order->id,
                         'customer' => $order->user ? $order->user->name : ($order->customer_name ?? 'Guest'),
-                        'items' => $items,
+                        'items' => $allItems,
+                        'copy_number' => $i,
+                        'total_copies' => $copies,
                         'timestamp' => now()->toDateTimeString(),
                     ],
                     'status' => 'pending'
@@ -99,29 +162,34 @@ class PrinterService
         
         if (!$setup) {
             \Log::info("No specific 'BILLING' setup found, looking for fallback billing printer.");
-            // Fallback: search for any printer with bill_print_through_printer_object enabled
             $setup = PrinterSetup::where('bill_print_through_printer_object', true)->first();
         }
 
         if ($setup) {
-            \Log::info("Found billing printer: {$setup->operation_type}. Creating billing job for order {$order->id}");
-            PrintJob::create([
-                'order_id' => $order->id,
-                'printer_type' => $setup->operation_type,
-                'print_data' => [
-                    'type' => 'BILL',
-                    'order_number' => $order->id,
-                    'customer' => $order->user ? $order->user->name : ($order->customer_name ?? 'Guest'),
-                    'total' => $order->total_amount,
-                    'items' => $order->items->map(fn($i) => [
-                        'name' => $i->product ? $i->product->name : 'Unknown',
-                        'quantity' => $i->quantity,
-                        'price' => $i->price,
-                    ]),
-                    'timestamp' => now()->toDateTimeString(),
-                ],
-                'status' => 'pending'
-            ]);
+            $copies = $setup->bill_duplicate ? 2 : 1;
+            \Log::info("Found billing printer: {$setup->operation_type}. Creating $copies billing job(s) for order {$order->id}");
+            
+            for ($i = 1; $i <= $copies; $i++) {
+                PrintJob::create([
+                    'order_id' => $order->id,
+                    'printer_type' => $setup->operation_type,
+                    'print_data' => [
+                        'type' => 'BILL',
+                        'order_number' => $order->id,
+                        'customer' => $order->user ? $order->user->name : ($order->customer_name ?? 'Guest'),
+                        'total' => $order->total_amount,
+                        'items' => $order->items->map(fn($i) => [
+                            'name' => $i->product ? $i->product->name : 'Unknown',
+                            'quantity' => $i->quantity,
+                            'price' => $i->price,
+                        ]),
+                        'copy_number' => $i,
+                        'total_copies' => $copies,
+                        'timestamp' => now()->toDateTimeString(),
+                    ],
+                    'status' => 'pending'
+                ]);
+            }
         } else {
             \Log::error("CRITICAL: No Billing Printer found for order {$order->id}. Please mark at least one printer for 'Bill Print' in Printer Setup.");
         }
