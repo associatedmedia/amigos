@@ -207,13 +207,13 @@
                     </div>
                     <div class="card-footer bg-white py-3">
                         <div class="row align-items-center">
-                            <div class="col-auto">
+                            <!-- <div class="col-auto">
                                 <button type="button" class="btn btn-outline-secondary px-4 me-2">Initialize Print Option</button>
                                 <button type="button" class="btn btn-outline-secondary px-4 me-2">Set For Slip Report</button>
                                 <button type="button" class="btn btn-outline-secondary px-4 me-2">Table Wise Kitchen Print</button>
                                 <button type="button" class="btn btn-outline-secondary px-4 me-2">Tabl Wise Group Print</button>
                                 <button type="button" class="btn btn-outline-secondary px-4 me-2">Logo Setup</button>
-                            </div>
+                            </div> -->
                             <div class="col text-end">
                                 <button type="submit" class="btn btn-primary px-5 me-2"><i class="bi bi-save me-1"></i> Save</button>
                                 <a href="{{ route('admin.printer-setups.index') }}" class="btn btn-danger px-4 mx-1"><i class="bi bi-x-circle me-1"></i> Close</a>
