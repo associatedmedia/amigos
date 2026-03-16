@@ -30,6 +30,7 @@ class PrinterService
     protected function queueKitchenJobs(Order $order)
     {
         $itemsByOperation = [];
+        \Log::info("Queueing kitchen jobs for order: {$order->id}");
 
         foreach ($order->items as $item) {
             if (!$item->product) {
@@ -37,8 +38,11 @@ class PrinterService
                 continue;
             }
 
-            $operationType = strtoupper($item->product->category);
-            \Log::info("Processing item: {$item->product->name}, Category: {$item->product->category} -> Operation Type: $operationType");
+            // Normalize category name to uppercase for comparison
+            $categoryName = trim($item->product->category);
+            $operationType = strtoupper($categoryName);
+            
+            \Log::info("Item: {$item->product->name}, Category: '$categoryName' -> Matching as: '$operationType'");
             
             if (!isset($itemsByOperation[$operationType])) {
                 $itemsByOperation[$operationType] = [];
@@ -51,12 +55,19 @@ class PrinterService
             ];
         }
 
+        if (empty($itemsByOperation)) {
+            \Log::warning("No items found to group for kitchen printing in order: {$order->id}");
+            return;
+        }
+
         foreach ($itemsByOperation as $operation => $items) {
-            // Check if a printer setup exists for this operation
-            $setup = PrinterSetup::where('operation_type', $operation)->first();
+            // Check if a printer setup exists for this operation (CASE INSENSITIVE)
+            $setup = PrinterSetup::whereRaw('UPPER(operation_type) = ?', [$operation])->first();
             
-            if (!$setup) {
-                \Log::warning("No PrinterSetup found for operation_type: '$operation'");
+            if ($setup) {
+                \Log::info("Printer Setup found for '$operation'. Kitchen Print enabled: " . ($setup->kitchen_printing_yes_no ? 'Yes' : 'No'));
+            } else {
+                \Log::error("CRITICAL: No Printer Setup found for operation type: '$operation'. Please create a Printer Setup with Operation Type '$operation' in the admin panel.");
                 continue;
             }
 
@@ -68,7 +79,7 @@ class PrinterService
                     'print_data' => [
                         'type' => 'KOT',
                         'order_number' => $order->id,
-                        'customer' => $order->user ? $order->user->name : 'Guest',
+                        'customer' => $order->user ? $order->user->name : ($order->customer_name ?? 'Guest'),
                         'items' => $items,
                         'timestamp' => now()->toDateTimeString(),
                     ],
@@ -83,9 +94,8 @@ class PrinterService
      */
     protected function queueBillingJob(Order $order)
     {
-        // Find a billing printer (defaulting to operation_type 'BILLING' or similar)
-        // You can refine this logic to pick a specific printer marked for billing
-        $setup = PrinterSetup::where('operation_type', 'BILLING')->first();
+        // Find a billing printer
+        $setup = PrinterSetup::whereRaw('UPPER(operation_type) = ?', ['BILLING'])->first();
         
         if (!$setup) {
             \Log::info("No specific 'BILLING' setup found, looking for fallback billing printer.");
@@ -101,7 +111,7 @@ class PrinterService
                 'print_data' => [
                     'type' => 'BILL',
                     'order_number' => $order->id,
-                    'customer' => $order->user ? $order->user->name : 'Guest',
+                    'customer' => $order->user ? $order->user->name : ($order->customer_name ?? 'Guest'),
                     'total' => $order->total_amount,
                     'items' => $order->items->map(fn($i) => [
                         'name' => $i->product ? $i->product->name : 'Unknown',
@@ -112,6 +122,8 @@ class PrinterService
                 ],
                 'status' => 'pending'
             ]);
+        } else {
+            \Log::error("CRITICAL: No Billing Printer found for order {$order->id}. Please mark at least one printer for 'Bill Print' in Printer Setup.");
         }
     }
 }
