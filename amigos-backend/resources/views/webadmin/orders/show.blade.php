@@ -123,7 +123,8 @@
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom d-print-none">
     <h1 class="h2">Order #{{ $order->order_number ?? $order->id }} Details</h1>
     <div>
-        <button onclick="window.print()" class="btn btn-primary btn-sm me-2"><i class="bi bi-printer"></i> Print KOT</button>
+        <a href="{{ route('admin.orders.printKOT', $order->id) }}" class="btn btn-success btn-sm me-2"><i class="bi bi-printer-fill"></i> QUEUE PRINT</a>
+        <button onclick="window.print()" class="btn btn-primary btn-sm me-2"><i class="bi bi-printer"></i> Browser Print</button>
         <a href="{{ route('admin.orders.index') }}" class="btn btn-secondary btn-sm"><i class="bi bi-arrow-left"></i> Back to Orders</a>
     </div>
 </div>

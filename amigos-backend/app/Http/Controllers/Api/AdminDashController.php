@@ -51,6 +51,11 @@ class AdminDashController extends Controller
 
         $order->save();
 
+        // Auto queue print jobs if moved to 'cooking' (Kitchen) 
+        if ($request->status === 'cooking') {
+            app(\App\Services\PrinterService::class)->queuePrintJobs($order);
+        }
+
         // TODO: Notification logic
         // If status == 'out_for_delivery', notify Customer ("Driver X is coming") AND Driver ("New Order Assigned")
 

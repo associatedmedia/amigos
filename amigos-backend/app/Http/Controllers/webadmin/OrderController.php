@@ -45,7 +45,19 @@ class OrderController extends Controller
         $order->status = $request->input('status');
         $order->save();
 
+        // Auto queue print jobs if accepted
+        if ($order->status === 'accepted') {
+            app(\App\Services\PrinterService::class)->queuePrintJobs($order);
+        }
+
         return redirect()->route('admin.orders.show', $order->id)->with('success', 'Order status updated successfully.');
+    }
+
+    public function printKOT($id)
+    {
+        $order = Order::findOrFail($id);
+        app(\App\Services\PrinterService::class)->queuePrintJobs($order);
+        return redirect()->route('admin.orders.show', $order->id)->with('success', 'Order sent to print queue.');
     }
 
     public function assignDriver(Request $request, $id)
