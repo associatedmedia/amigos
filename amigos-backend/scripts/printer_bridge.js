@@ -9,7 +9,7 @@ import path from 'path';
 
 // Configuration
 const CONFIG = {
-    API_URL: 'https://api.amigospizza.co/api/printer', // Update to your backend URL
+    API_URL: 'https://api.amigospizza.co/api/printer', // Updated to localhost for local testing
     POLL_INTERVAL: 5000, // 5 seconds
     DEBUG: true
 };
@@ -29,16 +29,16 @@ function log(message, type = 'INFO') {
 async function poll() {
     try {
         log('Polling for pending print jobs...', 'DEBUG');
-        
+
         const response = await fetch(`${CONFIG.API_URL}/pending-jobs`);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        
+
         const result = await response.json();
         const jobs = result.data;
 
         if (jobs && jobs.length > 0) {
             log(`Found ${jobs.length} pending print jobs.`);
-            
+
             for (const job of jobs) {
                 await processJob(job);
             }
@@ -55,7 +55,7 @@ async function poll() {
  */
 async function processJob(job) {
     log(`Processing job ID: ${job.id} for Order #${job.order_id} (${job.printer_type})`);
-    
+
     try {
         // 1. Mark as processing
         await updateJobStatus(job.id, 'processing');
@@ -63,7 +63,7 @@ async function processJob(job) {
         // 2. Perform printing logic
         // Note: In a real implementation, you would use a library like 'node-thermal-printer'
         // and 'printer' to send raw ESC/POS commands to the specific printer ID.
-        
+
         const success = await simulatePrint(job);
 
         if (success) {
@@ -84,7 +84,7 @@ async function processJob(job) {
  */
 async function simulatePrint(job) {
     // This is where you would interface with the OS printers.
-    return true; 
+    return true;
 }
 
 /**
@@ -102,7 +102,7 @@ async function updateJobStatus(id, status, errorMessage = null) {
                 error_message: errorMessage
             })
         });
-        
+
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     } catch (error) {
         log(`Failed to update status for job ${id}: ${error.message}`, 'ERROR');
