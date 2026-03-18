@@ -23,13 +23,25 @@
                 </div>
             </div>
 
-            <div class="row">
-                <div class="col-md-6 mb-3">
+                <div class="col-md-5 mb-3">
                     <label class="form-label fw-bold">Category</label>
                     <input type="text" name="category" class="form-control" value="{{ old('category', $product->category) }}">
                 </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label fw-bold">Old Database Code (Optional)</label>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label fw-bold">Print Assign (Fallback)</label>
+                    <select name="print_assign" class="form-select">
+                        <option value="">-- Match via Category --</option>
+                        @if(isset($printers))
+                            @foreach($printers as $printer)
+                                <option value="{{ $printer->operation_type }}" {{ old('print_assign', $product->print_assign) == $printer->operation_type ? 'selected' : '' }}>
+                                    {{ $printer->operation_type }} @if($printer->printer_model) ({{ $printer->printer_model }}) @endif
+                                </option>
+                            @endforeach
+                        @endif
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label fw-bold">Old DB Code</label>
                     <input type="text" name="old_db_code" class="form-control" value="{{ old('old_db_code', $product->old_db_code) }}">
                 </div>
             </div>

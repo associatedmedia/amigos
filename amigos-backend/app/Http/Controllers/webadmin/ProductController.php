@@ -20,7 +20,8 @@ class ProductController extends Controller
     public function create()
     {
         $categories = \App\Models\Category::all();
-        return view('webadmin.products.create', compact('categories'));
+        $printers = \App\Models\PrinterSetup::all();
+        return view('webadmin.products.create', compact('categories', 'printers'));
     }
 
     public function store(Request $request)
@@ -28,6 +29,7 @@ class ProductController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'category' => 'nullable|string|max:255',
+            'print_assign' => 'nullable|string|max:255',
             'price' => 'required|numeric|min:0',
             'old_db_code' => 'nullable|string|max:255',
             'description' => 'nullable|string',
@@ -40,6 +42,7 @@ class ProductController extends Controller
         $product = new Product();
         $product->name = $request->name;
         $product->category = $request->category;
+        $product->print_assign = $request->print_assign;
         $product->price = $request->price;
         $product->old_db_code = $request->old_db_code;
         $product->description = $request->description;
@@ -72,7 +75,8 @@ class ProductController extends Controller
     {
         $product = Product::findOrFail($id);
         $categories = \App\Models\Category::all();
-        return view('webadmin.products.edit', compact('product', 'categories'));
+        $printers = \App\Models\PrinterSetup::all();
+        return view('webadmin.products.edit', compact('product', 'categories', 'printers'));
     }
 
     public function update(Request $request, $id)
@@ -82,6 +86,7 @@ class ProductController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'category' => 'nullable|string|max:255',
+            'print_assign' => 'nullable|string|max:255',
             'price' => 'required|numeric|min:0',
             'old_db_code' => 'nullable|string|max:255',
             'description' => 'nullable|string',
@@ -93,6 +98,7 @@ class ProductController extends Controller
 
         $product->name = $request->name;
         $product->category = $request->category;
+        $product->print_assign = $request->print_assign;
         $product->price = $request->price;
         $product->old_db_code = $request->old_db_code;
         $product->description = $request->description;

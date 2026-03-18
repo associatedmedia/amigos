@@ -44,6 +44,14 @@ class PrinterService
             // Normalize category name to uppercase for comparison
             $categoryName = trim($item->product->category);
             $operationType = strtoupper($categoryName);
+
+            // Check if a printer setup explicitly maps to the category
+            $setup = PrinterSetup::whereRaw('UPPER(operation_type) = ?', [$operationType])->first();
+            
+            // If it doesn't map to a category, try checking the explicit print assignment on the product
+            if (!$setup && !empty($item->product->print_assign)) {
+                $operationType = strtoupper(trim($item->product->print_assign));
+            }
             
             \Log::info("Item: {$item->product->name}, Category: '$categoryName' -> Matching as: '$operationType'");
             
@@ -90,8 +98,10 @@ class PrinterService
                         'printer_type' => $operation,
                         'print_data' => [
                             'type' => 'KOT',
-                            'order_number' => $order->id,
+                            'order_number' => $order->order_number ?? $order->id,
                             'customer' => $order->user ? $order->user->name : ($order->customer_name ?? 'Guest'),
+                            'address' => $order->address,
+                            'phone' => $order->mobile_no ?? ($order->user ? $order->user->mobile_no : ''),
                             'items' => $items,
                             'copy_number' => $i,
                             'total_copies' => $copies,
@@ -139,8 +149,10 @@ class PrinterService
                     'printer_type' => $setup->operation_type,
                     'print_data' => [
                         'type' => 'FULL_ORDER',
-                        'order_number' => $order->id,
+                        'order_number' => $order->order_number ?? $order->id,
                         'customer' => $order->user ? $order->user->name : ($order->customer_name ?? 'Guest'),
+                        'address' => $order->address,
+                        'phone' => $order->mobile_no ?? ($order->user ? $order->user->mobile_no : ''),
                         'items' => $allItems,
                         'copy_number' => $i,
                         'total_copies' => $copies,
@@ -175,13 +187,17 @@ class PrinterService
                     'printer_type' => $setup->operation_type,
                     'print_data' => [
                         'type' => 'BILL',
-                        'order_number' => $order->id,
+                        'order_number' => $order->order_number ?? $order->id,
+                        'customer_name' => $order->customer_name,
                         'customer' => $order->user ? $order->user->name : ($order->customer_name ?? 'Guest'),
+                        'address' => $order->address,
+                        'phone' => $order->mobile_no ?? ($order->user ? $order->user->mobile_no : ''),
                         'total' => $order->total_amount,
                         'items' => $order->items->map(fn($i) => [
                             'name' => $i->product ? $i->product->name : 'Unknown',
                             'quantity' => $i->quantity,
                             'price' => $i->price,
+                            'tax_percentage' => $i->product ? $i->product->tax_percentage : 0,
                         ]),
                         'copy_number' => $i,
                         'total_copies' => $copies,

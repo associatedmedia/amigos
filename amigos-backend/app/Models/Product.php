@@ -11,10 +11,10 @@ class Product extends Model
 
     protected $table = 'products';
 
-    // Allow these fields to be mass-assigned
     protected $fillable = [
         'name',
         'category',      // Storing category name directly (based on your Excel import)
+        'print_assign',  // explicit print assignment fallback
         'price',
         'image_url',
         'old_db_code',    // To link with old order items

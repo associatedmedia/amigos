@@ -146,20 +146,36 @@ async function simulatePrint(job) {
 
     const data = job.print_data;
 
-    printer.alignCenter();
-    printer.println("AMIGOS PIZZA");
-    printer.drawLine();
-    
-    printer.alignLeft();
-    printer.println(`Order #: ${data.order_number}`);
-    printer.println(`Customer: ${data.customer}`);
-    printer.println(`Date: ${data.timestamp}`);
-    
+    const dateObj = new Date(data.timestamp);
+    const dateStr = dateObj.toLocaleDateString('en-GB', {day: '2-digit', month: '2-digit', year: '2-digit'});
+    const timeStr = dateObj.toLocaleTimeString('en-GB', {hour: '2-digit', minute: '2-digit'});
+    const orderType = data.address ? "HOME DELIVERY" : "TAKEAWAY";
+
+    let cleanAddr = data.address;
+    if (cleanAddr) {
+        try {
+            let parsed = JSON.parse(data.address);
+            if (Array.isArray(parsed)) cleanAddr = parsed.join(", ");
+            else if (typeof parsed === 'object') cleanAddr = Object.values(parsed).join(", ");
+        } catch (e) {}
+    }
+
     if (data.type === 'KOT' || data.type === 'FULL_ORDER') {
-        printer.println(`Ticket Type: ${data.type}`);
+        printer.alignCenter();
+        printer.println("AMIGOS PIZZA");
+        printer.println("KITCHEN ORDER TICKET");
         if (data.total_copies > 1) {
             printer.println(`Copy: ${data.copy_number} of ${data.total_copies}`);
         }
+        printer.drawLine();
+        
+        printer.alignLeft();
+        printer.println(orderType);
+        printer.println(`KOT No. : ${data.order_number}`);
+        printer.println(`Date: ${dateStr}   Time: ${timeStr}`);
+        printer.println(`Customer: ${data.customer_name || data.customer || 'Guest'}`);
+        if(data.phone) printer.println(`Phone: ${data.phone}`);
+        if(cleanAddr) printer.println(`Address: ${cleanAddr}`);
         printer.drawLine();
         
         printer.tableCustom([
@@ -171,38 +187,132 @@ async function simulatePrint(job) {
         for (const item of data.items) {
             printer.tableCustom([
                 { text: String(item.quantity), align: "LEFT", width: 0.15 },
-                { text: `${item.name} (${item.variety || ''})`, align: "LEFT", width: 0.85 }
+                { text: `${item.name} ${item.variety ? '('+item.variety+')' : ''}`, align: "LEFT", width: 0.85 }
             ]);
         }
+        printer.drawLine();
+        printer.alignCenter();
+        printer.println("*** END OF TICKET ***");
     } else if (data.type === 'BILL') {
-        printer.println(`Ticket Type: RECEIPT / BILL`);
-        if (data.total_copies > 1) {
-            printer.println(`Copy: ${data.copy_number} of ${data.total_copies}`);
-        }
+        printer.alignCenter();
+        printer.println("Office Copy");
+        printer.println("");
+        printer.println("Amigo's Foods & Hospitalities");
+        printer.println("Gogji Bagh , Opp. Amar Singh College");
+        printer.println("Main Gate , Srinagar, J & K");
+        printer.println("Phone : 9797798505,9906667444");
+        printer.println("        9070145454,8716988621");
+        printer.println("GST NO.- 01ABIFA7518C1ZZ");
+        printer.println("(All Taxes are Inclusive)");
         printer.drawLine();
         
+        printer.println(orderType);
+        printer.alignLeft();
         printer.tableCustom([
-            { text: "Qty", align: "LEFT", width: 0.15 },
-            { text: "Item", align: "LEFT", width: 0.55 },
-            { text: "Price", align: "RIGHT", width: 0.30 }
+            { text: `Bill : ${data.order_number}`, align: "LEFT", width: 0.50 },
+            { text: `Time : ${timeStr}`, align: "RIGHT", width: 0.50 }
+        ]);
+        
+        printer.tableCustom([
+            { text: "Date", align: "LEFT", width: 0.25 },
+            { text: "Table Cvr Stw", align: "CENTER", width: 0.40 },
+            { text: "UID", align: "RIGHT", width: 0.35 }
+        ]);
+        
+        // Match 10 chars of customer name max for UID
+        let uid = (data.customer_name || data.customer || 'Guest').substring(0, 10).toLowerCase();
+        printer.tableCustom([
+            { text: dateStr, align: "LEFT", width: 0.25 },
+            { text: "000 0", align: "CENTER", width: 0.40 },
+            { text: uid, align: "RIGHT", width: 0.35 }
         ]);
         printer.drawLine();
         
+        printer.tableCustom([
+            { text: "Item Name", align: "LEFT", width: 0.50 },
+            { text: "Qty.Rate", align: "RIGHT", width: 0.25 },
+            { text: "Amount", align: "RIGHT", width: 0.25 }
+        ]);
+        printer.drawLine();
+        
+        let subTotal = 0;
+        let totalQty = 0;
+        let taxes = {};
+        
         for (const item of data.items) {
+            const taxPercent = parseFloat(item.tax_percentage) || 0;
+            const baseRate = parseFloat(item.price) / (1 + (taxPercent / 100));
+            const amount = baseRate * parseInt(item.quantity, 10);
+            const taxAmount = (parseFloat(item.price) - baseRate) * parseInt(item.quantity, 10);
+            
+            subTotal += amount;
+            totalQty += parseInt(item.quantity, 10);
+            
+            if (taxPercent > 0) {
+                if (!taxes[taxPercent]) taxes[taxPercent] = 0;
+                taxes[taxPercent] += taxAmount;
+            }
+            
             printer.tableCustom([
-                { text: String(item.quantity), align: "LEFT", width: 0.15 },
-                { text: item.name, align: "LEFT", width: 0.55 },
-                { text: String(item.price), align: "RIGHT", width: 0.30 }
+                { text: item.name.substring(0, 25), align: "LEFT", width: 0.50 },
+                { text: `${item.quantity} ${baseRate.toFixed(2)}`, align: "RIGHT", width: 0.25 },
+                { text: amount.toFixed(2), align: "RIGHT", width: 0.25 }
             ]);
         }
+        
         printer.drawLine();
-        printer.alignRight();
-        printer.println(`TOTAL: Rs ${data.total}`);
+        
+        printer.tableCustom([
+            { text: "Sub Total", align: "LEFT", width: 0.50 },
+            { text: String(totalQty), align: "CENTER", width: 0.25 },
+            { text: subTotal.toFixed(2), align: "RIGHT", width: 0.25 }
+        ]);
+        
+        for (const [percent, taxAmt] of Object.entries(taxes)) {
+            const halfTax = taxAmt / 2;
+            const halfPercent = parseFloat(percent) / 2;
+            if (taxAmt > 0.01) {
+                printer.tableCustom([
+                    { text: `CGST ${halfPercent}%`, align: "LEFT", width: 0.50 },
+                    { text: "", align: "CENTER", width: 0.25 },
+                    { text: halfTax.toFixed(2), align: "RIGHT", width: 0.25 }
+                ]);
+                printer.tableCustom([
+                    { text: `SGST ${halfPercent}%`, align: "LEFT", width: 0.50 },
+                    { text: "", align: "CENTER", width: 0.25 },
+                    { text: halfTax.toFixed(2), align: "RIGHT", width: 0.25 }
+                ]);
+            }
+        }
+        
+        printer.drawLine();
+        printer.tableCustom([
+            { text: "Gross Amount", align: "LEFT", width: 0.50 },
+            { text: "", align: "CENTER", width: 0.25 },
+            { text: parseFloat(data.total).toFixed(2), align: "RIGHT", width: 0.25 }
+        ]);
+        printer.drawLine();
+        
+        printer.alignLeft();
+        if (data.customer_name) {
+            printer.println(`G. Name : ${data.customer_name.toUpperCase()}`);
+        } else if (data.customer) {
+            printer.println(`G. Name : ${data.customer.toUpperCase()}`);
+        }
+
+        if (cleanAddr) {
+            // ">>>>>" style address prefix like in image
+            printer.println(`Address : >>>>>${cleanAddr}`);
+        }
+
+        if (data.phone) {
+            printer.println(`phone   : ${data.phone}`);
+        }
+        
+        printer.println(`KOT No. : ${data.order_number}`);
+        printer.println("Thanks for Your Visit");
     }
 
-    printer.drawLine();
-    printer.alignCenter();
-    printer.println("Thank you!");
     printer.cut();
     
     // Get the raw ESC/POS Buffer
