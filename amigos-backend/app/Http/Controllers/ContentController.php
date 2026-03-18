@@ -55,7 +55,7 @@ class ContentController extends Controller
     }
 
     // --- BANNERS ---
-    public function storeBanner(Request $request)
+    public function storeBannerUrl(Request $request)
     {
         $data = $request->validate([
             'image_url' => 'required|url',
