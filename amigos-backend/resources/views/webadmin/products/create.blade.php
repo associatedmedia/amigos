@@ -21,13 +21,21 @@
                     <input type="number" step="0.01" name="price" class="form-control" placeholder="0.00" value="{{ old('price') }}" required>
                 </div>
             </div>
-
-                <div class="col-md-5 mb-3">
+            <div class="row">
+                <div class="col-md-6 mb-3">
                     <label class="form-label fw-bold">Category</label>
-                    <input type="text" name="category" class="form-control" placeholder="E.g., Veg Pizza" value="{{ old('category') }}">
-                    <small class="text-muted">Currently mapped automatically upon ingest, or typed manually here.</small>
+                    <select name="category" class="form-select">
+                        <option value="">-- Select Category --</option>
+                        @if(isset($categories))
+                            @foreach($categories as $categoryOption)
+                                <option value="{{ $categoryOption->name }}" {{ old('category') == $categoryOption->name ? 'selected' : '' }}>
+                                    {{ $categoryOption->name }}
+                                </option>
+                            @endforeach
+                        @endif
+                    </select>
                 </div>
-                <div class="col-md-4 mb-3">
+                <div class="col-md-6 mb-3">
                     <label class="form-label fw-bold">Print Assign (Fallback)</label>
                     <select name="print_assign" class="form-select">
                         <option value="">-- Match via Category --</option>
@@ -40,8 +48,11 @@
                         @endif
                     </select>
                 </div>
-                <div class="col-md-3 mb-3">
-                    <label class="form-label fw-bold">Old DB Code</label>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Old Database Code (Optional)</label>
                     <input type="text" name="old_db_code" class="form-control" placeholder="E.g., P01" value="{{ old('old_db_code') }}">
                 </div>
             </div>
