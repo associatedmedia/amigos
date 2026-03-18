@@ -32,7 +32,8 @@ class OrderController extends Controller
     {
         $order = Order::with(['user', 'items.product', 'driver'])->findOrFail($id);
         $drivers = \App\Models\User::where('role', 'driver')->get();
-        return view('webadmin.orders.show', compact('order', 'drivers'));
+        $orderStatuses = \App\Models\OrderStatus::orderBy('step_index')->get();
+        return view('webadmin.orders.show', compact('order', 'drivers', 'orderStatuses'));
     }
 
     public function updateStatus(Request $request, $id)
@@ -40,7 +41,7 @@ class OrderController extends Controller
         $order = Order::findOrFail($id);
         
         $request->validate([
-            'status' => 'required|string|in:pending,accepted,assigned,picked_up,delivered,cancelled,refunded',
+            'status' => 'required|string|exists:order_statuses,status_code',
         ]);
 
         $order->status = $request->input('status');

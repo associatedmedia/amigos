@@ -11,10 +11,12 @@ class SettingController extends Controller
     public function index()
     {
         $settings = Setting::all();
+        $orderStatuses = \App\Models\OrderStatus::orderBy('step_index')->get();
         
         return response()->json([
             'success' => true,
-            'data' => $settings
+            'data' => $settings,
+            'order_statuses' => $orderStatuses
         ]);
     }
 

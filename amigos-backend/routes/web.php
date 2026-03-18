@@ -96,5 +96,13 @@ Route::prefix('admin')->group(function () {
         Route::get('drivers/{id}/edit', [\App\Http\Controllers\webadmin\DriverController::class, 'edit'])->name('admin.drivers.edit');
         Route::put('drivers/{id}', [\App\Http\Controllers\webadmin\DriverController::class, 'update'])->name('admin.drivers.update');
         Route::delete('drivers/{id}', [\App\Http\Controllers\webadmin\DriverController::class, 'destroy'])->name('admin.drivers.destroy');
+        // Order Statuses
+        Route::get('order-statuses', [\App\Http\Controllers\WebAdmin\OrderStatusController::class, 'index'])->name('admin.order-statuses.index');
+        Route::get('order-statuses/data', [\App\Http\Controllers\WebAdmin\OrderStatusController::class, 'data'])->name('admin.order-statuses.data');
+        Route::get('order-statuses/create', [\App\Http\Controllers\WebAdmin\OrderStatusController::class, 'create'])->name('admin.order-statuses.create');
+        Route::post('order-statuses', [\App\Http\Controllers\WebAdmin\OrderStatusController::class, 'store'])->name('admin.order-statuses.store');
+        Route::get('order-statuses/{id}/edit', [\App\Http\Controllers\WebAdmin\OrderStatusController::class, 'edit'])->name('admin.order-statuses.edit');
+        Route::put('order-statuses/{id}', [\App\Http\Controllers\WebAdmin\OrderStatusController::class, 'update'])->name('admin.order-statuses.update');
+        Route::delete('order-statuses/{id}', [\App\Http\Controllers\WebAdmin\OrderStatusController::class, 'destroy'])->name('admin.order-statuses.destroy');
     });
 });

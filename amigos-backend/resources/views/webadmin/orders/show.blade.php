@@ -217,13 +217,11 @@
                     @method('PUT')
                     <div class="input-group">
                         <select name="status" class="form-select" required>
-                            <option value="pending" {{ $order->status == 'pending' ? 'selected' : '' }}>Pending</option>
-                            <option value="accepted" {{ $order->status == 'accepted' ? 'selected' : '' }}>Accepted</option>
-                            <option value="assigned" {{ $order->status == 'assigned' ? 'selected' : '' }}>Assigned</option>
-                            <option value="picked_up" {{ $order->status == 'picked_up' ? 'selected' : '' }}>Picked Up</option>
-                            <option value="delivered" {{ $order->status == 'delivered' ? 'selected' : '' }}>Delivered</option>
-                            <option value="cancelled" {{ $order->status == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
-                            <option value="refunded" {{ $order->status == 'refunded' ? 'selected' : '' }}>Refunded</option>
+                            @foreach($orderStatuses as $statusOp)
+                                <option value="{{ $statusOp->status_code }}" {{ $order->status == $statusOp->status_code ? 'selected' : '' }}>
+                                    {{ $statusOp->label }}
+                                </option>
+                            @endforeach
                         </select>
                         <button class="btn btn-primary" type="submit">Update</button>
                     </div>
