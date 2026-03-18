@@ -266,7 +266,7 @@
     @if(session('is_admin') || (auth()->check() && auth()->user()->role === 'admin'))
     
     <!-- Hidden audio element for new order notifications -->
-    <audio id="orderNotificationSound" src="https://actions.google.com/sounds/v1/alarms/store_door_chime.ogg" preload="auto"></audio>
+    <audio id="orderNotificationSound" src="https://api.amigospizza.co/ring.mp3" preload="auto"></audio>
 
     <script>
         $(document).ready(function() {
@@ -313,6 +313,7 @@
                     success: function(response) {
                         if (response.latest_id > lastOrderId) {
                             lastOrderId = response.latest_id;
+                            let newOrderNumber = response.order_number ? response.order_number : lastOrderId;
                             
                             // Play the chime sound
                             if (bell) {
@@ -322,13 +323,16 @@
                                 });
                             }
                             
-                            if (window.location.href.includes('/orders') && typeof table !== 'undefined' && table.ajax) {
-                                table.ajax.reload(null, false);
-                            } else {
-                                if (confirm("A new order (ID: #" + lastOrderId + ") has arrived! View it now?")) {
-                                    window.location.href = "{{ url('admin/orders') }}/" + lastOrderId;
+                            // Delay the confirm dialog slightly so the browser has time to start the audio thread
+                            setTimeout(function() {
+                                if (window.location.href.includes('/orders') && typeof table !== 'undefined' && table.ajax) {
+                                    table.ajax.reload(null, false);
+                                } else {
+                                    if (confirm("A new order (No: " + newOrderNumber + ") has arrived! View it now?")) {
+                                        window.location.href = "{{ url('admin/orders') }}/" + lastOrderId;
+                                    }
                                 }
-                            }
+                            }, 500);
                         }
                     }
                 });

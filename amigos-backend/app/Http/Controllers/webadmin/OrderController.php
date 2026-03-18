@@ -23,7 +23,8 @@ class OrderController extends Controller
     {
         $latestOrder = Order::orderBy('id', 'desc')->first();
         return response()->json([
-            'latest_id' => $latestOrder ? $latestOrder->id : 0
+            'latest_id' => $latestOrder ? $latestOrder->id : 0,
+            'order_number' => $latestOrder ? $latestOrder->order_number : null
         ]);
     }
 
