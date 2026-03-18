@@ -36,7 +36,7 @@
             order: [[0, "desc"]],
             ajax: "{{ route('admin.orders.data') }}",
             columns: [
-                { data: 'id', name: 'id' },
+                { data: 'order_number', name: 'order_number' },
                 { data: 'platform', name: 'platform', orderable: false, searchable: false },
                 { data: 'customer_name', name: 'user.name' },
                 { data: 'customer_phone', name: 'user.mobile_no' },

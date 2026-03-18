@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\WebAdmin;
+namespace App\Http\Controllers\webadmin;
 
 use App\Http\Controllers\Controller;
 use App\Models\OrderStatus;
