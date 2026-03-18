@@ -51,9 +51,17 @@
             </div>
 
             <div class="row">
-                <div class="col-md-6 mb-3">
+                <div class="col-md-4 mb-3">
                     <label class="form-label fw-bold">Old Database Code (Optional)</label>
                     <input type="text" name="old_db_code" class="form-control" placeholder="E.g., P01" value="{{ old('old_db_code') }}">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label fw-bold">GST Code / Name</label>
+                    <input type="text" name="gst" class="form-control" placeholder="E.g., GST 5%" value="{{ old('gst') }}">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label fw-bold">Tax Percentage (%)</label>
+                    <input type="number" step="0.01" name="tax_percentage" class="form-control" placeholder="0.00" value="{{ old('tax_percentage', 0) }}">
                 </div>
             </div>
 

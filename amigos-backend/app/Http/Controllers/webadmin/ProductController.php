@@ -31,6 +31,8 @@ class ProductController extends Controller
             'category' => 'nullable|string|max:255',
             'print_assign' => 'nullable|string|max:255',
             'price' => 'required|numeric|min:0',
+            'gst' => 'nullable|string|max:255',
+            'tax_percentage' => 'nullable|numeric|min:0|max:100',
             'old_db_code' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'is_veg' => 'boolean',
@@ -44,6 +46,8 @@ class ProductController extends Controller
         $product->category = $request->category;
         $product->print_assign = $request->print_assign;
         $product->price = $request->price;
+        $product->gst = $request->gst;
+        $product->tax_percentage = $request->tax_percentage ?? 0;
         $product->old_db_code = $request->old_db_code;
         $product->description = $request->description;
         $product->is_veg = $request->has('is_veg');
@@ -88,6 +92,8 @@ class ProductController extends Controller
             'category' => 'nullable|string|max:255',
             'print_assign' => 'nullable|string|max:255',
             'price' => 'required|numeric|min:0',
+            'gst' => 'nullable|string|max:255',
+            'tax_percentage' => 'nullable|numeric|min:0|max:100',
             'old_db_code' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'is_veg' => 'boolean',
@@ -100,6 +106,8 @@ class ProductController extends Controller
         $product->category = $request->category;
         $product->print_assign = $request->print_assign;
         $product->price = $request->price;
+        $product->gst = $request->gst;
+        $product->tax_percentage = $request->tax_percentage ?? 0;
         $product->old_db_code = $request->old_db_code;
         $product->description = $request->description;
         $product->is_veg = $request->has('is_veg');

@@ -16,6 +16,8 @@ class Product extends Model
         'category',      // Storing category name directly (based on your Excel import)
         'print_assign',  // explicit print assignment fallback
         'price',
+        'gst',
+        'tax_percentage',
         'image_url',
         'old_db_code',    // To link with old order items
         'is_veg',        // boolean
