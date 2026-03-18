@@ -266,7 +266,7 @@
     @if(session('is_admin') || (auth()->check() && auth()->user()->role === 'admin'))
     
     <!-- Hidden audio element for new order notifications -->
-    <audio id="orderNotificationSound" src="https://api.amigospizza.co/ring.mp3" preload="auto"></audio>
+    <audio id="orderNotificationSound" src="https://api.amigospizza.co/bell_ring.mp3" preload="auto"></audio>
 
     <script>
         $(document).ready(function() {
