@@ -115,10 +115,6 @@
                         <span>Subtotal</span>
                         <span id="displaySubtotal">₹0.00</span>
                     </div>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>Delivery Fee</span>
-                        <input type="number" name="delivery_fee" id="deliveryFee" class="form-control form-control-sm w-50 text-end" value="0" step="0.01">
-                    </div>
                     <div class="d-flex justify-content-between mb-2 text-muted small">
                         <span>Included GST (5%)</span>
                         <span id="displayGst">₹0.00</span>
@@ -137,7 +133,6 @@
     </div>
 </form>
 
-<!-- Add Customer Modal -->
 <div class="modal fade" id="addCustomerModal" tabindex="-1" aria-labelledby="addCustomerModal" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -173,7 +168,6 @@
     </div>
   </div>
 </div>
-
 
 @endsection
 
@@ -249,9 +243,8 @@
                 subtotal += total;
             });
 
-            let deliveryFee = parseFloat(document.getElementById('deliveryFee').value) || 0;
             let gst = subtotal - (subtotal / 1.05); // 5% inclusive GST
-            let grandTotal = subtotal + deliveryFee;
+            let grandTotal = subtotal; // Delivery fee logic removed from calculation
 
             document.getElementById('displaySubtotal').innerText = '₹' + subtotal.toFixed(2);
             document.getElementById('displayGst').innerText = '₹' + gst.toFixed(2);
@@ -303,8 +296,6 @@
                 }
             }
         });
-
-        document.getElementById('deliveryFee').addEventListener('input', calculateTotals);
 
         // Initial Calculation
         calculateTotals();
