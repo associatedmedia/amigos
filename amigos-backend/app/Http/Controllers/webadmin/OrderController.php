@@ -15,9 +15,45 @@ class OrderController extends Controller
         return view('webadmin.orders.index');
     }
 
-    public function create()
+   public function create()
     {
-        return view('webadmin.orders.create');
+        $customers = \App\Models\User::where('role', 'user')->get();
+        $products = \App\Models\Product::where('is_active', 1)->get();
+        return view('webadmin.orders.create', compact('customers', 'products'));
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'items' => 'required|array|min:1',
+            // add more validation as needed
+        ]);
+
+        \DB::transaction(function () use ($request) {
+            $order = Order::create([
+                'user_id' => $request->user_id,
+                'status' => 'pending',
+                'payment_status' => 'pending',
+                'platform' => 'web_admin',
+                'total_amount' => 0, // Will calculate below
+            ]);
+
+            $total = 0;
+            foreach ($request->items as $item) {
+                $order->items()->create([
+                    'product_id' => $item['product_id'],
+                    'quantity' => $item['quantity'],
+                    'price' => $item['price'],
+                    'variety_name' => $item['variety_name'] ?? null,
+                ]);
+                $total += ($item['price'] * $item['quantity']);
+            }
+
+            $order->update(['total_amount' => $total]);
+        });
+
+        return redirect()->route('admin.orders.index')->with('success', 'Order created manually!');
     }
 
     public function latestOrderId()
