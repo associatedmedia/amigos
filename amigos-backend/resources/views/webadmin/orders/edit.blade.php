@@ -92,7 +92,7 @@
                         <label class="form-label">Status</label>
                         <select name="status" class="form-select select2">
                             @foreach($orderStatuses as $statusObj)
-                                <option value="{{ $statusObj->status_code }}" {{ $order->status == $statusObj->status_code ? 'selected' : '' }}>{{ $statusObj->name }}</option>
+                                <option value="{{ $statusObj->status_code }}" {{ $order->status == $statusObj->status_code ? 'selected' : '' }}>{{ $statusObj->label }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -181,7 +181,6 @@
     $(document).ready(function() {
         if($('.select2').length) {
             $('.select2').select2({
-                theme: 'bootstrap-5',
                 width: '100%'
             });
         }
