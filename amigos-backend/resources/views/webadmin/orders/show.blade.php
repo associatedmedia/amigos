@@ -156,14 +156,8 @@
                     <tfoot class="table-light">
                         <tr>
                             <td colspan="3" class="text-end fw-bold">Subtotal:</td>
-                            <td class="text-end fw-bold">₹{{ number_format($order->total_amount, 2) }}</td>
+                            <td class="text-end fw-bold">₹{{ number_format($order->total_amount - $order->delivery_fee, 2) }}</td>
                         </tr>
-                        @if($order->gst_amount > 0)
-                        <tr>
-                            <td colspan="3" class="text-end">GST:</td>
-                            <td class="text-end">₹{{ number_format($order->gst_amount, 2) }}</td>
-                        </tr>
-                        @endif
                         @if($order->delivery_fee > 0)
                         <tr>
                             <td colspan="3" class="text-end">Delivery Fee:</td>
@@ -174,6 +168,11 @@
                             <td colspan="3" class="text-end fw-bold fs-5">Grand Total:</td>
                             <td class="text-end fw-bold text-success fs-5">₹{{ number_format($order->total_amount, 2) }}</td>
                         </tr>
+                        @if($order->gst_amount > 0)
+                        <tr>
+                            <td colspan="4" class="text-end text-muted small">(Includes GST: ₹{{ number_format($order->gst_amount, 2) }})</td>
+                        </tr>
+                        @endif
                     </tfoot>
                 </table>
             </div>
@@ -345,14 +344,8 @@
     <div>
         <div class="flex-between">
             <span>Subtotal:</span>
-            <span>₹{{ number_format($order->total_amount, 2) }}</span>
+            <span>₹{{ number_format($order->total_amount - $order->delivery_fee, 2) }}</span>
         </div>
-        @if($order->gst_amount > 0)
-        <div class="flex-between">
-            <span>GST:</span>
-            <span>₹{{ number_format($order->gst_amount, 2) }}</span>
-        </div>
-        @endif
         @if($order->delivery_fee > 0)
         <div class="flex-between">
             <span>Delivery:</span>
@@ -364,6 +357,12 @@
             <span>TOTAL:</span>
             <span>₹{{ number_format($order->total_amount, 2) }}</span>
         </div>
+        @if($order->gst_amount > 0)
+        <div class="flex-between" style="font-size: 11px;">
+            <span>(Includes GST:</span>
+            <span>₹{{ number_format($order->gst_amount, 2) }})</span>
+        </div>
+        @endif
     </div>
     
     <div class="divider"></div>

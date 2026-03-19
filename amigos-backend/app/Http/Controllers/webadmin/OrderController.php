@@ -34,13 +34,16 @@ class OrderController extends Controller
         \DB::transaction(function () use ($request) {
             $order = Order::create([
                 'user_id' => $request->user_id,
-                'status' => 'pending',
-                'payment_status' => 'pending',
+                'status' => $request->status ?? 'pending',
+                'payment_method' => $request->payment_method ?? 'cash',
+                'payment_status' => $request->payment_status ?? 'pending',
+                'delivery_fee' => $request->delivery_fee ?? 0,
                 'platform' => 'web_admin',
                 'total_amount' => 0, // Will calculate below
+                'gst_amount' => 0,
             ]);
 
-            $total = 0;
+            $subtotal = 0;
             foreach ($request->items as $item) {
                 $order->items()->create([
                     'product_id' => $item['product_id'],
@@ -48,10 +51,14 @@ class OrderController extends Controller
                     'price' => $item['price'],
                     'variety_name' => $item['variety_name'] ?? null,
                 ]);
-                $total += ($item['price'] * $item['quantity']);
+                $subtotal += ($item['price'] * $item['quantity']);
             }
 
-            $order->update(['total_amount' => $total]);
+            $deliveryFee = $request->delivery_fee ?? 0;
+            $gst = round($subtotal - ($subtotal / 1.05), 2); // 5% inclusive GST
+            $grandTotal = $subtotal + $deliveryFee;
+
+            $order->update(['total_amount' => $grandTotal, 'gst_amount' => $gst]);
         });
 
         return redirect()->route('admin.orders.index')->with('success', 'Order created manually!');
@@ -119,8 +126,8 @@ class OrderController extends Controller
             }
 
             // 3. Recalculate Totals
-            $order->gst_amount = $subtotal * 0.05; // Assuming 5% GST, adjust as needed
-            $order->total_amount = $subtotal + $order->gst_amount + $order->delivery_fee;
+            $order->gst_amount = round($subtotal - ($subtotal / 1.05), 2); // 5% inclusive GST
+            $order->total_amount = $subtotal + $order->delivery_fee;
             $order->save();
 
             DB::commit();

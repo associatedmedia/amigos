@@ -119,6 +119,10 @@
                         <span>Delivery Fee</span>
                         <input type="number" name="delivery_fee" id="deliveryFee" class="form-control form-control-sm w-50 text-end" value="0" step="0.01">
                     </div>
+                    <div class="d-flex justify-content-between mb-2 text-muted small">
+                        <span>Included GST (5%)</span>
+                        <span id="displayGst">₹0.00</span>
+                    </div>
                     <hr>
                     <div class="d-flex justify-content-between fw-bold fs-5 text-success">
                         <span>Grand Total</span>
@@ -246,10 +250,11 @@
             });
 
             let deliveryFee = parseFloat(document.getElementById('deliveryFee').value) || 0;
-            let gst = subtotal * 0.05; // 5% GST
-            let grandTotal = subtotal + gst + deliveryFee;
+            let gst = subtotal - (subtotal / 1.05); // 5% inclusive GST
+            let grandTotal = subtotal + deliveryFee;
 
             document.getElementById('displaySubtotal').innerText = '₹' + subtotal.toFixed(2);
+            document.getElementById('displayGst').innerText = '₹' + gst.toFixed(2);
             document.getElementById('displayGrandTotal').innerText = '₹' + grandTotal.toFixed(2);
         }
 
