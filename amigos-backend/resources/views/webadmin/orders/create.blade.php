@@ -29,33 +29,31 @@
                             </tr>
                         </thead>
                         <tbody id="itemRows">
-                            @foreach($order->items as $index => $item)
                             <tr class="item-row">
                                 <td>
-                                    <select name="items[{{ $index }}][product_id]" class="form-select product-select" required>
+                                    <select name="items[0][product_id]" class="form-select product-select" required>
                                         <option value="">Select...</option>
                                         @foreach($products as $product)
-                                            <option value="{{ $product->id }}" data-price="{{ $product->price }}" {{ $item->product_id == $product->id ? 'selected' : '' }}>
+                                            <option value="{{ $product->id }}" data-price="{{ $product->price }}">
                                                 {{ $product->name }}
                                             </option>
                                         @endforeach
                                     </select>
                                 </td>
                                 <td>
-                                    <input type="text" name="items[{{ $index }}][variety_name]" class="form-control" value="{{ $item->variety_name }}" placeholder="e.g. Large">
+                                    <input type="text" name="items[0][variety_name]" class="form-control" placeholder="e.g. Large">
                                 </td>
                                 <td>
-                                    <input type="number" name="items[{{ $index }}][price]" class="form-control item-price" value="{{ $item->price }}" step="0.01" required>
+                                    <input type="number" name="items[0][price]" class="form-control item-price" step="0.01" required>
                                 </td>
                                 <td>
-                                    <input type="number" name="items[{{ $index }}][quantity]" class="form-control item-qty" value="{{ $item->quantity }}" min="1" required>
+                                    <input type="number" name="items[0][quantity]" class="form-control item-qty" value="1" min="1" required>
                                 </td>
-                                <td class="item-row-total fw-bold pt-3 text-end">₹{{ number_format($item->price * $item->quantity, 2) }}</td>
+                                <td class="item-row-total fw-bold pt-3 text-end">₹0.00</td>
                                 <td>
                                     <button type="button" class="btn btn-danger btn-sm remove-row"><i class="bi bi-trash"></i></button>
                                 </td>
                             </tr>
-                            @endforeach
                         </tbody>
                     </table>
                 </div>
@@ -75,7 +73,7 @@
                         <label class="form-label">Customer</label>
                         <select name="user_id" class="form-select select2" required>
                             @foreach($customers as $customer)
-                                <option value="{{ $customer->id }}" {{ $order->user_id == $customer->id ? 'selected' : '' }}>
+                                <option value="{{ $customer->id }}">
                                     {{ $customer->name }} ({{ $customer->mobile_no }})
                                 </option>
                             @endforeach
@@ -84,22 +82,22 @@
                     <div class="mb-3">
                         <label class="form-label">Status</label>
                         <select name="status" class="form-select">
-                            <option value="pending" {{ $order->status == 'pending' ? 'selected' : '' }}>Pending</option>
-                            <option value="accepted" {{ $order->status == 'accepted' ? 'selected' : '' }}>Accepted</option>
-                            <option value="delivered" {{ $order->status == 'delivered' ? 'selected' : '' }}>Delivered</option>
-                            <option value="cancelled" {{ $order->status == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                            <option value="pending" selected>Pending</option>
+                            <option value="accepted">Accepted</option>
+                            <option value="delivered">Delivered</option>
+                            <option value="cancelled">Cancelled</option>
                         </select>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Payment</label>
                         <div class="input-group">
                             <select name="payment_method" class="form-select">
-                                <option value="cash" {{ $order->payment_method == 'cash' ? 'selected' : '' }}>Cash (COD)</option>
-                                <option value="razorpay" {{ $order->payment_method == 'razorpay' ? 'selected' : '' }}>Online</option>
+                                <option value="cash" selected>Cash (COD)</option>
+                                <option value="razorpay">Online</option>
                             </select>
                             <select name="payment_status" class="form-select">
-                                <option value="pending" {{ $order->payment_status == 'pending' ? 'selected' : '' }}>Pending</option>
-                                <option value="paid" {{ $order->payment_status == 'paid' ? 'selected' : '' }}>Paid</option>
+                                <option value="pending" selected>Pending</option>
+                                <option value="paid">Paid</option>
                             </select>
                         </div>
                     </div>
@@ -114,12 +112,12 @@
                     </div>
                     <div class="d-flex justify-content-between mb-2">
                         <span>Delivery Fee</span>
-                        <input type="number" name="delivery_fee" id="deliveryFee" class="form-control form-control-sm w-50 text-end" value="{{ $order->delivery_fee ?? 0 }}" step="0.01">
+                        <input type="number" name="delivery_fee" id="deliveryFee" class="form-control form-control-sm w-50 text-end" value="0" step="0.01">
                     </div>
                     <hr>
                     <div class="d-flex justify-content-between fw-bold fs-5 text-success">
                         <span>Grand Total</span>
-                        <span id="displayGrandTotal">₹{{ number_format($order->total_amount, 2) }}</span>
+                        <span id="displayGrandTotal">₹0.00</span>
                     </div>
                 </div>
                 <div class="card-footer border-0 bg-light text-end">
@@ -135,7 +133,7 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        let rowCount = {{ count($order->items) }};
+        let rowCount = 1;
         const tbody = document.getElementById('itemRows');
 
         // Function to calculate totals

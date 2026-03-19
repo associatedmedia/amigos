@@ -73,6 +73,14 @@ class OrderController extends Controller
         return view('webadmin.orders.show', compact('order', 'drivers', 'orderStatuses'));
     }
 
+    public function edit($id)
+    {
+        $order = Order::with(['items'])->findOrFail($id);
+        $customers = \App\Models\User::where('role', 'user')->get();
+        $products = \App\Models\Product::where('is_available', 1)->get();
+        return view('webadmin.orders.edit', compact('order', 'customers', 'products'));
+    }
+
     public function update(Request $request, $id)
     {
         $order = Order::findOrFail($id);

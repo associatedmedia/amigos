@@ -49,9 +49,9 @@ Route::prefix('admin')->group(function () {
         Route::get('orders', [OrderController::class, 'index'])->name('admin.orders.index');
         Route::get('orders/data', [OrderController::class, 'data'])->name('admin.orders.data');
         Route::get('orders/latest-id', [OrderController::class, 'latestOrderId'])->name('admin.orders.latest_id');
-        Route::get('/admin/orders/create', [OrderController::class, 'create'])->name('admin.orders.create');
-        Route::get('/admin/orders/{id}', [OrderController::class, 'show'])->name('admin.orders.edit');
-        
+        Route::get('orders/create', [OrderController::class, 'create'])->name('admin.orders.create');
+        Route::get('orders/{id}/edit', [OrderController::class, 'edit'])->name('admin.orders.edit');
+        Route::put('orders/{id}', [OrderController::class, 'update'])->name('admin.orders.update');
         Route::get('orders/{id}', [OrderController::class, 'show'])->name('admin.orders.show');
         Route::put('orders/{id}/status', [OrderController::class, 'updateStatus'])->name('admin.orders.updateStatus');
         Route::put('orders/{id}/assign-driver', [OrderController::class, 'assignDriver'])->name('admin.orders.assignDriver');
