@@ -162,10 +162,6 @@ class OrderController extends Controller
                 return $order->created_at->format('M d, Y h:i A');
             })
             ->addColumn('action', function ($order) {
-                $url = route('admin.orders.show', $order->id);
-                return '<a href="' . $url . '" class="btn btn-sm btn-outline-info"><i class="bi bi-eye"></i> View</a>';
-            })
-            ->addColumn('action', function ($order) {
             $viewUrl = route('admin.orders.show', $order->id);
             $editUrl = route('admin.orders.edit', $order->id); // NEW Route
             
