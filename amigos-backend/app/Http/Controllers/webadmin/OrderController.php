@@ -17,7 +17,7 @@ class OrderController extends Controller
 
     public function create()
     {
-        $customers = \App\Models\User::where('role', 'user')->get();
+        $customers = \App\Models\User::whereIn('role', ['user', 'customer'])->get();
         $products = \App\Models\Product::where('is_available', 1)->get();
         $orderStatuses = \App\Models\OrderStatus::orderBy('step_index')->get();
         return view('webadmin.orders.create', compact('customers', 'products', 'orderStatuses'));
@@ -77,7 +77,7 @@ class OrderController extends Controller
     public function edit($id)
     {
         $order = Order::with(['items'])->findOrFail($id);
-        $customers = \App\Models\User::where('role', 'user')->get();
+        $customers = \App\Models\User::whereIn('role', ['user', 'customer'])->get();
         $products = \App\Models\Product::where('is_available', 1)->get();
         $orderStatuses = \App\Models\OrderStatus::orderBy('step_index')->get();
         return view('webadmin.orders.edit', compact('order', 'customers', 'products', 'orderStatuses'));
