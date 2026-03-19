@@ -41,6 +41,36 @@ class CustomerController extends Controller
         return redirect()->route('admin.customers.index')->with('success', 'Customer created successfully.');
     }
 
+    public function storeAjax(Request $request)
+    {
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'mobile_no' => 'required|string|max:20|unique:users',
+            'email' => 'nullable|email|max:255|unique:users',
+            'password' => 'required|string|min:6',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first()
+            ]);
+        }
+
+        $customer = new User();
+        $customer->name = $request->name;
+        $customer->mobile_no = $request->mobile_no;
+        $customer->email = $request->email;
+        $customer->password = bcrypt($request->password);
+        $customer->role = 'user'; // OrderController expects 'user'
+        $customer->save();
+
+        return response()->json([
+            'success' => true,
+            'customer' => $customer
+        ]);
+    }
+
     public function show($id)
     {
         $customer = User::where('role', 'customer')->findOrFail($id);

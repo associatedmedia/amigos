@@ -74,13 +74,19 @@
                 <div class="card-body">
                     <div class="mb-3">
                         <label class="form-label">Customer</label>
-                        <select name="user_id" class="form-select select2" required>
-                            @foreach($customers as $customer)
-                                <option value="{{ $customer->id }}" {{ $order->user_id == $customer->id ? 'selected' : '' }}>
-                                    {{ $customer->name }} ({{ $customer->mobile_no }})
-                                </option>
-                            @endforeach
-                        </select>
+                        <div class="input-group">
+                            <select name="user_id" class="form-select select2" required>
+                                <option value="">Select Customer</option>
+                                @foreach($customers as $customer)
+                                    <option value="{{ $customer->id }}" {{ $order->user_id == $customer->id ? 'selected' : '' }}>
+                                        {{ $customer->name }} ({{ $customer->mobile_no }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#addCustomerModal" title="Add New Customer">
+                                <i class="bi bi-person-plus"></i> New
+                            </button>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Status</label>
@@ -130,6 +136,44 @@
     </div>
 </form>
 
+<!-- Add Customer Modal -->
+<div class="modal fade" id="addCustomerModal" tabindex="-1" aria-labelledby="addCustomerModal" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="addCustomerForm">
+        <div class="modal-header">
+          <h5 class="modal-title">Add New Customer</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <div id="addCustomerError" class="alert alert-danger d-none"></div>
+            <div class="mb-3">
+                <label class="form-label">Name *</label>
+                <input type="text" class="form-control" name="name" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Mobile No *</label>
+                <input type="text" class="form-control" name="mobile_no" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-control" name="email">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Password *</label>
+                <input type="password" class="form-control" name="password" required>
+            </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-primary" id="saveCustomerBtn">Save Customer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
 @endsection
 
 @push('scripts')
@@ -141,6 +185,51 @@
                 width: '100%'
             });
         }
+    });
+</script>
+<script>
+    document.getElementById('addCustomerForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        let formData = new FormData(this);
+        let btn = document.getElementById('saveCustomerBtn');
+        let errorDiv = document.getElementById('addCustomerError');
+        
+        btn.disabled = true;
+        btn.innerText = 'Saving...';
+        errorDiv.classList.add('d-none');
+        
+        fetch('{{ route('admin.customers.storeAjax') }}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            btn.disabled = false;
+            btn.innerText = 'Save Customer';
+            
+            if(data.success) {
+                let newOption = new Option(data.customer.name + ' (' + data.customer.mobile_no + ')', data.customer.id, true, true);
+                $('select[name="user_id"]').append(newOption).trigger('change');
+                
+                let modal = bootstrap.Modal.getInstance(document.getElementById('addCustomerModal'));
+                modal.hide();
+                this.reset();
+            } else {
+                errorDiv.innerText = data.message || 'Error occurred';
+                errorDiv.classList.remove('d-none');
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.innerText = 'Save Customer';
+            errorDiv.innerText = 'A network error occurred.';
+            errorDiv.classList.remove('d-none');
+        });
     });
 </script>
 <script>
