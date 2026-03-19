@@ -50,6 +50,7 @@ Route::prefix('admin')->group(function () {
         Route::get('orders/data', [OrderController::class, 'data'])->name('admin.orders.data');
         Route::get('orders/latest-id', [OrderController::class, 'latestOrderId'])->name('admin.orders.latest_id');
         Route::get('orders/create', [OrderController::class, 'create'])->name('admin.orders.create');
+        Route::post('orders', [OrderController::class, 'store'])->name('admin.orders.store');
         Route::get('orders/{id}/edit', [OrderController::class, 'edit'])->name('admin.orders.edit');
         Route::put('orders/{id}', [OrderController::class, 'update'])->name('admin.orders.update');
         Route::get('orders/{id}', [OrderController::class, 'show'])->name('admin.orders.show');
