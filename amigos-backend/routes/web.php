@@ -53,6 +53,7 @@ Route::prefix('admin')->group(function () {
         Route::get('orders/{id}', [OrderController::class, 'show'])->name('admin.orders.show');
         Route::put('orders/{id}/status', [OrderController::class, 'updateStatus'])->name('admin.orders.updateStatus');
         Route::put('orders/{id}/assign-driver', [OrderController::class, 'assignDriver'])->name('admin.orders.assignDriver');
+        Route::resource('orders', App\Http\Controllers\webadmin\OrderController::class);
 
         Route::get('/admin/orders/{id}/print-kot', [App\Http\Controllers\webadmin\OrderController::class, 'printKOT'])->name('admin.orders.printKOT');
 

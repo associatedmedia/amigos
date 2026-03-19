@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
@@ -34,6 +35,55 @@ class OrderController extends Controller
         $drivers = \App\Models\User::where('role', 'driver')->get();
         $orderStatuses = \App\Models\OrderStatus::orderBy('step_index')->get();
         return view('webadmin.orders.show', compact('order', 'drivers', 'orderStatuses'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $order = Order::findOrFail($id);
+
+        $request->validate([
+            'user_id' => 'required',
+            'items' => 'required|array|min:1',
+            'items.*.product_id' => 'required',
+            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.price' => 'required|numeric',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            // 1. Update Main Order details
+            $order->user_id = $request->user_id;
+            $order->status = $request->status;
+            $order->payment_status = $request->payment_status;
+            $order->payment_method = $request->payment_method;
+            $order->delivery_fee = $request->delivery_fee ?? 0;
+            
+            // 2. Delete old items and save new ones
+            $order->items()->delete();
+            
+            $subtotal = 0;
+            foreach ($request->items as $itemData) {
+                $order->items()->create([
+                    'product_id' => $itemData['product_id'],
+                    'variety_name' => $itemData['variety_name'] ?? null,
+                    'quantity' => $itemData['quantity'],
+                    'price' => $itemData['price'],
+                ]);
+                $subtotal += ($itemData['price'] * $itemData['quantity']);
+            }
+
+            // 3. Recalculate Totals
+            $order->gst_amount = $subtotal * 0.05; // Assuming 5% GST, adjust as needed
+            $order->total_amount = $subtotal + $order->gst_amount + $order->delivery_fee;
+            $order->save();
+
+            DB::commit();
+            return redirect()->route('admin.orders.show', $order->id)->with('success', 'Order updated successfully!');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Failed to update order: ' . $e->getMessage());
+        }
     }
 
     public function updateStatus(Request $request, $id)
@@ -115,7 +165,18 @@ class OrderController extends Controller
                 $url = route('admin.orders.show', $order->id);
                 return '<a href="' . $url . '" class="btn btn-sm btn-outline-info"><i class="bi bi-eye"></i> View</a>';
             })
-            ->rawColumns(['platform', 'payment_status', 'status', 'action'])
-            ->make(true);
+            ->addColumn('action', function ($order) {
+            $viewUrl = route('admin.orders.show', $order->id);
+            $editUrl = route('admin.orders.edit', $order->id); // NEW Route
+            
+            return '
+                <div class="btn-group" role="group">
+                    <a href="' . $viewUrl . '" class="btn btn-sm btn-outline-info" title="View KOT"><i class="bi bi-eye"></i></a>
+                    <a href="' . $editUrl . '" class="btn btn-sm btn-outline-primary" title="Edit Order"><i class="bi bi-pencil"></i></a>
+                </div>
+            ';
+        })
+        ->rawColumns(['platform', 'payment_status', 'status', 'action'])
+        ->make(true);
     }
 }
