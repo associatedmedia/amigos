@@ -81,21 +81,20 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Status</label>
-                        <select name="status" class="form-select">
-                            <option value="pending" selected>Pending</option>
-                            <option value="accepted">Accepted</option>
-                            <option value="delivered">Delivered</option>
-                            <option value="cancelled">Cancelled</option>
+                        <select name="status" class="form-select select2">
+                            @foreach($orderStatuses as $statusObj)
+                                <option value="{{ $statusObj->status_code }}" {{ $statusObj->status_code == 'pending' ? 'selected' : '' }}>{{ $statusObj->name }}</option>
+                            @endforeach
                         </select>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Payment</label>
                         <div class="input-group">
-                            <select name="payment_method" class="form-select">
+                            <select name="payment_method" class="form-select select2">
                                 <option value="cash" selected>Cash (COD)</option>
                                 <option value="razorpay">Online</option>
                             </select>
-                            <select name="payment_status" class="form-select">
+                            <select name="payment_status" class="form-select select2">
                                 <option value="pending" selected>Pending</option>
                                 <option value="paid">Paid</option>
                             </select>
@@ -131,6 +130,16 @@
 @endsection
 
 @push('scripts')
+<script>
+    $(document).ready(function() {
+        if($('.select2').length) {
+            $('.select2').select2({
+                theme: 'bootstrap-5',
+                width: '100%'
+            });
+        }
+    });
+</script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         let rowCount = 1;

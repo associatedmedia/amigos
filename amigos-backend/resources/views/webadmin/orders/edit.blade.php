@@ -84,21 +84,20 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Status</label>
-                        <select name="status" class="form-select">
-                            <option value="pending" {{ $order->status == 'pending' ? 'selected' : '' }}>Pending</option>
-                            <option value="accepted" {{ $order->status == 'accepted' ? 'selected' : '' }}>Accepted</option>
-                            <option value="delivered" {{ $order->status == 'delivered' ? 'selected' : '' }}>Delivered</option>
-                            <option value="cancelled" {{ $order->status == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                        <select name="status" class="form-select select2">
+                            @foreach($orderStatuses as $statusObj)
+                                <option value="{{ $statusObj->status_code }}" {{ $order->status == $statusObj->status_code ? 'selected' : '' }}>{{ $statusObj->name }}</option>
+                            @endforeach
                         </select>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Payment</label>
                         <div class="input-group">
-                            <select name="payment_method" class="form-select">
+                            <select name="payment_method" class="form-select select2">
                                 <option value="cash" {{ $order->payment_method == 'cash' ? 'selected' : '' }}>Cash (COD)</option>
                                 <option value="razorpay" {{ $order->payment_method == 'razorpay' ? 'selected' : '' }}>Online</option>
                             </select>
-                            <select name="payment_status" class="form-select">
+                            <select name="payment_status" class="form-select select2">
                                 <option value="pending" {{ $order->payment_status == 'pending' ? 'selected' : '' }}>Pending</option>
                                 <option value="paid" {{ $order->payment_status == 'paid' ? 'selected' : '' }}>Paid</option>
                             </select>
@@ -134,6 +133,16 @@
 @endsection
 
 @push('scripts')
+<script>
+    $(document).ready(function() {
+        if($('.select2').length) {
+            $('.select2').select2({
+                theme: 'bootstrap-5',
+                width: '100%'
+            });
+        }
+    });
+</script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         let rowCount = {{ count($order->items) }};

@@ -15,11 +15,12 @@ class OrderController extends Controller
         return view('webadmin.orders.index');
     }
 
-   public function create()
+    public function create()
     {
         $customers = \App\Models\User::where('role', 'user')->get();
         $products = \App\Models\Product::where('is_available', 1)->get();
-        return view('webadmin.orders.create', compact('customers', 'products'));
+        $orderStatuses = \App\Models\OrderStatus::orderBy('step_index')->get();
+        return view('webadmin.orders.create', compact('customers', 'products', 'orderStatuses'));
     }
 
     public function store(Request $request)
@@ -78,7 +79,8 @@ class OrderController extends Controller
         $order = Order::with(['items'])->findOrFail($id);
         $customers = \App\Models\User::where('role', 'user')->get();
         $products = \App\Models\Product::where('is_available', 1)->get();
-        return view('webadmin.orders.edit', compact('order', 'customers', 'products'));
+        $orderStatuses = \App\Models\OrderStatus::orderBy('step_index')->get();
+        return view('webadmin.orders.edit', compact('order', 'customers', 'products', 'orderStatuses'));
     }
 
     public function update(Request $request, $id)
