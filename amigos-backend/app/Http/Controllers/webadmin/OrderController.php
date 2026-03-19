@@ -18,7 +18,7 @@ class OrderController extends Controller
    public function create()
     {
         $customers = \App\Models\User::where('role', 'user')->get();
-        $products = \App\Models\Product::where('is_active', 1)->get();
+        $products = \App\Models\Product::where('is_available', 1)->get();
         return view('webadmin.orders.create', compact('customers', 'products'));
     }
 
