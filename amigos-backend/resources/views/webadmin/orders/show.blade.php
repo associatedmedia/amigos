@@ -292,7 +292,7 @@
             </div>
         </div>
 
-        @if($order->driver_id && in_array($order->status, ['assigned', 'picked_up']))
+        @if($order->driver_id && in_array($order->status, ['picked_up' , 'out_for_delivery']))
         <div class="card shadow-sm border-0 mb-4">
             <div class="card-header bg-white fw-bold d-flex justify-content-between align-items-center">
                 <span>
