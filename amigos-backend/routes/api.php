@@ -84,6 +84,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // Driver Location Tracking
     Route::post('/driver/location', [DriverLocationController::class, 'update']);
     Route::get('/orders/{id}/track', [DriverLocationController::class, 'show']);
+   
+    // Driver Routes
+    Route::get('/driver/orders', [App\Http\Controllers\Api\DriverApiController::class, 'getMyOrders']);
+    Route::post('/driver/orders/{id}/status', [App\Http\Controllers\Api\DriverApiController::class, 'updateOrderStatus']);
+    Route::post('/driver/update-location', [\App\Http\Controllers\Api\DriverApiController::class, 'updateLocation']);
 });
 
 // ==========================================
