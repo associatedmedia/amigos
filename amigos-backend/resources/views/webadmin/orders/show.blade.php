@@ -1,5 +1,7 @@
 @extends('webadmin.layout.app')
-
+@push('styles')
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+@endpush
 @push('scripts')
 <style>
     /* Styling for the Print KOT explicitly */
@@ -388,3 +390,73 @@
 </div>
 
 @endsection
+
+@push('scripts')
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Only run map logic if the map container exists
+        if (document.getElementById('driverMap')) {
+            
+            // 1. Initialize the Map (Defaulting to Srinagar coordinates temporarily)
+            var map = L.map('driverMap').setView([34.0837, 74.7973], 14);
+            
+            // 2. Load OpenStreetMap Tiles (100% Free)
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap'
+            }).addTo(map);
+
+            // 3. Create a custom delivery icon
+            var driverIcon = L.icon({
+                iconUrl: 'https://cdn-icons-png.flaticon.com/512/1986/1986937.png', // A free bike icon
+                iconSize: [40, 40],
+                iconAnchor: [20, 40],
+                popupAnchor: [0, -40]
+            });
+
+            var driverMarker = null;
+
+            // 4. Function to fetch and update location
+            function fetchDriverLocation() {
+                fetch('{{ route('admin.orders.live-location', $order->id) }}')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            var latLng = [data.lat, data.lng];
+                            
+                            // If marker doesn't exist, create it. Otherwise, just move it smoothly.
+                            if (!driverMarker) {
+                                driverMarker = L.marker(latLng, {icon: driverIcon}).addTo(map);
+                                driverMarker.bindPopup("<b>Amigos Driver</b><br>On the way!").openPopup();
+                                map.setView(latLng, 16); // Zoom in on the driver once found
+                            } else {
+                                driverMarker.setLatLng(latLng);
+                                // Optional: map.panTo(latLng); // Un-comment if you want the map to aggressively follow them
+                            }
+
+                            // Update UI text
+                            document.getElementById('lastUpdatedText').innerText = "Last update: " + data.last_updated;
+                            
+                            let badge = document.getElementById('driverStatusBadge');
+                            if (data.is_online) {
+                                badge.className = "badge bg-success ms-2";
+                                badge.innerText = "Active";
+                            } else {
+                                badge.className = "badge bg-danger ms-2";
+                                badge.innerText = "Offline";
+                            }
+                        } else {
+                            document.getElementById('lastUpdatedText').innerText = data.message;
+                        }
+                    })
+                    .catch(error => console.error('Error fetching location:', error));
+            }
+
+            // 5. Fetch immediately, then every 5 seconds forever
+            fetchDriverLocation();
+            setInterval(fetchDriverLocation, 5000);
+        }
+    });
+</script>
+@endpush
