@@ -291,6 +291,21 @@
                 @endif
             </div>
         </div>
+
+        @if($order->driver_id && in_array($order->status, ['assigned', 'picked_up']))
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white fw-bold d-flex justify-content-between align-items-center">
+                <span>
+                    <i class="bi bi-geo-alt-fill text-danger me-2"></i>Live Driver Tracking
+                    <span id="driverStatusBadge" class="badge bg-warning text-dark ms-2">Connecting...</span>
+                </span>
+                <span id="lastUpdatedText" class="text-muted small">Loading GPS...</span>
+            </div>
+            <div class="card-body p-0">
+                <div id="driverMap" style="height: 400px; width: 100%; border-bottom-left-radius: 6px; border-bottom-right-radius: 6px;"></div>
+            </div>
+        </div>
+        @endif
     </div>
 </div>
 

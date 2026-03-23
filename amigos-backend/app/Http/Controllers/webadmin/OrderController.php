@@ -228,4 +228,27 @@ class OrderController extends Controller
         ->rawColumns(['platform', 'payment_status', 'status', 'action'])
         ->make(true);
     }
+
+    public function getLiveLocation($id)
+    {
+        $order = \App\Models\Order::findOrFail($id);
+        
+        if (!$order->driver_id) {
+            return response()->json(['success' => false, 'message' => 'No driver assigned']);
+        }
+
+        $location = \App\Models\DriverLocation::where('driver_id', $order->driver_id)->first();
+
+        if (!$location) {
+            return response()->json(['success' => false, 'message' => 'Waiting for driver GPS...']);
+        }
+
+        return response()->json([
+            'success' => true,
+            'lat' => $location->latitude,
+            'lng' => $location->longitude,
+            'is_online' => $location->is_online,
+            'last_updated' => $location->updated_at->diffForHumans() // e.g., "10 seconds ago"
+        ]);
+    }
 }

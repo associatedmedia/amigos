@@ -110,5 +110,8 @@ Route::prefix('admin')->group(function () {
         Route::get('order-statuses/{id}/edit', [\App\Http\Controllers\webadmin\OrderStatusController::class, 'edit'])->name('admin.order-statuses.edit');
         Route::put('order-statuses/{id}', [\App\Http\Controllers\webadmin\OrderStatusController::class, 'update'])->name('admin.order-statuses.update');
         Route::delete('order-statuses/{id}', [\App\Http\Controllers\webadmin\OrderStatusController::class, 'destroy'])->name('admin.order-statuses.destroy');
+
+
+        Route::get('/orders/{id}/live-location', [App\Http\Controllers\webadmin\OrderController::class, 'getLiveLocation'])->name('admin.orders.live-location');
     });
 });
