@@ -48,9 +48,17 @@ class PrinterService
             // Check if a printer setup explicitly maps to the category
             $setup = PrinterSetup::whereRaw('UPPER(operation_type) = ?', [$operationType])->first();
             
-            // If it doesn't map to a category, try checking the explicit print assignment on the product
-            if (!$setup && !empty($item->product->print_assign)) {
-                $operationType = strtoupper(trim($item->product->print_assign));
+            // If it doesn't map to a category, check the explicit print assignment on the product
+            if (!$setup) {
+                if (!empty($item->product->print_assign)) {
+                    $operationType = strtoupper(trim($item->product->print_assign));
+                } else {
+                    // Fallback to explicit print assignment on the category
+                    $categoryModel = \App\Models\Category::where('name', $item->product->category)->first();
+                    if ($categoryModel && !empty($categoryModel->print_assign)) {
+                        $operationType = strtoupper(trim($categoryModel->print_assign));
+                    }
+                }
             }
             
             \Log::info("Item: {$item->product->name}, Category: '$categoryName' -> Matching as: '$operationType'");
