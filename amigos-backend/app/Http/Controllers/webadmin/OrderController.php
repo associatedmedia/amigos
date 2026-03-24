@@ -32,8 +32,16 @@ class OrderController extends Controller
         ]);
 
         \DB::transaction(function () use ($request) {
+            $user = \App\Models\User::find($request->user_id);
+
             $order = Order::create([
                 'user_id' => $request->user_id,
+                'mobile_no' => $user->mobile_no ?? 'N/A',
+                'address' => $user->address ?? 'N/A',
+                'customer_name' => $user->name ?? 'Guest',
+                'order_number' => Order::generateOrderNumber(),
+                'store_id' => 1,
+                'timestamp' => time(),
                 'status' => $request->status ?? 'pending',
                 'payment_method' => $request->payment_method ?? 'cash',
                 'payment_status' => $request->payment_status ?? 'pending',
