@@ -18,7 +18,8 @@ class CategoryController extends Controller
 
     public function create()
     {
-        return view('webadmin.categories.create');
+        $printers = \App\Models\PrinterSetup::all();
+        return view('webadmin.categories.create', compact('printers'));
     }
 
     public function store(Request $request)
@@ -26,12 +27,14 @@ class CategoryController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'image_url' => 'nullable|url',
-            'image' => 'nullable|image|max:2048'
+            'image' => 'nullable|image|max:2048',
+            'print_assign' => 'nullable|string'
         ]);
 
         $category = new Category();
         $category->name = $request->name;
         $category->is_active = $request->has('is_active') ? true : false;
+        $category->print_assign = $request->print_assign;
 
         if ($request->filled('image_url')) {
             $category->image_url = $request->image_url;
@@ -56,7 +59,8 @@ class CategoryController extends Controller
     public function edit($id)
     {
         $category = Category::findOrFail($id);
-        return view('webadmin.categories.edit', compact('category'));
+        $printers = \App\Models\PrinterSetup::all();
+        return view('webadmin.categories.edit', compact('category', 'printers'));
     }
 
     public function update(Request $request, $id)
@@ -66,11 +70,13 @@ class CategoryController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'image_url' => 'nullable|url',
-            'image' => 'nullable|image|max:2048'
+            'image' => 'nullable|image|max:2048',
+            'print_assign' => 'nullable|string'
         ]);
 
         $category->name = $request->name;
         $category->is_active = $request->has('is_active') ? true : false;
+        $category->print_assign = $request->print_assign;
 
         if ($request->filled('image_url')) {
             // Delete old image if it was a stored file

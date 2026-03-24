@@ -19,6 +19,20 @@
                 </div>
                 
                 <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Print Assign (Fallback)</label>
+                    <select name="print_assign" class="form-select">
+                        <option value="">-- None / Default --</option>
+                        @if(isset($printers))
+                            @foreach($printers as $printer)
+                                <option value="{{ $printer->operation_type }}" {{ old('print_assign', $category->print_assign) == $printer->operation_type ? 'selected' : '' }}>
+                                    {{ $printer->operation_type }} @if($printer->printer_model) ({{ $printer->printer_model }}) @endif
+                                </option>
+                            @endforeach
+                        @endif
+                    </select>
+                </div>
+                
+                <div class="col-md-6 mb-3">
                     <label class="form-label fw-bold">Category Image URL (Optional)</label>
                     <input type="url" name="image_url" class="form-control" placeholder="https://example.com/image.jpg" value="{{ old('image_url', str_starts_with($category->image_url ?? '', 'http') ? $category->image_url : '') }}">
                     <small class="text-muted">Provide a direct link OR upload a file below.</small>

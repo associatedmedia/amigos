@@ -14,6 +14,7 @@ class Category extends Model
     protected $fillable = [
         'name', 
         'image_url', // If you add category icons later
+        'print_assign',
     ];
 
     /**
