@@ -40,7 +40,8 @@
 
                 <div class="col-md-6 mb-4">
                     <label class="form-label fw-bold">Upload Local Image</label>
-                    <input type="file" name="image" class="form-control" accept="image/*">
+                    <input type="file" name="image" class="form-control" accept="image/png">
+                    <div class="form-text">Recommended Size: 300 x 300 px (1:1 Square), PNG (Transparent)</div>
                     @if($category->image_url)
                         <div class="mt-2">
                             <span class="text-muted small">Current Image:</span><br>

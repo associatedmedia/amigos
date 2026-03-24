@@ -60,7 +60,8 @@
                        class="form-control @error('image') is-invalid @enderror" 
                        id="image" 
                        name="image" 
-                       accept="image/*">
+                       accept="image/jpeg,image/webp">
+                <div class="form-text">Recommended Size: 800 x 400 px (2:1), JPG / WebP</div>
                 @error('image')
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror

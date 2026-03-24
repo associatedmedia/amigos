@@ -79,7 +79,8 @@
 
                 <div class="col-md-4 mb-3">
                     <label class="form-label fw-bold">Upload Local Image</label>
-                    <input type="file" name="image" class="form-control" accept="image/*">
+                    <input type="file" name="image" class="form-control" accept="image/jpeg,image/webp">
+                    <div class="form-text">Recommended Size: 600 x 600 px (1:1 Square), JPG / WebP</div>
                 </div>
                 
                 <div class="col-md-4 mb-3 d-flex align-items-end pb-2">

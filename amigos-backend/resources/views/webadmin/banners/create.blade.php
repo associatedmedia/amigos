@@ -45,8 +45,8 @@
             <div class="row mb-3">
                 <div class="col-md-6">
                     <label for="image" class="form-label">Upload Image</label>
-                    <input class="form-control" type="file" id="image" name="image">
-                    <div class="form-text">Upload a local image file (jpeg, png, jpg, gif).</div>
+                    <input class="form-control" type="file" id="image" name="image" accept="image/jpeg,image/webp">
+                    <div class="form-text">Recommended Size: 1024 x 500 px (~ 2:1), JPG / WebP</div>
                 </div>
                 <div class="col-md-6">
                     <label for="image_url" class="form-label">Or Image URL</label>

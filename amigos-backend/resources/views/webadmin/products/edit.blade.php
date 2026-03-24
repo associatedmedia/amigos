@@ -74,7 +74,8 @@
             <div class="row mb-4">
                 <div class="col-md-4 mb-3">
                     <label class="form-label fw-bold">Product Image</label>
-                    <input type="file" name="image" class="form-control" accept="image/*">
+                    <input type="file" name="image" class="form-control" accept="image/jpeg,image/webp">
+                    <div class="form-text">Recommended Size: 600 x 600 px (1:1 Square), JPG / WebP</div>
                     @if($product->image_url)
                         <div class="mt-2">
                             <span class="text-muted small">Current Image:</span><br>
