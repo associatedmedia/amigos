@@ -117,7 +117,7 @@ class OrderController extends Controller
             $order->status = $request->status;
             $order->payment_status = $request->payment_status;
             $order->payment_method = $request->payment_method;
-            $order->delivery_fee = $request->delivery_fee ?? 0;
+            $deliveryFee = $request->delivery_fee ?? 0;
             
             // 2. Delete old items and save new ones
             $order->items()->delete();
@@ -134,8 +134,8 @@ class OrderController extends Controller
             }
 
             // 3. Recalculate Totals
-            $order->gst_amount = round($subtotal - ($subtotal / 1.05), 2); // 5% inclusive GST
-            $order->total_amount = $subtotal + $order->delivery_fee;
+            $gstAmount = round($subtotal - ($subtotal / 1.05), 2); // 5% inclusive GST
+            $order->total_amount = $subtotal + $deliveryFee;
             $order->save();
 
             DB::commit();
