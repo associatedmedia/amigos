@@ -294,6 +294,42 @@
             </div>
         </div>
 
+        <div class="card shadow-sm border-0 mb-4 mt-4">
+            <div class="card-header bg-white fw-bold"><i class="bi bi-clock-history me-2"></i> Order History Timeline</div>
+            <div class="card-body">
+                @if($order->histories && $order->histories->count() > 0)
+                    <div class="position-relative ms-3 mt-2">
+                        <!-- Vertical Status Track -->
+                        <div class="position-absolute h-100 border-start" style="left: -12px; border-color: #dee2e6!important;"></div>
+                        
+                        @foreach($order->histories as $history)
+                            <div class="mb-3 position-relative">
+                                <!-- Marker Dot -->
+                                <span class="position-absolute top-0 start-0 translate-middle p-1 border border-light rounded-circle bg-primary" style="left: -12px!important; width: 14px; height: 14px; z-index: 2;"></span>
+                                
+                                <div class="ms-3 pt-0">
+                                    <div class="fw-bold text-dark">{{ $history->action }}</div>
+                                    <div class="small fw-semibold mt-1" style="color: #6c757d;">
+                                        {{ $history->created_at->format('M d, Y - h:i A') }} 
+                                        @if($history->user) 
+                                            <span class="text-primary">• by {{ $history->user->name }}</span> 
+                                        @endif
+                                    </div>
+                                    @if($history->remarks)
+                                        <p class="mb-0 mt-2 small bg-light p-2 rounded text-secondary border shadow-sm">{{ $history->remarks }}</p>
+                                    @endif
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="alert alert-secondary py-2 mb-0 mt-2 small">
+                        <i class="bi bi-info-circle"></i> History tracking wasn't active when this order was created.
+                    </div>
+                @endif
+            </div>
+        </div>
+
        
     </div>
 </div>
