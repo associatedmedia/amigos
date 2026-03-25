@@ -104,13 +104,13 @@
 
 @push('scripts')
 <!-- Load Google Maps Interface -->
-<script async defer src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&callback=initGoogleMap"></script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY', env('GOOGLE_API_KEY')) }}&callback=initGoogleMap"></script>
 
 <script>
     let map, driverMarker, destMarker, directionsService, directionsRenderer;
     // Safely parse order coordinates, falling back to registered user coordinates
-    const destLat = {{ $order->latitude ?? ($order->user->latitude ?? 'null') }};
-    const destLng = {{ $order->longitude ?? ($order->user->longitude ?? 'null') }};
+    const destLat = @json($order->latitude ?? ($order->user->latitude ?? null));
+    const destLng = @json($order->longitude ?? ($order->user->longitude ?? null));
     const hasDestination = (destLat !== null && destLng !== null);
 
     window.initGoogleMap = function() {
@@ -145,10 +145,16 @@
             });
         }
 
-        // 4. Start Ping Cycle
+
+        // 4. Map loaded successfully
+        console.log("Google Maps initialized.");
+    };
+
+    // 4. Start Ping Cycle immediately (don't wait for Google Maps to load)
+    document.addEventListener('DOMContentLoaded', function() {
         fetchDriverLocation();
         setInterval(fetchDriverLocation, 5000);
-    };
+    });
 
     function updateRoute(driverPos) {
         if (!hasDestination || !driverPos) return;
