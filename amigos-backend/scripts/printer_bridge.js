@@ -116,8 +116,9 @@ async function simulatePrint(job) {
         throw new Error("'node-thermal-printer' missing. Cannot format receipts. Run: npm install node-thermal-printer");
     }
 
-    // Map the database printer_type to physical config
-    const config = printerConfigs.find(c => c.operation_type === job.printer_type);
+    // Map the database printer_type to physical config (Case-insensitive matching)
+    const normalizedJobType = job.printer_type?.toString().trim().toUpperCase();
+    const config = printerConfigs.find(c => c.operation_type?.trim().toUpperCase() === normalizedJobType);
     
     if (!config || !config.printer_id) {
         throw new Error(`No hardware printer_id configured in Admin Panel for operation type: ${job.printer_type}`);
