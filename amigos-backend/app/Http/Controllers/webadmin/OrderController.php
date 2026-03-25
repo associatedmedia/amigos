@@ -252,6 +252,23 @@ class OrderController extends Controller
             return response()->json(['success' => false, 'message' => 'No driver assigned']);
         }
 
+        // 1. Try fetching from ultra-fast Redis Cache
+        $redisDetails = \Illuminate\Support\Facades\Redis::get("driver:{$order->driver_id}:details");
+
+        if ($redisDetails) {
+            $data = json_decode($redisDetails, true);
+            $lastUpdated = \Carbon\Carbon::parse($data['updated_at'] ?? now());
+            
+            return response()->json([
+                'success' => true,
+                'lat' => $data['lat'],
+                'lng' => $data['lng'],
+                'is_online' => true, // If it's in Redis, they are online and tracking
+                'last_updated' => $lastUpdated->diffForHumans()
+            ]);
+        }
+
+        // 2. Fallback to Database if Redis key expired or tracking offline
         $location = \App\Models\DriverLocation::where('driver_id', $order->driver_id)->first();
 
         if (!$location) {
