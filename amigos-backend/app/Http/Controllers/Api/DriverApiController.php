@@ -62,6 +62,19 @@ class DriverApiController extends Controller
             ]
         );
 
+        // Update Redis for live tracking if online
+        if ($request->is_online) {
+            \Illuminate\Support\Facades\Redis::geoadd('drivers_live', $request->longitude, $request->latitude, $driver->id);
+            \Illuminate\Support\Facades\Redis::setex("driver:{$driver->id}:details", 3600, json_encode([
+                'lat' => $request->latitude, 
+                'lng' => $request->longitude, 
+                'updated_at' => now()
+            ]));
+        } else {
+            \Illuminate\Support\Facades\Redis::zrem('drivers_live', $driver->id);
+            \Illuminate\Support\Facades\Redis::del("driver:{$driver->id}:details");
+        }
+
         return response()->json(['success' => true]);
     }
 
