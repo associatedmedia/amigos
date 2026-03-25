@@ -173,8 +173,12 @@
     }
 
     function fetchDriverLocation() {
-        fetch('{{ route('admin.orders.live-location', $order->id) }}')
-            .then(res => res.json())
+        // Use relative URL to avoid Mixed Content (HTTP vs HTTPS) issues on production
+        fetch('/admin/orders/{{ $order->id }}/live-location')
+            .then(res => {
+                if (!res.ok) throw new Error("Server returned " + res.status);
+                return res.json();
+            })
             .then(data => {
                 let badge = document.getElementById('gpsStatusBadge');
                 

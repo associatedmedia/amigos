@@ -275,19 +275,23 @@ class OrderController extends Controller
         }
 
         // 2. Fallback to Database if Redis key expired or tracking offline
-        $location = \App\Models\DriverLocation::where('driver_id', $order->driver_id)->first();
+        try {
+            $location = \App\Models\DriverLocation::where('driver_id', $order->driver_id)->first();
 
-        if (!$location) {
-            return response()->json(['success' => false, 'message' => 'Waiting for driver GPS...']);
+            if (!$location) {
+                return response()->json(['success' => false, 'message' => 'Waiting for driver GPS...']);
+            }
+
+            return response()->json([
+                'success' => true,
+                'lat' => $location->latitude,
+                'lng' => $location->longitude,
+                'is_online' => (bool)$location->is_online,
+                'last_updated' => $location->updated_at->diffForHumans()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'DB Fetch Error: ' . $e->getMessage()]);
         }
-
-        return response()->json([
-            'success' => true,
-            'lat' => $location->latitude,
-            'lng' => $location->longitude,
-            'is_online' => $location->is_online,
-            'last_updated' => $location->updated_at->diffForHumans()
-        ]);
     }
 
     public function tracking($id)
