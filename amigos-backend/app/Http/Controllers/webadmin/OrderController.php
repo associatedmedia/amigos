@@ -224,12 +224,19 @@ class OrderController extends Controller
             })
             ->addColumn('action', function ($order) {
             $viewUrl = route('admin.orders.show', $order->id);
-            $editUrl = route('admin.orders.edit', $order->id); // NEW Route
+            $editUrl = route('admin.orders.edit', $order->id);
             
+            $trackBtn = '';
+            if (in_array($order->status, ['picked_up', 'out_for_delivery'])) {
+                $trackUrl = route('admin.orders.tracking', $order->id);
+                $trackBtn = '<a href="' . $trackUrl . '" class="btn btn-sm btn-outline-danger" title="Live Tracking"><i class="bi bi-geo-alt-fill"></i></a>';
+            }
+
             return '
                 <div class="btn-group" role="group">
                     <a href="' . $viewUrl . '" class="btn btn-sm btn-outline-info" title="View KOT"><i class="bi bi-eye"></i></a>
                     <a href="' . $editUrl . '" class="btn btn-sm btn-outline-primary" title="Edit Order"><i class="bi bi-pencil"></i></a>
+                    ' . $trackBtn . '
                 </div>
             ';
         })
@@ -256,7 +263,20 @@ class OrderController extends Controller
             'lat' => $location->latitude,
             'lng' => $location->longitude,
             'is_online' => $location->is_online,
-            'last_updated' => $location->updated_at->diffForHumans() // e.g., "10 seconds ago"
+            'last_updated' => $location->updated_at->diffForHumans()
         ]);
+    }
+
+    public function tracking($id)
+    {
+        $order = Order::with(['user', 'driver', 'items.product'])->findOrFail($id);
+        
+        // Ensure only actively dispatched orders can be tracked
+        if (!in_array($order->status, ['picked_up', 'out_for_delivery']) || !$order->driver_id) {
+            return redirect()->route('admin.orders.show', $order->id)
+                ->with('error', 'Tracking unavailable. Order is not actively out for delivery.');
+        }
+
+        return view('webadmin.orders.tracking', compact('order'));
     }
 }
