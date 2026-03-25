@@ -1,10 +1,6 @@
 @extends('webadmin.layout.app')
 
 @push('styles')
-<!-- Standard Leaflet CSS -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<!-- Leaflet Routing Machine CSS -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
 <style>
     /* Full height map container */
     #trackingMap {
@@ -12,14 +8,7 @@
         width: 100%;
         border-radius: 8px;
         box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        z-index: 1;
     }
-    
-    /* Hide the built-in routing machine text itinerary, we only want the map line */
-    .leaflet-routing-container {
-        display: none !important;
-    }
-    
     .tracking-sidebar {
         height: calc(100vh - 120px);
         overflow-y: auto;
@@ -80,7 +69,7 @@
                 @endphp
                 <p class="small mb-0"><strong>Address:</strong><br>{{ $addressStr }}</p>
                 
-                @if(!$order->latitude || !$order->longitude)
+                @if(!($order->latitude ?? $order->user->latitude) || !($order->longitude ?? $order->user->longitude))
                     <div class="alert alert-warning py-1 px-2 mt-2 mb-0 small"><i class="bi bi-exclamation-triangle"></i> Customer GPS coordinates missing. Destination routing disabled.</div>
                 @endif
             </div>
@@ -106,7 +95,7 @@
         </div>
     </div>
 
-    <!-- Right Container: Map -->
+    <!-- Right Container: Google Map -->
     <div class="col-lg-9 ps-0">
         <div id="trackingMap"></div>
     </div>
@@ -114,127 +103,116 @@
 @endsection
 
 @push('scripts')
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+<!-- Load Google Maps Interface -->
+<script async defer src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&callback=initGoogleMap"></script>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
+    let map, driverMarker, destMarker, directionsService, directionsRenderer;
+    // Safely parse order coordinates, falling back to registered user coordinates
+    const destLat = {{ $order->latitude ?? ($order->user->latitude ?? 'null') }};
+    const destLng = {{ $order->longitude ?? ($order->user->longitude ?? 'null') }};
+    const hasDestination = (destLat !== null && destLng !== null);
+
+    window.initGoogleMap = function() {
+        // 1. Initialize Default Center
+        let centerPoint = hasDestination ? { lat: destLat, lng: destLng } : { lat: 34.0837, lng: 74.7973 };
         
-        // Coordinates for Customer Destination
-        const destLat = {{ $order->latitude ?? 'null' }};
-        const destLng = {{ $order->longitude ?? 'null' }};
-        const hasDestination = (destLat !== null && destLng !== null);
-
-        // Initialize Map (Default view: Srinagar)
-        var centerLat = hasDestination ? destLat : 34.0837;
-        var centerLng = hasDestination ? destLng : 74.7973;
-        var map = L.map('trackingMap').setView([centerLat, centerLng], 14);
-
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '© OpenStreetMap'
-        }).addTo(map);
-
-        // Define Icons
-        var driverIcon = L.icon({
-            iconUrl: 'https://cdn-icons-png.flaticon.com/512/1986/1986937.png', // Delivery Bike
-            iconSize: [42, 42],
-            iconAnchor: [21, 42],
-            popupAnchor: [0, -42]
+        map = new google.maps.Map(document.getElementById('trackingMap'), {
+            zoom: 15,
+            center: centerPoint,
+            mapTypeId: 'roadmap',
+            disableDefaultUI: false
         });
 
-        var homeIcon = L.icon({
-            iconUrl: 'https://cdn-icons-png.flaticon.com/512/25/25694.png', // Home/Flag
-            iconSize: [36, 36],
-            iconAnchor: [18, 36],
-            popupAnchor: [0, -36]
+        // 2. Setup Routing Engine
+        directionsService = new google.maps.DirectionsService();
+        directionsRenderer = new google.maps.DirectionsRenderer({
+            map: map,
+            suppressMarkers: true, // We will use our custom markers
+            polylineOptions: { strokeColor: '#0d6efd', strokeWeight: 6, strokeOpacity: 0.8 }
         });
 
-        // Setup Destination Marker
-        var destLocation = null;
+        // 3. Mark Destination
         if (hasDestination) {
-            destLocation = L.latLng(destLat, destLng);
-            L.marker(destLocation, {icon: homeIcon}).addTo(map)
-             .bindPopup("<b>Delivery Destination</b>");
+            destMarker = new google.maps.Marker({
+                position: centerPoint,
+                map: map,
+                icon: {
+                    url: 'https://cdn-icons-png.flaticon.com/512/25/25694.png',
+                    scaledSize: new google.maps.Size(32, 32)
+                },
+                title: "Delivery Destination"
+            });
         }
 
-        var driverMarker = null;
-        var routingControl = null;
+        // 4. Start Ping Cycle
+        fetchDriverLocation();
+        setInterval(fetchDriverLocation, 5000);
+    };
 
-        function updateRoute(driverLatLng) {
-            // Only plot route if we have a destination AND a driver location
-            if (!hasDestination || !destLocation || !driverLatLng) return;
+    function updateRoute(driverPos) {
+        if (!hasDestination || !driverPos) return;
 
-            if (!routingControl) {
-                // First time creating the route
-                routingControl = L.Routing.control({
-                    waypoints: [
-                        driverLatLng,
-                        destLocation
-                    ],
-                    // We only want to display the line, not the driving directions popup
-                    routeWhileDragging: false,
-                    showAlternatives: false,
-                    fitSelectedRoutes: true,
-                    createMarker: function() { return null; }, // We already made our own markers
-                    lineOptions: {
-                        styles: [{color: '#0d6efd', opacity: 0.8, weight: 6}] // Blue path
-                    }
-                }).addTo(map);
-            } else {
-                // Update the starting point dynamically as driver moves
-                routingControl.spliceWaypoints(0, 1, driverLatLng);
+        let request = {
+            origin: driverPos,
+            destination: { lat: destLat, lng: destLng },
+            travelMode: 'DRIVING'
+        };
+
+        directionsService.route(request, function(result, status) {
+            if (status == 'OK') {
+                directionsRenderer.setDirections(result);
             }
-        }
+        });
+    }
 
-        // Fetch driver data via AJAX
-        function fetchDriverLocation() {
-            fetch('{{ route('admin.orders.live-location', $order->id) }}')
-                .then(response => response.json())
-                .then(data => {
-                    let badge = document.getElementById('gpsStatusBadge');
+    function fetchDriverLocation() {
+        fetch('{{ route('admin.orders.live-location', $order->id) }}')
+            .then(res => res.json())
+            .then(data => {
+                let badge = document.getElementById('gpsStatusBadge');
+                
+                if (data.success) {
+                    let latLng = { lat: parseFloat(data.lat), lng: parseFloat(data.lng) };
                     
-                    if (data.success) {
-                        var latLng = L.latLng(data.lat, data.lng);
-                        
-                        // Update/Create Driver Marker
-                        if (!driverMarker) {
-                            driverMarker = L.marker(latLng, {icon: driverIcon, zIndexOffset: 1000}).addTo(map);
-                            driverMarker.bindPopup("<b>{{ $order->driver->name ?? 'Delivery Partner' }}</b>").openPopup();
-                            
-                            // If no destination exists, center on the driver
-                            if (!hasDestination) {
-                                map.setView(latLng, 16);
-                            }
-                        } else {
-                            // Smoothly move the marker to new coordinates
-                            driverMarker.setLatLng(latLng);
-                        }
-
-                        // Update the dynamic polyline route
-                        updateRoute(latLng);
-
-                        // Update Dashboard Status
-                        document.getElementById('lastUpdatedText').innerText = "Last update: " + data.last_updated;
-                        if (data.is_online) {
-                            badge.className = "badge bg-success";
-                            badge.innerText = "Active & Tracking";
-                        } else {
-                            badge.className = "badge bg-danger";
-                            badge.innerText = "Driver App Offline";
+                    if (!driverMarker) {
+                        // Create Driver Marker on First Load
+                        driverMarker = new google.maps.Marker({
+                            position: latLng,
+                            map: map,
+                            icon: {
+                                url: 'https://cdn-icons-png.flaticon.com/512/1986/1986937.png',
+                                scaledSize: new google.maps.Size(40, 40)
+                            },
+                            title: "{{ $order->driver->name ?? 'Driver' }}"
+                        });
+                        if (!hasDestination) {
+                            map.setCenter(latLng);
                         }
                     } else {
-                        document.getElementById('lastUpdatedText').innerText = data.message;
-                        badge.className = "badge bg-secondary";
-                        badge.innerText = "No Signal";
+                        // Move marker instantly for live tracking
+                        driverMarker.setPosition(latLng);
                     }
-                })
-                .catch(error => console.error('Error fetching tracker data:', error));
-        }
 
-        // Start Ping Cycle
-        fetchDriverLocation();
-        setInterval(fetchDriverLocation, 5000); // Pulse every 5 seconds
-    });
+                    // Dynamically recalculate driving ETA/Route polyline
+                    updateRoute(latLng);
+
+                    // Update UI Stats
+                    document.getElementById('lastUpdatedText').innerText = "Last update: " + data.last_updated;
+                    if (data.is_online) {
+                        badge.className = "badge bg-success";
+                        badge.innerText = "Active";
+                    } else {
+                        badge.className = "badge bg-danger";
+                        badge.innerText = "App Offline";
+                    }
+                } else {
+                    document.getElementById('lastUpdatedText').innerText = data.message;
+                    badge.className = "badge bg-secondary";
+                    badge.innerText = "No Signal";
+                }
+            })
+            .catch(err => console.error("Error pinging driver GPS:", err));
+    }
 </script>
 @endpush

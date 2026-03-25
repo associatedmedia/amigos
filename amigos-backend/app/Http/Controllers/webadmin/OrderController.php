@@ -43,6 +43,8 @@ class OrderController extends Controller
                 'store_id' => 1,
                 'timestamp' => time(),
                 'status' => $request->status ?? 'pending',
+                'latitude' => $user->latitude ?? null,
+                'longitude' => $user->longitude ?? null,
                 'payment_method' => $request->payment_method ?? 'cash',
                 'payment_status' => $request->payment_status ?? 'pending',
                 'delivery_fee' => $request->delivery_fee ?? 0,
