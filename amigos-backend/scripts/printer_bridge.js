@@ -2,7 +2,8 @@
  * Amigos Pizza - Local Printer Bridge
  * This script runs locally on the system connected to the printers.
  * It polls the backend API for pending print jobs and sends them to local printers.
- */
+*. DATED : 25/MAR/2026  
+*/
 
 import fs from 'fs';
 import path from 'path';
@@ -119,7 +120,7 @@ async function simulatePrint(job) {
     // Map the database printer_type to physical config (Case-insensitive matching)
     const normalizedJobType = job.printer_type?.toString().trim().toUpperCase();
     const config = printerConfigs.find(c => c.operation_type?.trim().toUpperCase() === normalizedJobType);
-    
+
     if (!config || !config.printer_id) {
         throw new Error(`No hardware printer_id configured in Admin Panel for operation type: ${job.printer_type}`);
     }
@@ -127,7 +128,7 @@ async function simulatePrint(job) {
     // The user's legacy system used "PRINTER_NAME, winspool, COM1:" or similar.
     // For raw networking, the printer_id in the admin panel MUST BE SET TO THE PRINTER'S IP ADDRESS (e.g. "192.168.1.100")
     const printerIp = config.printer_id.split(',')[0].trim();
-    
+
     // Basic IP validation just to be safe it's not a legacy spooler string
     if (!/^[0-9\.]+$/.test(printerIp)) {
         throw new Error(`CRITICAL: For Raw IP Printing, the Printer ID must be an IP Address (e.g., 192.168.1.100). Found: '${printerIp}'`);
@@ -148,8 +149,8 @@ async function simulatePrint(job) {
     const data = job.print_data;
 
     const dateObj = new Date(data.timestamp);
-    const dateStr = dateObj.toLocaleDateString('en-GB', {day: '2-digit', month: '2-digit', year: '2-digit'});
-    const timeStr = dateObj.toLocaleTimeString('en-GB', {hour: '2-digit', minute: '2-digit'});
+    const dateStr = dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' });
+    const timeStr = dateObj.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
     const orderType = data.address ? "HOME DELIVERY" : "TAKEAWAY";
 
     let cleanAddr = data.address;
@@ -158,7 +159,7 @@ async function simulatePrint(job) {
             let parsed = JSON.parse(data.address);
             if (Array.isArray(parsed)) cleanAddr = parsed.join(", ");
             else if (typeof parsed === 'object') cleanAddr = Object.values(parsed).join(", ");
-        } catch (e) {}
+        } catch (e) { }
     }
 
     if (data.type === 'KOT' || data.type === 'FULL_ORDER') {
@@ -169,26 +170,26 @@ async function simulatePrint(job) {
             printer.println(`Copy: ${data.copy_number} of ${data.total_copies}`);
         }
         printer.drawLine();
-        
+
         printer.alignLeft();
         printer.println(orderType);
         printer.println(`KOT No. : ${data.order_number}`);
         printer.println(`Date: ${dateStr}   Time: ${timeStr}`);
         printer.println(`Customer: ${data.customer_name || data.customer || 'Guest'}`);
-        if(data.phone) printer.println(`Phone: ${data.phone}`);
-        if(cleanAddr) printer.println(`Address: ${cleanAddr}`);
+        if (data.phone) printer.println(`Phone: ${data.phone}`);
+        if (cleanAddr) printer.println(`Address: ${cleanAddr}`);
         printer.drawLine();
-        
+
         printer.tableCustom([
             { text: "Qty", align: "LEFT", width: 0.15 },
             { text: "Item", align: "LEFT", width: 0.85 }
         ]);
         printer.drawLine();
-        
+
         for (const item of data.items) {
             printer.tableCustom([
                 { text: String(item.quantity), align: "LEFT", width: 0.15 },
-                { text: `${item.name} ${item.variety ? '('+item.variety+')' : ''}`, align: "LEFT", width: 0.85 }
+                { text: `${item.name} ${item.variety ? '(' + item.variety + ')' : ''}`, align: "LEFT", width: 0.85 }
             ]);
         }
         printer.drawLine();
@@ -206,20 +207,20 @@ async function simulatePrint(job) {
         printer.println("GST NO.- 01ABIFA7518C1ZZ");
         printer.println("(All Taxes are Inclusive)");
         printer.drawLine();
-        
+
         printer.println(orderType);
         printer.alignLeft();
         printer.tableCustom([
             { text: `Bill : ${data.order_number}`, align: "LEFT", width: 0.50 },
             { text: `Time : ${timeStr}`, align: "RIGHT", width: 0.50 }
         ]);
-        
+
         printer.tableCustom([
             { text: "Date", align: "LEFT", width: 0.25 },
             { text: "Table Cvr Stw", align: "CENTER", width: 0.40 },
             { text: "UID", align: "RIGHT", width: 0.35 }
         ]);
-        
+
         // Match 10 chars of customer name max for UID
         let uid = (data.customer_name || data.customer || 'Guest').substring(0, 10).toLowerCase();
         printer.tableCustom([
@@ -228,47 +229,47 @@ async function simulatePrint(job) {
             { text: uid, align: "RIGHT", width: 0.35 }
         ]);
         printer.drawLine();
-        
+
         printer.tableCustom([
             { text: "Item Name", align: "LEFT", width: 0.50 },
             { text: "Qty.Rate", align: "RIGHT", width: 0.25 },
             { text: "Amount", align: "RIGHT", width: 0.25 }
         ]);
         printer.drawLine();
-        
+
         let subTotal = 0;
         let totalQty = 0;
         let taxes = {};
-        
+
         for (const item of data.items) {
             const taxPercent = parseFloat(item.tax_percentage) || 0;
             const baseRate = parseFloat(item.price) / (1 + (taxPercent / 100));
             const amount = baseRate * parseInt(item.quantity, 10);
             const taxAmount = (parseFloat(item.price) - baseRate) * parseInt(item.quantity, 10);
-            
+
             subTotal += amount;
             totalQty += parseInt(item.quantity, 10);
-            
+
             if (taxPercent > 0) {
                 if (!taxes[taxPercent]) taxes[taxPercent] = 0;
                 taxes[taxPercent] += taxAmount;
             }
-            
+
             printer.tableCustom([
                 { text: item.name.substring(0, 25), align: "LEFT", width: 0.50 },
                 { text: `${item.quantity} ${baseRate.toFixed(2)}`, align: "RIGHT", width: 0.25 },
                 { text: amount.toFixed(2), align: "RIGHT", width: 0.25 }
             ]);
         }
-        
+
         printer.drawLine();
-        
+
         printer.tableCustom([
             { text: "Sub Total", align: "LEFT", width: 0.50 },
             { text: String(totalQty), align: "CENTER", width: 0.25 },
             { text: subTotal.toFixed(2), align: "RIGHT", width: 0.25 }
         ]);
-        
+
         for (const [percent, taxAmt] of Object.entries(taxes)) {
             const halfTax = taxAmt / 2;
             const halfPercent = parseFloat(percent) / 2;
@@ -285,7 +286,7 @@ async function simulatePrint(job) {
                 ]);
             }
         }
-        
+
         printer.drawLine();
         printer.tableCustom([
             { text: "Gross Amount", align: "LEFT", width: 0.50 },
@@ -293,7 +294,7 @@ async function simulatePrint(job) {
             { text: parseFloat(data.total).toFixed(2), align: "RIGHT", width: 0.25 }
         ]);
         printer.drawLine();
-        
+
         printer.alignLeft();
         if (data.customer_name) {
             printer.println(`G. Name : ${data.customer_name.toUpperCase()}`);
@@ -309,22 +310,22 @@ async function simulatePrint(job) {
         if (data.phone) {
             printer.println(`phone   : ${data.phone}`);
         }
-        
+
         printer.println(`KOT No. : ${data.order_number}`);
         printer.println("Thanks for Your Visit");
     }
 
     printer.cut();
-    
+
     // Get the raw ESC/POS Buffer
     const buffer = printer.getBuffer();
 
     return new Promise((resolve, reject) => {
         log(`Connecting to ${printerIp}:9100...`, 'DEBUG');
-        
+
         // Connect over raw TCP socket (Port 9100 is standard for receipt printers)
         const client = new net.Socket();
-        
+
         client.on('error', (err) => {
             log(`Network socket failed: TCP Connection error to ${printerIp}:9100 -> ${err.message}`, 'ERROR');
             reject(new Error(`TCP Error: ${err.message}`));
@@ -332,14 +333,14 @@ async function simulatePrint(job) {
 
         client.connect(9100, printerIp, () => {
             log(`Connected to TCP Socket. Pushing Buffer...`, 'DEBUG');
-            
+
             client.write(buffer, () => {
                 log(`Buffer successfully sent. Closing TCP Port...`, 'DEBUG');
                 client.destroy(); // kill client after server's response
                 resolve(true);
             });
         });
-        
+
         // Timeout safeguard
         setTimeout(() => {
             client.destroy();
