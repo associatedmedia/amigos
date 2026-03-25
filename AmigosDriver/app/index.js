@@ -15,6 +15,25 @@ export default function LoginScreen() {
   const [timer, setTimer] = useState(0);
   const [attempts, setAttempts] = useState(0);
   const [isBlocked, setIsBlocked] = useState(false);
+  const [isCheckingToken, setIsCheckingToken] = useState(true);
+
+  // --- AUTO LOGIN ON APP START ---
+  useEffect(() => {
+    const checkExistingToken = async () => {
+        try {
+            const token = await AsyncStorage.getItem('userToken');
+            if (token) {
+                // Instantly redirect to dashboard securely
+                router.replace('/dashboard');
+            } else {
+                setIsCheckingToken(false);
+            }
+        } catch (e) {
+            setIsCheckingToken(false);
+        }
+    };
+    checkExistingToken();
+  }, []);
 
   // Handle the countdown timer for resending OTP
   useEffect(() => {
@@ -116,6 +135,14 @@ export default function LoginScreen() {
           Alert.alert("Error", "Failed to verify OTP. Please try again." || error.message);
       }
   };
+
+  if (isCheckingToken) {
+      return (
+          <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+              <Text>Loading Amigos...</Text>
+          </SafeAreaView>
+      );
+  }
 
   return (
     <SafeAreaView style={styles.container}>

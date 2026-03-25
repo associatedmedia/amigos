@@ -16,6 +16,8 @@ export default function DashboardScreen() {
   const [orders, setOrders] = useState([]);
   const [driverName, setDriverName] = useState('Driver');
   const [analytics, setAnalytics] = useState({ total_deliveries: 0, cash_to_collect: 0 });
+  const [lastGeoSync, setLastGeoSync] = useState(null); // Feedback for GPS Sync
+  const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -42,16 +44,20 @@ export default function DashboardScreen() {
            },
            async (loc) => {
               try {
-                  const driverId = await AsyncStorage.getItem('driverId');
-                  if (driverId) {
-                      await axios.post(`${API_URL}/driver/location`, {
-                          driver_id: driverId,
-                          lat: loc.coords.latitude,
-                          lng: loc.coords.longitude
-                      });
+                  const token = await AsyncStorage.getItem('userToken');
+                  if (token) {
+                      setIsSyncing(true);
+                      await axios.post(`${API_URL}/driver/update-location`, {
+                          latitude: loc.coords.latitude,
+                          longitude: loc.coords.longitude,
+                          is_online: true
+                      }, { headers: { Authorization: `Bearer ${token}` } });
+                      setLastGeoSync(new Date());
                   }
               } catch (err) {
-                  // handle silently
+                  console.log("Loc Update Fail", err.response?.data?.message || err.message);
+              } finally {
+                  setIsSyncing(false);
               }
            }
          );
@@ -71,6 +77,17 @@ export default function DashboardScreen() {
     };
   }, [isOnline]);
 
+  // Regular Polling for New Orders when Online
+  useEffect(() => {
+     let interval;
+     if (isOnline) {
+         interval = setInterval(() => {
+             fetchOrders();
+         }, 15000); // 15 seconds
+     }
+     return () => clearInterval(interval);
+  }, [isOnline]);
+
   const fetchOrders = async () => {
     try {
       const token = await AsyncStorage.getItem('userToken');
@@ -84,6 +101,15 @@ export default function DashboardScreen() {
       if (response.data.success) {
         setOrders(response.data.orders);
         await AsyncStorage.setItem('offlineOrders', JSON.stringify(response.data.orders));
+        
+        // --- NEW RINGER LOGIC ---
+        const ackStr = await AsyncStorage.getItem('acknowledged_orders');
+        const ackList = ackStr ? JSON.parse(ackStr) : [];
+        
+        const unacked = response.data.orders.find(o => o.status === 'assigned' && !ackList.includes(o.id));
+        if (unacked) {
+             router.push({ pathname: '/new-order-ringer', params: { orderData: JSON.stringify(unacked) }});
+        }
       }
     } catch (error) {
       console.error("Error fetching orders:", error);
@@ -179,49 +205,90 @@ export default function DashboardScreen() {
           // Driver is going OFFLINE
           setIsOnline(false);
           
-          // Note: Here is where you would call stopBackgroundTracking() if you implement it later.
+          try {
+              const token = await AsyncStorage.getItem('userToken');
+              if (token) {
+                  let loc = await Location.getLastKnownPositionAsync({});
+                  await axios.post(`${API_URL}/driver/update-location`, {
+                      latitude: loc?.coords?.latitude || 0,
+                      longitude: loc?.coords?.longitude || 0,
+                      is_online: false
+                  }, { headers: { Authorization: `Bearer ${token}` } });
+              }
+          } catch(e) {}
       }
   };
 
-  const handleLogout = async () => {
-      setMenuVisible(false);
-      await AsyncStorage.removeItem('userToken');
-      router.replace('/');
+
+
+  const renderOrderCard = ({ item }) => {
+    // Detect Cash on Delivery
+    const isCash = item.payment_method === 'cash';
+    
+    // Unpack strict JSON Address
+    let displayAddress = item.address || item.user?.address || 'Customer Address';
+    if (typeof displayAddress === 'string' && displayAddress.startsWith('{')) {
+        try {
+            const parsed = JSON.parse(displayAddress);
+            displayAddress = Object.values(parsed).filter(Boolean).join(', ');
+        } catch(e) {}
+    }
+
+    // Format exact Date & Time (e.g., "Oct 24, 02:30 PM")
+    let orderTime = '';
+    if (item.created_at) {
+        const dateObj = new Date(item.created_at);
+        orderTime = dateObj.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    return (
+        <TouchableOpacity 
+        style={styles.card} 
+        activeOpacity={0.9}
+        onPress={() => router.push({ pathname: '/active-delivery', params: { orderId: item.id } })}
+        >
+        <View style={styles.cardHeader}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={styles.badge}>
+                    <Text style={styles.badgeText}>{item.status === 'picked_up' ? 'PICKED UP' : 'NEW'}</Text>
+                </View>
+                <Text style={styles.orderId}>Order #{item.order_number ?? item.id}</Text>
+            </View>
+            <Text style={{ fontSize: 12, color: '#888', fontWeight: 'bold' }}>{orderTime}</Text>
+        </View>
+
+        <View style={styles.locationContainer}>
+            <View style={styles.locationRow}>
+                <View style={styles.dotPickup} />
+                <Text style={styles.locationText} numberOfLines={1}>Amigos Pizza (Main)</Text>
+            </View>
+            <View style={styles.lineConnection} />
+            <View style={styles.locationRow}>
+                <View style={styles.dotDropoff} />
+                <Text style={styles.locationText} numberOfLines={1}>{displayAddress}</Text>
+            </View>
+        </View>
+
+        <View style={styles.cardFooter}>
+            <View>
+                <Text style={styles.distance}><Ionicons name="cash-outline" size={16} /> ₹{item.total_amount}</Text>
+                {isCash ? (
+                    <Text style={{ color: '#e63946', fontWeight: '900', fontSize: 13, marginTop: 4 }}>
+                        <Ionicons name="alert-circle" size={14} /> COLLECT CASH
+                    </Text>
+                ) : (
+                    <Text style={{ color: '#27ae60', fontWeight: '900', fontSize: 13, marginTop: 4 }}>
+                        <Ionicons name="checkmark-circle" size={14} /> PAID ONLINE
+                    </Text>
+                )}
+            </View>
+            <View style={styles.actionBtn}>
+                <Text style={styles.actionBtnText}>View Details</Text>
+            </View>
+        </View>
+        </TouchableOpacity>
+    );
   };
-
-  const renderOrderCard = ({ item }) => (
-    <TouchableOpacity 
-      style={styles.card} 
-      activeOpacity={0.9}
-      onPress={() => router.push({ pathname: '/active-delivery', params: { orderId: item.id } })}
-    >
-      <View style={styles.cardHeader}>
-        <View style={styles.badge}>
-            <Text style={styles.badgeText}>NEW</Text>
-        </View>
-        <Text style={styles.orderId}>Order #{item.order_number ?? item.id}</Text>
-      </View>
-
-      <View style={styles.locationContainer}>
-          <View style={styles.locationRow}>
-            <View style={styles.dotPickup} />
-            <Text style={styles.locationText} numberOfLines={1}>Amigos Pizza (Main)</Text>
-          </View>
-          <View style={styles.lineConnection} />
-          <View style={styles.locationRow}>
-            <View style={styles.dotDropoff} />
-            <Text style={styles.locationText} numberOfLines={1}>{item.address || 'Customer Address'}</Text>
-          </View>
-      </View>
-
-      <View style={styles.cardFooter}>
-        <Text style={styles.distance}><Ionicons name="cash-outline" size={16} /> ₹{item.total_amount}</Text>
-        <View style={styles.actionBtn}>
-          <Text style={styles.actionBtnText}>View Details</Text>
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -238,11 +305,19 @@ export default function DashboardScreen() {
 
         <View style={styles.statusRow}>
             <View>
-            <Text style={styles.statusText}>{isOnline ? 'YOU ARE ONLINE' : 'YOU ARE OFFLINE'}</Text>
-            <Text style={styles.subStatusText}>{isOnline ? 'Searching for orders...' : 'Go online to receive orders'}</Text>
+              <Text style={styles.statusText}>{isOnline ? 'YOU ARE ONLINE' : 'YOU ARE OFFLINE'}</Text>
+              {isOnline ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <View style={[styles.syncDot, { backgroundColor: isSyncing ? '#e67e22' : '#4cd137' }]} />
+                    <Text style={styles.subStatusText}>
+                        {isSyncing ? 'Syncing GPS...' : (lastGeoSync ? `Synced at ${lastGeoSync.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}` : 'Searching GPS...')}
+                    </Text>
+                </View>
+              ) : (
+                <Text style={styles.subStatusText}>Go online to receive orders</Text>
+              )}
             </View>
             
-            {/* 3. UPDATED: Call handleToggleOnline instead of setIsOnline directly */}
             <Switch 
                 value={isOnline} 
                 onValueChange={handleToggleOnline} 
@@ -309,19 +384,19 @@ export default function DashboardScreen() {
                     </TouchableOpacity>
                 </View>
 
-                <TouchableOpacity style={styles.menuItem}>
+                <TouchableOpacity style={styles.menuItem} onPress={() => { setMenuVisible(false); router.push('/profile'); }}>
                     <Ionicons name="person-outline" size={24} color="#555" />
                     <Text style={styles.menuItemText}>My Profile</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.menuItem} onPress={() => { setMenuVisible(false); router.push('/orders-list'); }}>
+                    <Ionicons name="list-outline" size={24} color="#555" />
+                    <Text style={styles.menuItemText}>Order History</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.menuItem} onPress={() => Alert.alert("Contact", "Support: +91 9999999999")}>
                     <Ionicons name="headset-outline" size={24} color="#555" />
                     <Text style={styles.menuItemText}>Contact Support</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
-                    <Ionicons name="log-out-outline" size={24} color="#e63946" />
-                    <Text style={[styles.menuItemText, { color: '#e63946' }]}>Logout</Text>
                 </TouchableOpacity>
 
                 <Text style={styles.appVersion}>Amigos Driver v1.0.0</Text>
@@ -334,15 +409,16 @@ export default function DashboardScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f4f5f7' },
-  header: { padding: 20, paddingBottom: 40, borderBottomLeftRadius: 24, borderBottomRightRadius: 24, elevation: 5 },
-  headerOffline: { backgroundColor: '#333' },
-  headerOnline: { backgroundColor: '#4cd137' },
-  navBar: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
-  iconBtn: { padding: 4 },
+  header: { padding: 24, borderBottomLeftRadius: 32, borderBottomRightRadius: 32, elevation: 10 },
+  headerOffline: { backgroundColor: '#2d3436' },
+  headerOnline: { backgroundColor: '#e63946' },
+  navBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+  iconBtn: { padding: 8 },
   statusRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  statusText: { fontSize: 22, fontWeight: '900', color: '#fff' },
-  subStatusText: { fontSize: 14, color: '#rgba(255,255,255,0.8)', marginTop: 4 },
-  statsContainer: { paddingHorizontal: 20, marginTop: -25 },
+  statusText: { color: '#fff', fontSize: 20, fontWeight: '900', letterSpacing: 1 },
+  subStatusText: { color: 'rgba(255,255,255,0.8)', fontSize: 13, marginTop: 4, fontWeight: 'bold' },
+  syncDot: { width: 8, height: 8, borderRadius: 4, marginRight: 6, marginTop: 4 },
+  statsContainer: { marginTop: -25, paddingHorizontal: 20 },
   singleStatBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', padding: 20, borderRadius: 16, elevation: 4 },
   statLabel: { fontSize: 13, color: '#666', fontWeight: 'bold', textTransform: 'uppercase' },
   statValue: { fontSize: 28, fontWeight: '900', color: '#111', marginTop: 2 },
@@ -351,7 +427,7 @@ const styles = StyleSheet.create({
   offlineState: { alignItems: 'center', justifyContent: 'center', marginTop: 40 },
   offlineMessage: { textAlign: 'center', color: '#888', marginTop: 16, fontSize: 16, fontWeight: '500' },
   card: { backgroundColor: '#fff', borderRadius: 16, padding: 16, marginBottom: 16, elevation: 2, borderWidth: 1, borderColor: '#f0f0f0' },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   badge: { backgroundColor: '#ffeaa7', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, marginRight: 8 },
   badgeText: { fontSize: 10, fontWeight: 'bold', color: '#d63031' },
   orderId: { fontSize: 16, fontWeight: 'bold', color: '#555' },

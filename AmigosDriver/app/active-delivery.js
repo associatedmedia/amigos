@@ -116,15 +116,22 @@ export default function ActiveDeliveryScreen() {
   };
 
   // --------------------------------------------------------
-  // NEW: OPEN TURN-BY-TURN NAVIGATION
+  // OPEN TURN-BY-TURN NAVIGATION
   // --------------------------------------------------------
   const handleNavigate = () => {
-      // TODO: Replace these with order.restaurant_lat or order.customer_lat from your DB
-      const lat = order.latitude;  //34.0837; 
-      const lng = order.longitude; //74.7973;
+      // Dynamic fallbacks for customer coordinates
+      const custLat = parseFloat(order.latitude || order.user?.latitude || 34.0837); 
+      const custLng = parseFloat(order.longitude || order.user?.longitude || 74.7973);
+      
+      // Amigos Pizza Main Branch (Srinagar)
+      const restLat = 34.0837;
+      const restLng = 74.7973;
+
+      const lat = isPickedUp ? custLat : restLat;
+      const lng = isPickedUp ? custLng : restLng;
       const label = isPickedUp ? "Customer Dropoff" : "Amigos Pizza";
 
-      // Creates the correct URL scheme based on whether they have an iPhone or Android
+      // Creates the correct URL scheme based on OS
       const url = Platform.select({
           ios: `maps:0,0?q=${label}@${lat},${lng}`,
           android: `geo:0,0?q=${lat},${lng}(${label})`
@@ -149,6 +156,23 @@ export default function ActiveDeliveryScreen() {
   const isPickedUp = order.status === 'picked_up';
   const totalItems = order.items ? order.items.reduce((sum, item) => sum + item.quantity, 0) : 0;
 
+  // Dynamically resolve Customer Coordinates
+  const custLat = parseFloat(order.latitude || order.user?.latitude || 34.0837); 
+  const custLng = parseFloat(order.longitude || order.user?.longitude || 74.7973);
+  
+  // Decide Map Marker Focus (Restaurant vs Customer)
+  const mapCenterLat = isPickedUp ? custLat : 34.0837;
+  const mapCenterLng = isPickedUp ? custLng : 74.7973;
+
+  // Unpack strict Laravel JSON Addresses strings
+  let displayAddress = order.address || order.user?.address || 'No Address Provided';
+  if (typeof displayAddress === 'string' && displayAddress.startsWith('{')) {
+      try {
+          const parsed = JSON.parse(displayAddress);
+          displayAddress = Object.values(parsed).filter(Boolean).join(', ');
+      } catch(e) {}
+  }
+
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.backButtonContainer}>
@@ -157,16 +181,20 @@ export default function ActiveDeliveryScreen() {
         </TouchableOpacity>
       </SafeAreaView>
 
+      {/* Dynamic Map Tracking */}
       <MapView 
         style={styles.map} 
-        initialRegion={{
-          latitude: 34.0837, 
-          longitude: 74.7973,
-          latitudeDelta: 0.05,
-          longitudeDelta: 0.05,
+        region={{
+          latitude: mapCenterLat, 
+          longitude: mapCenterLng,
+          latitudeDelta: 0.015,
+          longitudeDelta: 0.015,
         }}
       >
-        <Marker coordinate={{ latitude: 34.0837, longitude: 74.7973 }} title="Destination" />
+        <Marker 
+            coordinate={{ latitude: mapCenterLat, longitude: mapCenterLng }} 
+            title={isPickedUp ? "Customer Destination" : "Amigos Restaurant"} 
+        />
       </MapView>
 
       <View style={styles.bottomSheet}>
@@ -183,15 +211,15 @@ export default function ActiveDeliveryScreen() {
                 </View>
                 <View style={{ marginLeft: 12, flex: 1 }}>
                     <Text style={styles.shopName} numberOfLines={1}>
-                        {isPickedUp ? (order.user?.name || 'Customer') : 'Amigos Pizza (Main)'}
+                        {isPickedUp ? (order.user?.name || order.customer_name || 'Customer') : 'Amigos Pizza'}
                     </Text>
                     <Text style={styles.addressText} numberOfLines={2}>
                         Order #{order.order_number ?? order.id} • {totalItems} Items
-                        {isPickedUp ? `\n${order.address_line_1 || ''}` : ''}
+                        {isPickedUp ? `\n${displayAddress}` : ''}
                     </Text>
                 </View>
                 
-                {/* NEW: Map / Navigation Button */}
+                {/* Map / Navigation Button */}
                 <TouchableOpacity style={[styles.actionIconButton, { backgroundColor: '#0984e3', marginRight: 10 }]} onPress={handleNavigate}>
                     <Ionicons name="navigate" size={20} color="#fff" />
                 </TouchableOpacity>
