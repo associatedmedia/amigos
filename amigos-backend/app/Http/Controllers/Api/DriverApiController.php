@@ -100,4 +100,15 @@ class DriverApiController extends Controller
 
         return response()->json(['success' => true, 'orders' => $orders]);
     }
+
+    public function declineOrder(Request $request, $orderId)
+    {
+        $order = Order::where('id', $orderId)->where('driver_id', $request->user()->id)->firstOrFail();
+        
+        $order->driver_id = null;
+        $order->status = 'processing';
+        $order->save();
+
+        return response()->json(['success' => true, 'message' => 'Order declined successfully.']);
+    }
 }
