@@ -173,14 +173,15 @@
     }
 
     function fetchDriverLocation() {
-        // Use relative URL to avoid Mixed Content (HTTP vs HTTPS) issues on production
-        fetch('/admin/orders/{{ $order->id }}/live-location')
+        // Use root-relative URL to handle subdirectories correctly and avoid Mixed Content blocks
+        fetch('{{ route('admin.orders.live-location', $order->id, false) }}')
             .then(res => {
-                if (!res.ok) throw new Error("Server returned " + res.status);
+                if (!res.ok) throw new Error("Server: " + res.status);
                 return res.json();
             })
             .then(data => {
                 let badge = document.getElementById('gpsStatusBadge');
+                let statusText = document.getElementById('lastUpdatedText');
                 
                 if (data.success) {
                     let latLng = { lat: parseFloat(data.lat), lng: parseFloat(data.lng) };
@@ -220,9 +221,13 @@
                     document.getElementById('lastUpdatedText').innerText = data.message;
                     badge.className = "badge bg-secondary";
                     badge.innerText = "No Signal";
-                }
             })
-            .catch(err => console.error("Error pinging driver GPS:", err));
+            .catch(err => {
+                document.getElementById('lastUpdatedText').innerText = "Network Error: " + err.message;
+                document.getElementById('gpsStatusBadge').className = "badge bg-danger";
+                document.getElementById('gpsStatusBadge').innerText = "No Signal";
+                console.error("Error pinging driver GPS:", err);
+            });
     }
 </script>
 @endpush
