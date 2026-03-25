@@ -16,7 +16,7 @@ class DriverApiController extends Controller
         $orders = Order::with(['items.product', 'user'])
             ->where('driver_id', $driverId)
             ->whereIn('status', ['assigned', 'picked_up'])
-            ->orderBy('created_at', 'asc')
+            ->orderBy('created_at', 'desc')
             ->get();
 
         return response()->json(['success' => true, 'orders' => $orders]);
