@@ -43,43 +43,60 @@ class DriverApiController extends Controller
         ]);
 
         $driver = $request->user();
-
-        // Ensure only drivers can update locations
-        if ($driver->role !== 'driver') {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
-        }
-
-        // Update or Create the driver's current location
-        DriverLocation::updateOrCreate(
-            ['driver_id' => $driver->id],
-            [
-                'latitude' => $request->latitude,
-                'longitude' => $request->longitude,
-                'heading' => $request->heading ?? 0,
-                'speed' => $request->speed ?? 0,
-                'is_online' => $request->is_online,
-                'updated_at' => now(), // Always touch timestamp so Admin sees they are active
-            ]
-        );
-
-        // Update Redis for live tracking if online
         try {
-            if ($request->is_online) {
-                \Illuminate\Support\Facades\Redis::geoadd('drivers_live', $request->longitude, $request->latitude, $driver->id);
-                \Illuminate\Support\Facades\Redis::setex("driver:{$driver->id}:details", 3600, json_encode([
-                    'lat' => $request->latitude, 
-                    'lng' => $request->longitude, 
-                    'updated_at' => now()
-                ]));
-            } else {
-                \Illuminate\Support\Facades\Redis::zrem('drivers_live', $driver->id);
-                \Illuminate\Support\Facades\Redis::del("driver:{$driver->id}:details");
-            }
-        } catch (\Exception $e) {
-            // Ignore Redis connectivity issues securely on local environments
-        }
+            $request->validate([
+                'latitude' => 'required|numeric',
+                'longitude' => 'required|numeric',
+                'is_online' => 'required|boolean'
+            ]);
 
-        return response()->json(['success' => true]);
+            $driver = $request->user();
+
+            // Ensure only drivers can update locations
+            if ($driver->role !== 'driver') {
+                return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            }
+
+            // 1. Permanent DB Update (MySQL)
+            try {
+                \App\Models\DriverLocation::updateOrCreate(
+                    ['driver_id' => $driver->id],
+                    [
+                        'latitude' => $request->latitude,
+                        'longitude' => $request->longitude,
+                        'is_online' => $request->is_online,
+                        'updated_at' => now()
+                    ]
+                );
+            } catch (\Exception $dbEx) {
+                // Return descriptive DB error for debugging (Migration related usually)
+                return response()->json([
+                    'success' => false, 
+                    'message' => 'DB Error: ' . $dbEx->getMessage()
+                ], 500);
+            }
+
+            // 2. Update Redis for live tracking if online
+            try {
+                if ($request->is_online) {
+                    \Illuminate\Support\Facades\Redis::geoadd('drivers_live', $request->longitude, $request->latitude, $driver->id);
+                    \Illuminate\Support\Facades\Redis::setex("driver:{$driver->id}:details", 3600, json_encode([
+                        'lat' => $request->latitude, 
+                        'lng' => $request->longitude, 
+                        'updated_at' => now()
+                    ]));
+                }
+            } catch (\Exception $e) {
+                // Log but ignore Redis connectivity issues securely on local environments
+            }
+
+            return response()->json(['success' => true]);
+        } catch (\Exception $globalEx) {
+            return response()->json([
+                'success' => false, 
+                'message' => 'Global Error: ' . $globalEx->getMessage()
+            ], 500);
+        }
     }
 
     public function getAnalytics(Request $request)
