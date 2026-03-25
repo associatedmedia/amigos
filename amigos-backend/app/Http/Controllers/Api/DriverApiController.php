@@ -64,4 +64,28 @@ class DriverApiController extends Controller
 
         return response()->json(['success' => true]);
     }
+
+    public function getAnalytics(Request $request)
+    {
+        $driverId = $request->user()->id;
+
+        // Count today's deliveries
+        $totalDeliveries = Order::where('driver_id', $driverId)
+            ->where('status', 'delivered')
+            ->whereDate('updated_at', \Carbon\Carbon::today())
+            ->count();
+
+        // Calculate today's cash to collect
+        $cashToCollect = Order::where('driver_id', $driverId)
+            ->where('status', 'delivered')
+            ->where('payment_method', 'cash')
+            ->whereDate('updated_at', \Carbon\Carbon::today())
+            ->sum('total_amount');
+
+        return response()->json([
+            'success' => true, 
+            'total_deliveries' => $totalDeliveries,
+            'cash_to_collect' => (float) $cashToCollect
+        ]);
+    }
 }

@@ -89,6 +89,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/driver/orders', [App\Http\Controllers\Api\DriverApiController::class, 'getMyOrders']);
     Route::post('/driver/orders/{id}/status', [App\Http\Controllers\Api\DriverApiController::class, 'updateOrderStatus']);
     Route::post('/driver/update-location', [\App\Http\Controllers\Api\DriverApiController::class, 'updateLocation']);
+    Route::get('/driver/analytics', [\App\Http\Controllers\Api\DriverApiController::class, 'getAnalytics']);
 });
 
 // ==========================================
