@@ -88,4 +88,16 @@ class DriverApiController extends Controller
             'cash_to_collect' => (float) $cashToCollect
         ]);
     }
+
+    public function getOrderHistory(Request $request)
+    {
+        $driverId = $request->user()->id;
+
+        $orders = Order::with(['items.product', 'user'])
+            ->where('driver_id', $driverId)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json(['success' => true, 'orders' => $orders]);
+    }
 }
