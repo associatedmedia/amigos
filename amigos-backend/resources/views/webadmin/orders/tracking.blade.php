@@ -1,17 +1,14 @@
 @extends('webadmin.layout.app')
 
 @push('styles')
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
-    /* Full height map container */
-    #trackingMap {
+    #map {
         height: calc(100vh - 120px);
         width: 100%;
         border-radius: 8px;
         box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-    .tracking-sidebar {
-        height: calc(100vh - 120px);
-        overflow-y: auto;
+        z-index: 1;
     }
 </style>
 @endpush
@@ -95,82 +92,55 @@
         </div>
     </div>
 
-    <!-- Right Container: Google Map -->
+    <!-- Right Container: Leaflet Map -->
     <div class="col-lg-9 ps-0">
-        <div id="trackingMap"></div>
+        <div id="map"></div>
     </div>
 </div>
 @endsection
 
 @push('scripts')
-<!-- Load Google Maps Interface -->
-<script async defer src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY', env('GOOGLE_API_KEY')) }}&callback=initGoogleMap"></script>
-
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    let map, driverMarker, destMarker, directionsService, directionsRenderer;
-    // Safely parse order coordinates, falling back to registered user coordinates
+    let map;
+    let driverMarker, destMarker;
+    let routeLine;
+
+    // Safely parse order coordinates
     const destLat = @json($order->latitude ?? ($order->user->latitude ?? null));
     const destLng = @json($order->longitude ?? ($order->user->longitude ?? null));
     const hasDestination = (destLat !== null && destLng !== null);
 
-    window.initGoogleMap = function() {
-        // 1. Initialize Default Center
-        let centerPoint = hasDestination ? { lat: destLat, lng: destLng } : { lat: 34.0837, lng: 74.7973 };
+    document.addEventListener('DOMContentLoaded', function() {
+        // 1. Initialize Leaflet Map
+        const defaultLat = 34.0837; 
+        const defaultLng = 74.7973;
         
-        map = new google.maps.Map(document.getElementById('trackingMap'), {
-            zoom: 15,
-            center: centerPoint,
-            mapTypeId: 'roadmap',
-            disableDefaultUI: false
-        });
+        const initialLat = hasDestination ? destLat : defaultLat;
+        const initialLng = hasDestination ? destLng : defaultLng;
 
-        // 2. Setup Routing Engine
-        directionsService = new google.maps.DirectionsService();
-        directionsRenderer = new google.maps.DirectionsRenderer({
-            map: map,
-            suppressMarkers: true, // We will use our custom markers
-            polylineOptions: { strokeColor: '#0d6efd', strokeWeight: 6, strokeOpacity: 0.8 }
-        });
+        map = L.map('map').setView([initialLat, initialLng], 14);
 
-        // 3. Mark Destination
+        // 2. Add OpenStreetMap Tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // 3. Add Destination Marker
         if (hasDestination) {
-            destMarker = new google.maps.Marker({
-                position: centerPoint,
-                map: map,
-                icon: {
-                    url: 'https://cdn-icons-png.flaticon.com/512/25/25694.png',
-                    scaledSize: new google.maps.Size(32, 32)
-                },
-                title: "Delivery Destination"
-            });
+            destMarker = L.marker([destLat, destLng], {
+                icon: L.icon({
+                    iconUrl: 'https://cdn-icons-png.flaticon.com/512/2776/2776067.png', // Home Icon
+                    iconSize: [35, 35],
+                    iconAnchor: [17, 35]
+                })
+            }).addTo(map).bindPopup('<b>Customer Destination</b>');
         }
 
-
-        // 4. Map loaded successfully
-        console.log("Google Maps initialized.");
-    };
-
-    // 4. Start Ping Cycle immediately (don't wait for Google Maps to load)
-    document.addEventListener('DOMContentLoaded', function() {
+        // 4. Start Ping Cycle
         fetchDriverLocation();
         setInterval(fetchDriverLocation, 5000);
     });
-
-    function updateRoute(driverPos) {
-        if (!hasDestination || !driverPos) return;
-
-        let request = {
-            origin: driverPos,
-            destination: { lat: destLat, lng: destLng },
-            travelMode: 'DRIVING'
-        };
-
-        directionsService.route(request, function(result, status) {
-            if (status == 'OK') {
-                directionsRenderer.setDirections(result);
-            }
-        });
-    }
 
     function fetchDriverLocation() {
         // Use root-relative URL to handle subdirectories correctly and avoid Mixed Content blocks
@@ -184,43 +154,47 @@
                 let statusText = document.getElementById('lastUpdatedText');
                 
                 if (data.success) {
-                    let latLng = { lat: parseFloat(data.lat), lng: parseFloat(data.lng) };
-                    
+                    const lat = parseFloat(data.lat);
+                    const lng = parseFloat(data.lng);
+
+                    // Update Badge Status
+                    badge.className = data.is_online ? "badge bg-success" : "badge bg-warning text-dark";
+                    badge.innerText = data.is_online ? "Active" : "Offline";
+                    statusText.innerText = "Last update: " + data.last_updated;
+
+                    // Update or Create Driver Marker
                     if (!driverMarker) {
-                        // Create Driver Marker on First Load
-                        driverMarker = new google.maps.Marker({
-                            position: latLng,
-                            map: map,
-                            icon: {
-                                url: 'https://cdn-icons-png.flaticon.com/512/1986/1986937.png',
-                                scaledSize: new google.maps.Size(40, 40)
-                            },
-                            title: "{{ $order->driver->name ?? 'Driver' }}"
-                        });
+                        driverMarker = L.marker([lat, lng], {
+                            icon: L.icon({
+                                iconUrl: 'https://cdn-icons-png.flaticon.com/512/1048/1048329.png', // Bike icon
+                                iconSize: [40, 40],
+                                iconAnchor: [20, 20]
+                            })
+                        }).addTo(map).bindPopup('<b>Driver Location</b>');
+
+                        // Also center map if first time
                         if (!hasDestination) {
-                            map.setCenter(latLng);
+                             map.setView([lat, lng]);
                         }
                     } else {
-                        // Move marker instantly for live tracking
-                        driverMarker.setPosition(latLng);
+                        driverMarker.setLatLng([lat, lng]);
                     }
 
-                    // Dynamically recalculate driving ETA/Route polyline
-                    updateRoute(latLng);
-
-                    // Update UI Stats
-                    document.getElementById('lastUpdatedText').innerText = "Last update: " + data.last_updated;
-                    if (data.is_online) {
-                        badge.className = "badge bg-success";
-                        badge.innerText = "Active";
-                    } else {
-                        badge.className = "badge bg-danger";
-                        badge.innerText = "App Offline";
+                    // Update Connect Line
+                    if (hasDestination) {
+                        const points = [[lat, lng], [destLat, destLng]];
+                        if (!routeLine) {
+                            routeLine = L.polyline(points, { color: '#e63946', weight: 3, dashArray: '5, 10' }).addTo(map);
+                        } else {
+                            routeLine.setLatLngs(points);
+                        }
                     }
+
                 } else {
-                    document.getElementById('lastUpdatedText').innerText = data.message;
+                    statusText.innerText = data.message;
                     badge.className = "badge bg-secondary";
                     badge.innerText = "No Signal";
+                }
             })
             .catch(err => {
                 document.getElementById('lastUpdatedText').innerText = "Network Error: " + err.message;
