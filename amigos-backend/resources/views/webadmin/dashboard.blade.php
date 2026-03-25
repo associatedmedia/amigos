@@ -63,7 +63,7 @@
 
 <h4 class="mb-3 text-secondary"><i class="bi bi-database"></i> System Statistics</h4>
 <div class="row text-center mb-4">
-    <div class="col-md-4 mb-3">
+    <div class="col-md-3 mb-3">
         <div class="card text-white bg-primary shadow-sm h-100 border-0" style="opacity: 0.9;">
             <div class="card-body">
                 <h5 class="card-title"><i class="bi bi-box-seam"></i> Products</h5>
@@ -71,7 +71,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4 mb-3">
+    <div class="col-md-3 mb-3">
         <div class="card text-white bg-danger shadow-sm h-100 border-0">
             <div class="card-body">
                 <h5 class="card-title"><i class="bi bi-tags"></i> Categories</h5>
@@ -79,11 +79,19 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4 mb-3">
+    <div class="col-md-3 mb-3">
         <div class="card text-white bg-dark shadow-sm h-100 border-0" style="opacity: 0.9;">
             <div class="card-body">
                 <h5 class="card-title"><i class="bi bi-people"></i> Users</h5>
                 <h2 class="card-text fw-bold">{{ $totalUsers }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-dark bg-warning shadow-sm h-100 border-0" style="cursor: pointer; opacity: 0.9;" data-bs-toggle="modal" data-bs-target="#onlineDriversModal">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-car-front"></i> Online Drivers</h5>
+                <h2 class="card-text fw-bold">{{ $onlineDriversCount }}</h2>
             </div>
         </div>
     </div>
@@ -131,6 +139,36 @@
     <div class="tab-pane fade" id="tab-all" role="tabpanel">
         @include('webadmin.partials.dashboard_orders_table', ['orders' => $recentOrders])
     </div>
+</div>
+
+<!-- Online Drivers Modal -->
+<div class="modal fade" id="onlineDriversModal" tabindex="-1" aria-labelledby="onlineDriversModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-warning text-dark border-0">
+        <h5 class="modal-title" id="onlineDriversModalLabel"><i class="bi bi-car-front"></i> Online Drivers List</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-0">
+          @if($onlineDrivers->isEmpty())
+             <div class="p-4 text-center text-muted">No drivers are currently online.</div>
+          @else
+             <ul class="list-group list-group-flush">
+                 @foreach($onlineDrivers as $loc)
+                 <li class="list-group-item d-flex justify-content-between align-items-center">
+                     <div>
+                         <strong>{{ $loc->driver ? $loc->driver->name : 'Unknown Driver' }}</strong>
+                         <br>
+                         <small class="text-muted"><i class="bi bi-telephone"></i> {{ $loc->driver ? $loc->driver->mobile_no : 'N/A' }}</small>
+                     </div>
+                     <span class="badge bg-success rounded-pill">Online</span>
+                 </li>
+                 @endforeach
+             </ul>
+          @endif
+      </div>
+    </div>
+  </div>
 </div>
 
 @endsection

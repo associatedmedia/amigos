@@ -44,8 +44,11 @@ class DashboardController extends Controller
             'cancelled' => Order::whereIn('status', ['cancelled', 'refunded'])->count(),
         ];
 
+        $onlineDrivers = \App\Models\DriverLocation::with('driver')->where('is_online', true)->get();
+        $onlineDriversCount = $onlineDrivers->count();
+
         return view('webadmin.dashboard', compact(
-            'totalOrders', 'todayOrders', 'weeklyOrders', 'totalSales', 'todaySales', 'weeklySales', 'totalProducts', 'totalCategories', 'totalUsers', 'recentOrders', 'pendingOrders', 'deliveredOrders', 'cancelledOrders', 'orderCounts'
+            'totalOrders', 'todayOrders', 'weeklyOrders', 'totalSales', 'todaySales', 'weeklySales', 'totalProducts', 'totalCategories', 'totalUsers', 'recentOrders', 'pendingOrders', 'deliveredOrders', 'cancelledOrders', 'orderCounts', 'onlineDrivers', 'onlineDriversCount'
         ));
     }
 }
