@@ -4,6 +4,11 @@ SETLOCAL EnableDelayedExpansion
 :: Amigos Printer Bridge Manager for Windows
 :: This script manages the printer bridge as a background process using PM2
 
+:: To START the printer: ./manager.bat start
+:: To STOP the printer: ./manager.bat stop
+:: To check IF it is running: ./manager.bat status
+:: To see the live printer logs: ./manager.bat logs
+
 SET SCRIPT_DIR=%~dp0
 cd /d "%SCRIPT_DIR%"
 
