@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Linking, Platform } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context'; 
@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
+import * as Haptics from 'expo-haptics';
 
 const API_URL = 'https://api.amigospizza.co/api';
 
@@ -54,24 +55,6 @@ export default function ActiveDeliveryScreen() {
       
       const nextStatus = order.status === 'assigned' ? 'picked_up' : 'delivered';
 
-      // Proof of Delivery logic
-      if (nextStatus === 'delivered') {
-          const { status } = await ImagePicker.requestCameraPermissionsAsync();
-          if (status !== 'granted') {
-              Alert.alert("Permission Denied", "Camera access is required for Proof of Delivery.");
-              return;
-          }
-
-          let result = await ImagePicker.launchCameraAsync({
-              mediaTypes: ImagePicker.MediaTypeOptions.Images,
-              quality: 0.5,
-          });
-
-          if (result.canceled) {
-              return; // Driver canceled taking photo
-          }
-      }
-
       setUpdating(true);
 
       const token = await AsyncStorage.getItem('userToken');
@@ -80,7 +63,8 @@ export default function ActiveDeliveryScreen() {
               status: nextStatus
           }, { headers: { Authorization: `Bearer ${token}` }});
 
-          if (response.data.success) {
+        if (response.data.success) {
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
               if (nextStatus === 'delivered') {
                   Alert.alert("Success", "Order delivered successfully!");
                   router.replace('/dashboard');
@@ -183,6 +167,7 @@ export default function ActiveDeliveryScreen() {
 
       {/* Dynamic Map Tracking */}
       <MapView 
+        provider={PROVIDER_GOOGLE}
         style={styles.map} 
         region={{
           latitude: mapCenterLat, 

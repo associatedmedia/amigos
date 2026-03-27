@@ -9,13 +9,35 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "config": {
+        "googleMapsApiKey": "AIzaSyA024waSwg_D8uc9p631ClPteTdpDRDQ4U"
+      },
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "This app uses your location to track delivery progress and show routes to customers.",
+        "UIBackgroundModes": [
+          "fetch"
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#1a1a1a"
       },
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyA024waSwg_D8uc9p631ClPteTdpDRDQ4U"
+        }
+      },
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "VIBRATE",
+        "FOREGROUND_SERVICE",
+        "WAKE_LOCK",
+        "android.permission.INTERNET"
+      ],
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.associatedmedia.amigospizzadrivers"
@@ -25,7 +47,8 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-location"
     ],
     "experiments": {
       "typedRoutes": true,
