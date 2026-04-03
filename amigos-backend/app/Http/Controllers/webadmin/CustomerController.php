@@ -26,7 +26,8 @@ class CustomerController extends Controller
             'mobile_no' => 'required|string|max:20|unique:users',
             'email' => 'nullable|email|max:255|unique:users',
             'password' => 'required|string|min:6',
-            'address' => 'nullable|string'
+            'address' => 'nullable|string',
+            'is_active' => 'required|boolean'
         ]);
 
         $customer = new User();
@@ -36,6 +37,7 @@ class CustomerController extends Controller
         $customer->password = bcrypt($request->password);
         $customer->role = 'customer';
         $customer->address = $request->address;
+        $customer->is_active = $request->has('is_active') ? $request->is_active : 1;
         $customer->save();
 
         return redirect()->route('admin.customers.index')->with('success', 'Customer created successfully.');
@@ -92,13 +94,15 @@ class CustomerController extends Controller
             'mobile_no' => 'required|string|max:20|unique:users,mobile_no,'.$customer->id,
             'email' => 'nullable|email|max:255|unique:users,email,'.$customer->id,
             'address' => 'nullable|string',
-            'password' => 'nullable|string|min:6'
+            'password' => 'nullable|string|min:6',
+            'is_active' => 'required|boolean'
         ]);
 
         $customer->name = $request->name;
         $customer->mobile_no = $request->mobile_no;
         $customer->email = $request->email;
         $customer->address = $request->address;
+        $customer->is_active = $request->is_active;
         if ($request->filled('password')) {
             $customer->password = bcrypt($request->password);
         }

@@ -32,6 +32,14 @@
                     <input type="password" name="password" class="form-control" required>
                 </div>
                 
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Status</label>
+                    <select name="is_active" class="form-select">
+                        <option value="1" {{ old('is_active', '1') == '1' ? 'selected' : '' }}>Active</option>
+                        <option value="0" {{ old('is_active') == '0' ? 'selected' : '' }}>Inactive</option>
+                    </select>
+                </div>
+                
                 <div class="col-md-12 mb-4">
                     <label class="form-label fw-bold">Address (Optional)</label>
                     <textarea name="address" class="form-control" rows="3">{{ old('address') }}</textarea>
