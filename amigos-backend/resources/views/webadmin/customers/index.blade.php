@@ -30,6 +30,7 @@
         $('#customersTable').DataTable({
             processing: true,
             serverSide: true,
+            stateSave: true,
             order: [[3, "desc"]], // Sort by Joined Date (created_at) by default
             ajax: "{{ route('admin.customers.data') }}",
             columns: [
