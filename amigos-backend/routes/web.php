@@ -44,7 +44,7 @@ Route::prefix('admin')->group(function () {
         Route::get('customers/{id}', [CustomerController::class, 'show'])->name('admin.customers.show');
         Route::get('customers/{id}/edit', [CustomerController::class, 'edit'])->name('admin.customers.edit');
         Route::put('customers/{id}', [CustomerController::class, 'update'])->name('admin.customers.update');
-        Route::delete('customers/{id}', [CustomerController::class, 'destroy'])->name('admin.customers.destroy');
+        Route::post('customers/{id}/toggle-status', [CustomerController::class, 'toggleStatus'])->name('admin.customers.toggleStatus');
         
         // Orders
         Route::get('orders', [OrderController::class, 'index'])->name('admin.orders.index');

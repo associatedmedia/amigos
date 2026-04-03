@@ -25,6 +25,7 @@ class User extends Authenticatable
         'address',
         'latitude',
         'longitude',
+        'is_active',
         // Add 'role' or 'fcm_token' here later if needed
     ];
 

@@ -107,11 +107,16 @@ class CustomerController extends Controller
         return redirect()->route('admin.customers.index')->with('success', 'Customer updated successfully.');
     }
 
-    public function destroy($id)
+    public function toggleStatus($id)
     {
         $customer = User::where('role', 'customer')->findOrFail($id);
-        $customer->delete();
-        return response()->json(['success' => true]);
+        $customer->is_active = !$customer->is_active;
+        $customer->save();
+        return response()->json([
+            'success' => true, 
+            'message' => 'Customer status updated successfully', 
+            'is_active' => $customer->is_active
+        ]);
     }
 
     public function data()
@@ -128,11 +133,15 @@ class CustomerController extends Controller
             ->addColumn('action', function ($user) {
                 $viewUrl = route('admin.customers.show', $user->id);
                 $editUrl = route('admin.customers.edit', $user->id);
-                $deleteUrl = route('admin.customers.destroy', $user->id);
+                $toggleUrl = route('admin.customers.toggleStatus', $user->id);
+                
+                $statusBtnClass = $user->is_active ? 'btn-danger' : 'btn-success';
+                $statusIcon = $user->is_active ? 'bi-x-circle' : 'bi-check-circle';
+                $statusText = $user->is_active ? 'Disable' : 'Enable';
                 
                 return '<a href="' . $viewUrl . '" class="btn btn-sm btn-outline-info me-1"><i class="bi bi-eye"></i> View</a>' .
                        '<a href="' . $editUrl . '" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i> Edit</a>' .
-                       '<button onclick="confirmDelete(\'' . $deleteUrl . '\')" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Delete</button>';
+                       '<button onclick="toggleStatus(\'' . $toggleUrl . '\')" class="btn btn-sm ' . $statusBtnClass . '"><i class="bi ' . $statusIcon . '"></i> ' . $statusText . '</button>';
             })
             ->rawColumns(['action'])
             ->make(true);
