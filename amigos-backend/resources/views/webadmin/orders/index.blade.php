@@ -33,6 +33,7 @@
         $('#ordersTable').DataTable({
             processing: true,
             serverSide: true,
+            stateSave: true,
             order: [[7, "desc"]],
             ajax: "{{ route('admin.orders.data') }}",
             columns: [
