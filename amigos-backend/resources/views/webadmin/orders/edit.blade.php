@@ -262,9 +262,10 @@
             let minOrderAmt = parseFloat('{{ $minOrderAmt ?? 0 }}');
             let gst = subtotal - (subtotal / 1.05); // 5% inclusive GST
             let halfGst = gst / 2;
+            let subtotalWithoutTax = subtotal - gst;
             let grandTotal = subtotal + deliveryFee;
 
-            document.getElementById('displaySubtotal').innerText = '₹' + subtotal.toFixed(2);
+            document.getElementById('displaySubtotal').innerText = '₹' + subtotalWithoutTax.toFixed(2);
             document.getElementById('displayCgst').innerText = '₹' + halfGst.toFixed(2);
             document.getElementById('displaySgst').innerText = '₹' + halfGst.toFixed(2);
             document.getElementById('displayGrandTotal').innerText = '₹' + grandTotal.toFixed(2);
