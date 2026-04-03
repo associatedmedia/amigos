@@ -123,8 +123,12 @@
                         <input type="number" name="delivery_fee" id="deliveryFee" class="form-control form-control-sm w-50 text-end" value="{{ $order->delivery_fee ?? 0 }}" step="0.01">
                     </div>
                     <div class="d-flex justify-content-between mb-2 text-muted small">
-                        <span>Included GST (5%)</span>
-                        <span id="displayGst">₹0.00</span>
+                        <span>Included CGST (2.5%)</span>
+                        <span id="displayCgst">₹0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2 text-muted small">
+                        <span>Included SGST (2.5%)</span>
+                        <span id="displaySgst">₹0.00</span>
                     </div>
                     <hr>
                     <div class="d-flex justify-content-between fw-bold fs-5 text-success">
@@ -132,11 +136,13 @@
                         <span id="displayGrandTotal">₹{{ number_format($order->total_amount, 2) }}</span>
                     </div>
                 </div>
-                <div class="card-footer border-0 bg-light text-end">
-                    <button type="submit" class="btn btn-primary w-100"><i class="bi bi-save"></i> Save Changes</button>
+                <div class="card-footer border-0 bg-light">
+                    <div id="minOrderWarning" class="alert alert-warning py-2 mb-3 text-center d-none" style="font-size: 0.9rem;">
+                        Subtotal must be at least ₹<span id="minOrderAmtSpan">0</span> to place order.
+                    </div>
+                    <button type="submit" id="saveOrderBtn" class="btn btn-primary w-100"><i class="bi bi-save"></i> Save Changes</button>
                 </div>
             </div>
-        </div>
     </div>
 </form>
 
@@ -253,16 +259,28 @@
             });
 
             let deliveryFee = parseFloat(document.getElementById('deliveryFee').value) || 0;
+            let minOrderAmt = parseFloat('{{ $minOrderAmt ?? 0 }}');
             let gst = subtotal - (subtotal / 1.05); // 5% inclusive GST
+            let halfGst = gst / 2;
             let grandTotal = subtotal + deliveryFee;
 
             document.getElementById('displaySubtotal').innerText = '₹' + subtotal.toFixed(2);
-            document.getElementById('displayGst').innerText = '₹' + gst.toFixed(2);
+            document.getElementById('displayCgst').innerText = '₹' + halfGst.toFixed(2);
+            document.getElementById('displaySgst').innerText = '₹' + halfGst.toFixed(2);
             document.getElementById('displayGrandTotal').innerText = '₹' + grandTotal.toFixed(2);
-        }
+            
+            let btn = document.getElementById('saveOrderBtn');
+            let warning = document.getElementById('minOrderWarning');
+            document.getElementById('minOrderAmtSpan').innerText = minOrderAmt;
 
-        // Add new row logic
-        document.getElementById('addItemBtn').addEventListener('click', function () {
+            if (subtotal < minOrderAmt && subtotal > 0) {
+                warning.classList.remove('d-none');
+                btn.disabled = true;
+            } else {
+                warning.classList.add('d-none');
+                btn.disabled = false;
+            }
+        }        document.getElementById('addItemBtn').addEventListener('click', function () {
             let firstRow = document.querySelector('.item-row');
             let newRow = firstRow.cloneNode(true);
             

@@ -13,14 +13,13 @@ class OrderController extends Controller
     public function index()
     {
         return view('webadmin.orders.index');
-    }
-
-    public function create()
+    }    public function create()
     {
         $customers = \App\Models\User::whereIn('role', ['user', 'customer'])->get();
         $products = \App\Models\Product::where('is_available', 1)->get();
         $orderStatuses = \App\Models\OrderStatus::orderBy('step_index')->get();
-        return view('webadmin.orders.create', compact('customers', 'products', 'orderStatuses'));
+        $minOrderAmt = \App\Models\Setting::where('key', 'minimum_order_criteria')->value('value') ?? 0;
+        return view('webadmin.orders.create', compact('customers', 'products', 'orderStatuses', 'minOrderAmt'));
     }
 
     public function store(Request $request)
@@ -31,7 +30,19 @@ class OrderController extends Controller
             // add more validation as needed
         ]);
 
-        \DB::transaction(function () use ($request) {
+        $minOrderAmt = \App\Models\Setting::where('key', 'minimum_order_criteria')->value('value') ?? 0;
+        
+        // Calculate subtotal to check against minimum order criteria
+        $subtotalCheck = 0;
+        foreach ($request->items as $item) {
+            $subtotalCheck += ($item['price'] * $item['quantity']);
+        }
+        
+        if ($subtotalCheck < $minOrderAmt) {
+            return redirect()->back()->with('error', "Order subtotal must be at least ₹{$minOrderAmt}")->withInput();
+        }
+
+        \DB::transaction(function () use ($request, $subtotalCheck) {
             $user = \App\Models\User::find($request->user_id);
 
             $order = Order::create([
@@ -53,7 +64,6 @@ class OrderController extends Controller
                 'gst_amount' => 0,
             ]);
 
-            $subtotal = 0;
             foreach ($request->items as $item) {
                 $order->items()->create([
                     'product_id' => $item['product_id'],
@@ -61,12 +71,11 @@ class OrderController extends Controller
                     'price' => $item['price'],
                     'variety_name' => $item['variety_name'] ?? null,
                 ]);
-                $subtotal += ($item['price'] * $item['quantity']);
             }
 
             $deliveryFee = $request->delivery_fee ?? 0;
-            $gst = round($subtotal - ($subtotal / 1.05), 2); // 5% inclusive GST
-            $grandTotal = $subtotal + $deliveryFee;
+            $gst = round($subtotalCheck - ($subtotalCheck / 1.05), 2); // 5% inclusive GST
+            $grandTotal = $subtotalCheck + $deliveryFee;
 
             $order->update(['total_amount' => $grandTotal, 'gst_amount' => $gst]);
         });
@@ -97,7 +106,8 @@ class OrderController extends Controller
         $customers = \App\Models\User::whereIn('role', ['user', 'customer'])->get();
         $products = \App\Models\Product::where('is_available', 1)->get();
         $orderStatuses = \App\Models\OrderStatus::orderBy('step_index')->get();
-        return view('webadmin.orders.edit', compact('order', 'customers', 'products', 'orderStatuses'));
+        $minOrderAmt = \App\Models\Setting::where('key', 'minimum_order_criteria')->value('value') ?? 0;
+        return view('webadmin.orders.edit', compact('order', 'customers', 'products', 'orderStatuses', 'minOrderAmt'));
     }
 
     public function update(Request $request, $id)
@@ -126,18 +136,28 @@ class OrderController extends Controller
             
             $subtotal = 0;
             foreach ($request->items as $itemData) {
+                $subtotal += ($itemData['price'] * $itemData['quantity']);
+            }
+            
+            $minOrderAmt = \App\Models\Setting::where('key', 'minimum_order_criteria')->value('value') ?? 0;
+            if ($subtotal < $minOrderAmt) {
+                DB::rollBack();
+                return redirect()->back()->with('error', "Order subtotal must be at least ₹{$minOrderAmt}")->withInput();
+            }
+
+            foreach ($request->items as $itemData) {
                 $order->items()->create([
                     'product_id' => $itemData['product_id'],
                     'variety_name' => $itemData['variety_name'] ?? null,
                     'quantity' => $itemData['quantity'],
                     'price' => $itemData['price'],
                 ]);
-                $subtotal += ($itemData['price'] * $itemData['quantity']);
             }
 
             // 3. Recalculate Totals
             $gstAmount = round($subtotal - ($subtotal / 1.05), 2); // 5% inclusive GST
             $order->total_amount = $subtotal + $deliveryFee;
+            $order->gst_amount = $gstAmount;
             $order->save();
 
             DB::commit();
