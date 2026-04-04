@@ -31,7 +31,7 @@
         $('#categoriesTable').DataTable({
             processing: true,
             serverSide: true,
-            order: [[3, "desc"]],
+            order: [[3, "asc"]],
             ajax: "{{ route('admin.categories.data') }}",
             columns: [
                 { data: 'id', name: 'id' },
