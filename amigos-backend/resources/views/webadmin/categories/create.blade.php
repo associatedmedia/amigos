@@ -32,6 +32,12 @@
                 </div>
 
                 <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Sort Order</label>
+                    <input type="number" name="sort_order" class="form-control" placeholder="e.g., 0 for first" value="{{ old('sort_order', 0) }}">
+                    <small class="text-muted">Ascending order (0 is highestPriority). Categories are sorted by this value.</small>
+                </div>
+
+                <div class="col-md-6 mb-3">
                     <label class="form-label fw-bold">Category Image URL (Optional)</label>
                     <input type="url" name="image_url" class="form-control" placeholder="https://example.com/image.jpg" value="{{ old('image_url') }}">
                     <small class="text-muted">Provide a direct link OR upload a file below.</small>

@@ -15,6 +15,7 @@ class Category extends Model
         'name', 
         'image_url', // If you add category icons later
         'print_assign',
+        'sort_order',
     ];
 
     /**

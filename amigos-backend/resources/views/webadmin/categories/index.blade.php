@@ -15,6 +15,7 @@
                 <th>ID</th>
                 <th>Image</th>
                 <th>Name</th>
+                <th>Sort Order</th>
                 <th>Status</th>
                 <th>Action</th>
             </tr>
@@ -36,6 +37,7 @@
                 { data: 'id', name: 'id' },
                 { data: 'image_url', name: 'image_url', orderable: false, searchable: false },
                 { data: 'name', name: 'name' },
+                { data: 'sort_order', name: 'sort_order' },
                 { data: 'is_active', name: 'is_active', searchable: false },
                 { data: 'action', name: 'action', orderable: false, searchable: false }
             ]

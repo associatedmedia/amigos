@@ -14,7 +14,7 @@ class MenuController extends Controller
         // Cache menu for 5 minutes to reduce DB queries on every app open
         $grouped = Cache::remember('app_menu_data', 300, function () {
             // Get all active categories
-            $categories = \App\Models\Category::where('is_active', true)->get();
+            $categories = \App\Models\Category::where('is_active', true)->orderBy('sort_order', 'asc')->get();
             
             // Get all available products
             $products = Product::where('is_available', true)->get()->map(function ($product) {

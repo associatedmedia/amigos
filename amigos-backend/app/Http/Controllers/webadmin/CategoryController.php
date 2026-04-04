@@ -28,13 +28,15 @@ class CategoryController extends Controller
             'name' => 'required|string|max:255',
             'image_url' => 'nullable|url',
             'image' => 'nullable|image|max:2048',
-            'print_assign' => 'nullable|string'
+            'print_assign' => 'nullable|string',
+            'sort_order' => 'nullable|integer'
         ]);
 
         $category = new Category();
         $category->name = $request->name;
         $category->is_active = $request->has('is_active') ? true : false;
         $category->print_assign = $request->print_assign;
+        $category->sort_order = $request->sort_order ?? 0;
 
         if ($request->filled('image_url')) {
             $category->image_url = $request->image_url;
@@ -71,12 +73,14 @@ class CategoryController extends Controller
             'name' => 'required|string|max:255',
             'image_url' => 'nullable|url',
             'image' => 'nullable|image|max:2048',
-            'print_assign' => 'nullable|string'
+            'print_assign' => 'nullable|string',
+            'sort_order' => 'nullable|integer'
         ]);
 
         $category->name = $request->name;
         $category->is_active = $request->has('is_active') ? true : false;
         $category->print_assign = $request->print_assign;
+        $category->sort_order = $request->sort_order ?? 0;
 
         if ($request->filled('image_url')) {
             // Delete old image if it was a stored file
@@ -128,6 +132,9 @@ class CategoryController extends Controller
                 return $category->is_active 
                     ? '<span class="badge bg-success">Active</span>' 
                     : '<span class="badge bg-danger">Disabled</span>';
+            })
+            ->editColumn('sort_order', function ($category) {
+                return $category->sort_order;
             })
             ->addColumn('action', function ($category) {
                 $viewUrl = route('admin.categories.show', $category->id);
