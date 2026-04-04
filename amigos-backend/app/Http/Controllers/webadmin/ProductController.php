@@ -37,6 +37,7 @@ class ProductController extends Controller
             'description' => 'nullable|string',
             'is_veg' => 'boolean',
             'is_available' => 'boolean',
+            'is_best_seller' => 'boolean',
             'image_url' => 'nullable|url',
             'image' => 'nullable|image|max:2048'
         ]);
@@ -52,6 +53,7 @@ class ProductController extends Controller
         $product->description = $request->description;
         $product->is_veg = $request->has('is_veg');
         $product->is_available = $request->has('is_available');
+        $product->is_best_seller = $request->has('is_best_seller');
 
         if ($request->filled('image_url')) {
             $product->image_url = $request->image_url;
@@ -98,6 +100,7 @@ class ProductController extends Controller
             'description' => 'nullable|string',
             'is_veg' => 'boolean',
             'is_available' => 'boolean',
+            'is_best_seller' => 'boolean',
             'image_url' => 'nullable|url',
             'image' => 'nullable|image|max:2048'
         ]);
@@ -112,6 +115,7 @@ class ProductController extends Controller
         $product->description = $request->description;
         $product->is_veg = $request->has('is_veg');
         $product->is_available = $request->has('is_available');
+        $product->is_best_seller = $request->has('is_best_seller');
 
         if ($request->filled('image_url')) {
             if ($product->image_url && preg_match('/storage\/(products\/.*)$/', $product->image_url, $matches)) {
@@ -167,7 +171,11 @@ class ProductController extends Controller
             ->editColumn('type', function ($product) {
                 $color = $product->is_veg ? 'success' : 'danger';
                 $text = $product->is_veg ? 'VEG' : 'NON-VEG';
-                return '<span class="badge bg-' . $color . '">' . $text . '</span>';
+                $html = '<span class="badge bg-' . $color . '">' . $text . '</span>';
+                if ($product->is_best_seller) {
+                    $html .= ' <span class="badge bg-warning text-dark"><i class="bi bi-star-fill"></i> Best Seller</span>';
+                }
+                return $html;
             })
             ->editColumn('is_available', function ($product) {
                 $color = $product->is_available ? 'primary' : 'secondary';

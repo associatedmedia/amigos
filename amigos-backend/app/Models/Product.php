@@ -22,7 +22,8 @@ class Product extends Model
         'old_db_code',    // To link with old order items
         'is_veg',        // boolean
         'description',
-        'is_available'
+        'is_available',
+        'is_best_seller'
     ];
 
     /**
@@ -31,6 +32,7 @@ class Product extends Model
     protected $casts = [
         'is_veg' => 'boolean',       // 1 becomes true, 0 becomes false
         'is_available' => 'boolean',
+        'is_best_seller' => 'boolean',
         'price' => 'float',
     ];
 

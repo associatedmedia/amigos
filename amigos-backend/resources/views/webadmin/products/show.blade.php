@@ -38,10 +38,17 @@
                     <span class="badge bg-secondary">{{ $product->category ? $product->category : 'Uncategorized' }}</span>
                 </div>
 
-                <div class="d-flex justify-content-between align-items-center">
+                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="text-muted">Status:</span>
                     <span class="badge bg-{{ $product->is_available ? 'primary' : 'secondary' }}">{{ $product->is_available ? 'Available' : 'Unavailable' }}</span>
                 </div>
+
+                @if($product->is_best_seller)
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Special:</span>
+                        <span class="badge bg-warning text-dark"><i class="bi bi-star-fill"></i> Best Seller</span>
+                    </div>
+                @endif
             </div>
         </div>
     </div>
