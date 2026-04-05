@@ -15,6 +15,7 @@ class SettingController extends Controller
         $codEnabled = $settings->get('cod_enabled')->value ?? '1';
         $isStoreOnline = $settings->get('is_store_online')->value ?? '1';
         $minOrderCriteria = json_decode($settings->get('minimum_order_criteria')->value ?? '[]', true);
+        $appCacheTimeline = $settings->get('app_cache_timeline_minutes')->value ?? '15';
 
         // Pad the criteria array to ensure there are always enough fields in the form
         $distances = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 'fallback'];
@@ -27,7 +28,7 @@ class SettingController extends Controller
             ];
         }
 
-        return view('webadmin.settings.index', compact('codEnabled', 'isStoreOnline', 'fullCriteria'));
+        return view('webadmin.settings.index', compact('codEnabled', 'isStoreOnline', 'fullCriteria', 'appCacheTimeline'));
     }
 
     public function update(Request $request)
@@ -35,12 +36,14 @@ class SettingController extends Controller
         $request->validate([
             'cod_enabled' => 'required|in:0,1',
             'is_store_online' => 'required|in:0,1',
+            'app_cache_timeline_minutes' => 'required|integer|min:0',
             'criteria' => 'required|array',
             'criteria.*.min_value' => 'required|numeric|min:0',
         ]);
 
         Setting::updateOrCreate(['key' => 'cod_enabled'], ['value' => $request->cod_enabled]);
         Setting::updateOrCreate(['key' => 'is_store_online'], ['value' => $request->is_store_online]);
+        Setting::updateOrCreate(['key' => 'app_cache_timeline_minutes'], ['value' => $request->app_cache_timeline_minutes]);
 
         $criteriaToSave = [];
         foreach ($request->criteria as $distance => $values) {
