@@ -72,6 +72,7 @@ class PrinterService
                 'name' => $item->product->name,
                 'quantity' => $item->quantity,
                 'variety' => $item->variety_name ?? 'Regular',
+                'kitchen' => $operationType,
             ];
         }
 
@@ -142,10 +143,29 @@ class PrinterService
         // Prepare all items
         $allItems = [];
         foreach ($order->items as $item) {
+            $itemKitchen = 'GENERAL';
+            if ($item->product) {
+                // Determine kitchen name for this item
+                $categoryName = trim($item->product->category);
+                $opType = strtoupper($categoryName);
+                
+                $setup = PrinterSetup::whereRaw('UPPER(operation_type) = ?', [$opType])->first();
+                if (!$setup) {
+                    $categoryModel = \App\Models\Category::where('name', $item->product->category)->first();
+                    if ($categoryModel && !empty($categoryModel->print_assign)) {
+                        $opType = strtoupper(trim($categoryModel->print_assign));
+                    } elseif (!empty($item->product->print_assign)) {
+                        $opType = strtoupper(trim($item->product->print_assign));
+                    }
+                }
+                $itemKitchen = $opType;
+            }
+
             $allItems[] = [
                 'name' => $item->product ? $item->product->name : 'Unknown',
                 'quantity' => $item->quantity,
                 'variety' => $item->variety_name ?? 'Regular',
+                'kitchen' => $itemKitchen,
             ];
         }
 

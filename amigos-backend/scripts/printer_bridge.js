@@ -164,7 +164,7 @@ async function simulatePrint(job) {
 
     if (data.type === 'KOT' || data.type === 'FULL_ORDER') {
         printer.alignCenter();
-        printer.println("AMIGOS PIZZA");
+        printer.println("AMIGOS PIZZA | WEB ORDER");
         printer.println("KITCHEN ORDER TICKET");
         if (data.total_copies > 1) {
             printer.println(`Copy: ${data.copy_number} of ${data.total_copies}`);
@@ -191,13 +191,20 @@ async function simulatePrint(job) {
                 { text: String(item.quantity), align: "LEFT", width: 0.15 },
                 { text: `${item.name} ${item.variety ? '(' + item.variety + ')' : ''}`, align: "LEFT", width: 0.85 }
             ]);
+            // Print the kitchen station assigned to this item
+            if (item.kitchen) {
+                printer.tableCustom([
+                    { text: "", align: "LEFT", width: 0.15 },
+                    { text: ` Kitchen -- [${item.kitchen}]`, align: "LEFT", width: 0.85 }
+                ]);
+            }
         }
         printer.drawLine();
         printer.alignCenter();
         printer.println("*** END OF TICKET ***");
     } else if (data.type === 'BILL') {
         printer.alignCenter();
-        printer.println("Office Copy");
+        printer.println("Office Copy | Web Order");
         printer.println("");
         printer.println("Amigo's Foods & Hospitalities");
         printer.println("Gogji Bagh , Opp. Amar Singh College");
@@ -215,19 +222,13 @@ async function simulatePrint(job) {
             { text: `Time : ${timeStr}`, align: "RIGHT", width: 0.50 }
         ]);
 
-        printer.tableCustom([
-            { text: "Date", align: "LEFT", width: 0.25 },
-            { text: "Table Cvr Stw", align: "CENTER", width: 0.40 },
-            { text: "UID", align: "RIGHT", width: 0.35 }
-        ]);
-
         // Match 10 chars of customer name max for UID
-        let uid = (data.customer_name || data.customer || 'Guest').substring(0, 10).toLowerCase();
-        printer.tableCustom([
-            { text: dateStr, align: "LEFT", width: 0.25 },
-            { text: "000 0", align: "CENTER", width: 0.40 },
-            { text: uid, align: "RIGHT", width: 0.35 }
-        ]);
+        // let uid = (data.customer_name || data.customer || 'Guest').substring(0, 10).toLowerCase();
+        // printer.tableCustom([
+        //     { text: dateStr, align: "LEFT", width: 0.25 },
+        //     { text: "000 0", align: "CENTER", width: 0.40 },
+        //     { text: uid, align: "RIGHT", width: 0.35 }
+        // ]);
         printer.drawLine();
 
         printer.tableCustom([
@@ -312,7 +313,8 @@ async function simulatePrint(job) {
         }
 
         printer.println(`KOT No. : ${data.order_number}`);
-        printer.println("Thanks for Your Visit");
+        printer.println("Thanks for Your Shopping Online !");
+        printer.println("Rate Our Apps On Play Store and App Store");
     }
 
     printer.cut();
