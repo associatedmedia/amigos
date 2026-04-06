@@ -172,7 +172,15 @@
                         </tr>
                         @if($order->gst_amount > 0)
                         <tr>
-                            <td colspan="4" class="text-end text-muted small">(Includes GST: ₹{{ number_format($order->gst_amount, 2) }})</td>
+                            <td colspan="3" class="text-end text-muted small">CGST (2.5%):</td>
+                            <td class="text-end text-muted small">₹{{ number_format($order->gst_amount / 2, 2) }}</td>
+                        </tr>
+                        <tr>
+                            <td colspan="3" class="text-end text-muted small">SGST (2.5%):</td>
+                            <td class="text-end text-muted small">₹{{ number_format($order->gst_amount / 2, 2) }}</td>
+                        </tr>
+                        <tr>
+                            <td colspan="4" class="text-end text-muted extra-small font-italic">*(GST Inclusive)</td>
                         </tr>
                         @endif
                     </tfoot>
@@ -406,8 +414,15 @@
         </div>
         @if($order->gst_amount > 0)
         <div class="flex-between" style="font-size: 11px;">
-            <span>(Includes GST:</span>
-            <span>₹{{ number_format($order->gst_amount, 2) }})</span>
+            <span>CGST (2.5%):</span>
+            <span>₹{{ number_format($order->gst_amount / 2, 2) }}</span>
+        </div>
+        <div class="flex-between" style="font-size: 11px;">
+            <span>SGST (2.5%):</span>
+            <span>₹{{ number_format($order->gst_amount / 2, 2) }}</span>
+        </div>
+        <div class="text-center" style="font-size: 10px; margin-top: 2px;">
+            <i>(GST Inclusive)</i>
         </div>
         @endif
     </div>
