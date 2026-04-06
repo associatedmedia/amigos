@@ -28,11 +28,27 @@
                     <select name="category" class="form-select">
                         <option value="">-- Select Category --</option>
                         @if(isset($categories))
+                            @php
+                                $categoryExists = false;
+                                foreach($categories as $cat) {
+                                    if(old('category', $product->category) == $cat->name) {
+                                        $categoryExists = true;
+                                        break;
+                                    }
+                                }
+                            @endphp
+
                             @foreach($categories as $categoryOption)
                                 <option value="{{ $categoryOption->name }}" {{ old('category', $product->category) == $categoryOption->name ? 'selected' : '' }}>
                                     {{ $categoryOption->name }}
                                 </option>
                             @endforeach
+
+                            @if(!$categoryExists && $product->category)
+                                <option value="{{ $product->category }}" selected>
+                                    {{ $product->category }} (Legacy/Not in List)
+                                </option>
+                            @endif
                         @endif
                     </select>
                 </div>

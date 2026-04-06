@@ -28,7 +28,7 @@ class ProductController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'category' => 'nullable|string|max:255',
+            'category' => 'required|string|max:255',
             'print_assign' => 'nullable|string|max:255',
             'price' => 'required|numeric|min:0',
             'gst' => 'nullable|string|max:255',
@@ -93,7 +93,7 @@ class ProductController extends Controller
         
         $request->validate([
             'name' => 'required|string|max:255',
-            'category' => 'nullable|string|max:255',
+            'category' => 'required|string|max:255',
             'print_assign' => 'nullable|string|max:255',
             'price' => 'required|numeric|min:0',
             'gst' => 'nullable|string|max:255',
@@ -131,8 +131,7 @@ class ProductController extends Controller
             $path = Storage::disk('public')->put('products', $request->file('image'));
             // generate url
             $product->image_url = Storage::disk('public')->url($path);
-    
-    }
+        }
 
         $product->save();
         Cache::forget('app_menu_data');
