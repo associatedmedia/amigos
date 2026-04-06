@@ -21,6 +21,9 @@ class MenuController extends Controller
                 if ($product->image_url) {
                     $product->image_url = str_starts_with($product->image_url, 'http') ? $product->image_url : rtrim(url('/'), '/') . '/' . ltrim($product->image_url, '/');
                 }
+                // Ensure boolean flags are explicitly present for SQLite/MySQL consistency
+                $product->is_upsell = (bool)$product->is_upsell;
+                $product->is_best_seller = (bool)$product->is_best_seller;
                 return $product;
             });
 

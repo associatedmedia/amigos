@@ -254,6 +254,13 @@
         <div class="card shadow-sm border-0 mb-4">
             <div class="card-header bg-white fw-bold">Delivery Location</div>
             <div class="card-body">
+                @if($order->comment)
+                    <div class="alert alert-info py-2 mb-3 border-start border-4 border-info">
+                        <h6 class="fw-bold mb-1 rounded"><i class="bi bi-chat-right-dots-fill me-2"></i>Chef's Note / Special Instructions:</h6>
+                        <p class="mb-0 fs-6">{{ $order->comment }}</p>
+                    </div>
+                @endif
+
                 @if($order->address)
                     @php
                         $decodedAddress = json_decode($order->address, true);

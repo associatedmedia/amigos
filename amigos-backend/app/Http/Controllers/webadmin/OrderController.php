@@ -241,6 +241,9 @@ class OrderController extends Controller
                 $color = $order->status === 'completed' ? 'success' : ($order->status === 'pending' ? 'warning' : 'secondary');
                 return '<span class="badge bg-' . $color . '">' . ucfirst($order->status) . '</span>';
             })
+            ->editColumn('comment', function ($order) {
+                return $order->comment ? '<span class="text-truncate d-inline-block" style="max-width: 150px;" title="' . e($order->comment) . '">' . e($order->comment) . '</span>' : 'N/A';
+            })
             ->editColumn('created_at', function ($order) {
                 return $order->created_at->format('M d, Y h:i A');
             })
@@ -262,7 +265,7 @@ class OrderController extends Controller
                 </div>
             ';
         })
-        ->rawColumns(['platform', 'payment_status', 'status', 'action'])
+        ->rawColumns(['platform', 'payment_status', 'status', 'comment', 'action'])
         ->make(true);
     }
 
