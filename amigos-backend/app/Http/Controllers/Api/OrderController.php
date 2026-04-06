@@ -46,6 +46,7 @@ class OrderController extends Controller
                     'latitude' => $request->latitude,
                     'longitude' => $request->longitude,
                     'platform' => $request->platform,
+                    'comment' => $request->comment,
                     'status' => 'pending' 
                 ]);
 

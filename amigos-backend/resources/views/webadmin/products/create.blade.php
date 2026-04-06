@@ -103,6 +103,13 @@
                         <label class="form-check-label ms-2 mt-1 fs-6" for="isBestSellerSwitch">Mark as Best Seller</label>
                     </div>
                 </div>
+
+                <div class="col-md-4 mb-3 d-flex align-items-end pb-2">
+                    <div class="form-check form-switch fs-5">
+                        <input class="form-check-input" type="checkbox" role="switch" name="is_upsell" id="isUpsellSwitch" value="1" {{ old('is_upsell') ? 'checked' : '' }}>
+                        <label class="form-check-label ms-2 mt-1 fs-6" for="isUpsellSwitch">Show in Upsell?</label>
+                    </div>
+                </div>
             </div>
 
             <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Save Product</button>

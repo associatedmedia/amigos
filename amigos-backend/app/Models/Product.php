@@ -23,7 +23,8 @@ class Product extends Model
         'is_veg',        // boolean
         'description',
         'is_available',
-        'is_best_seller'
+        'is_best_seller',
+        'is_upsell'
     ];
 
     /**
@@ -33,6 +34,7 @@ class Product extends Model
         'is_veg' => 'boolean',       // 1 becomes true, 0 becomes false
         'is_available' => 'boolean',
         'is_best_seller' => 'boolean',
+        'is_upsell' => 'boolean',
         'price' => 'float',
     ];
 

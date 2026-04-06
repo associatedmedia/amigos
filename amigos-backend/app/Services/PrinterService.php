@@ -114,6 +114,7 @@ class PrinterService
                             'items' => $items,
                             'copy_number' => $i,
                             'total_copies' => $copies,
+                            'comment' => $order->comment, // Added Note for Chef (KOT)
                             'timestamp' => now()->toDateTimeString(),
                         ],
                         'status' => 'pending'
@@ -165,6 +166,7 @@ class PrinterService
                         'items' => $allItems,
                         'copy_number' => $i,
                         'total_copies' => $copies,
+                        'comment' => $order->comment, // Added Note for Chef (FULL_ORDER)
                         'timestamp' => now()->toDateTimeString(),
                     ],
                     'status' => 'pending'

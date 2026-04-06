@@ -38,6 +38,7 @@ class ProductController extends Controller
             'is_veg' => 'boolean',
             'is_available' => 'boolean',
             'is_best_seller' => 'boolean',
+            'is_upsell' => 'boolean',
             'image_url' => 'nullable|url',
             'image' => 'nullable|image|max:2048'
         ]);
@@ -54,6 +55,7 @@ class ProductController extends Controller
         $product->is_veg = $request->has('is_veg');
         $product->is_available = $request->has('is_available');
         $product->is_best_seller = $request->has('is_best_seller');
+        $product->is_upsell = $request->has('is_upsell');
 
         if ($request->filled('image_url')) {
             $product->image_url = $request->image_url;
@@ -101,6 +103,7 @@ class ProductController extends Controller
             'is_veg' => 'boolean',
             'is_available' => 'boolean',
             'is_best_seller' => 'boolean',
+            'is_upsell' => 'boolean',
             'image_url' => 'nullable|url',
             'image' => 'nullable|image|max:2048'
         ]);
@@ -116,6 +119,7 @@ class ProductController extends Controller
         $product->is_veg = $request->has('is_veg');
         $product->is_available = $request->has('is_available');
         $product->is_best_seller = $request->has('is_best_seller');
+        $product->is_upsell = $request->has('is_upsell');
 
         if ($request->filled('image_url')) {
             if ($product->image_url && preg_match('/storage\/(products\/.*)$/', $product->image_url, $matches)) {

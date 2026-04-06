@@ -24,7 +24,8 @@ class Order extends Model
         'status',
         'latitude',
         'longitude',
-        'platform'
+        'platform',
+        'comment'
         // REMOVED 'items' from fillable because it is now a separate table
     ];
 
