@@ -13,9 +13,9 @@ import * as Haptics from 'expo-haptics';
 const API_URL = 'https://api.amigospizza.co/api';
 
 export default function ActiveDeliveryScreen() {
-  const { orderId } = useLocalSearchParams();
-  const [order, setOrder] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { orderId, orderData } = useLocalSearchParams();
+  const [order, setOrder] = useState(orderData ? JSON.parse(orderData) : null);
+  const [loading, setLoading] = useState(!orderData);
   const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
@@ -169,6 +169,9 @@ export default function ActiveDeliveryScreen() {
       <MapView 
         provider={PROVIDER_GOOGLE}
         style={styles.map} 
+        showsUserLocation={true}
+        followsUserLocation={false}
+        loadingEnabled={true}
         region={{
           latitude: mapCenterLat, 
           longitude: mapCenterLng,

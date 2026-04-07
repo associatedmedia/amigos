@@ -57,7 +57,7 @@ Route::get('/products', [ProductController::class, 'index']);
 Route::get('/app-version', function () {
     return response()->json([
         'success'         => true,
-        'minimum_version' => '19.0.1', // Update this when you want to force updates
+        'minimum_version' => '21.0.0', // Update this when you want to force updates
         'store_url_android' => 'https://play.google.com/store/apps/details?id=com.associatedmedia.amigospizza',
         'store_url_ios'     => 'https://apps.apple.com/us/app/amigos-pizza/id123456789' // Replace with actual iOS ID if needed
     ]);
@@ -144,22 +144,22 @@ Route::group(['prefix' => 'printer'], function () {
     Route::post('/jobs/{id}/status', [PrinterApiController::class, 'updateJobStatus']);
     
     // TEMPORARY: Expose logs to debug missing print jobs on AWS
-    Route::get('/debug-logs', function () {
-        $logFile = storage_path('logs/laravel.log');
-        if (file_exists($logFile)) {
-            // Get the last 500 lines for faster loading
-            $lines = file($logFile);
-            $lastLines = array_slice($lines, -500);
-            return response(implode("", $lastLines))->header('Content-Type', 'text/plain');
-        }
-        return response('No log file found.', 404);
-    });
+    // Route::get('/debug-logs', function () {
+    //     $logFile = storage_path('logs/laravel.log');
+    //     if (file_exists($logFile)) {
+    //         // Get the last 500 lines for faster loading
+    //         $lines = file($logFile);
+    //         $lastLines = array_slice($lines, -500);
+    //         return response(implode("", $lastLines))->header('Content-Type', 'text/plain');
+    //     }
+    //     return response('No log file found.', 404);
+    // });
 
     // TEMPORARY: Expose DB contents to check if jobs are saving
-    Route::get('/debug-db', function () {
-        return response()->json([
-            'total_jobs' => \App\Models\PrintJob::count(),
-            'all_jobs' => \App\Models\PrintJob::all()
-        ]);
-    });
+    // Route::get('/debug-db', function () {
+    //     return response()->json([
+    //         'total_jobs' => \App\Models\PrintJob::count(),
+    //         'all_jobs' => \App\Models\PrintJob::all()
+    //     ]);
+    // });
 });

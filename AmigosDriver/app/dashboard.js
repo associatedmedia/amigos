@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Constants from 'expo-constants';
-import { View, Text, StyleSheet, Switch, FlatList, TouchableOpacity, RefreshControl, Modal, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, Switch, FlatList, TouchableOpacity, RefreshControl, Modal, Alert, Platform, AppState } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -19,6 +19,7 @@ export default function DashboardScreen() {
     const [analytics, setAnalytics] = useState({ total_deliveries: 0, cash_to_collect: 0 });
     const [lastGeoSync, setLastGeoSync] = useState(null); // Feedback for GPS Sync
     const [isSyncing, setIsSyncing] = useState(false);
+    const [appState, setAppState] = useState(AppState.currentState);
 
     useEffect(() => {
         const loadProfile = async () => {
@@ -35,6 +36,14 @@ export default function DashboardScreen() {
         fetchOrders();
         fetchAnalytics();
         syncOfflineQueue();
+
+        const subscription = AppState.addEventListener('change', nextAppState => {
+            setAppState(nextAppState);
+        });
+
+        return () => {
+            subscription.remove();
+        };
     }, []);
 
     // Live Location Tracking Effect
@@ -48,8 +57,8 @@ export default function DashboardScreen() {
                     locationSubscription = await Location.watchPositionAsync(
                         {
                             accuracy: Location.Accuracy.Balanced,
-                            timeInterval: 10000,
-                            distanceInterval: 10,
+                            timeInterval: 30000, // Increased to 30s for battery
+                            distanceInterval: 25, // Increased to 25m for battery
                         },
                         async (loc) => updateServerLocation(loc)
                     );
@@ -75,10 +84,16 @@ export default function DashboardScreen() {
                         longitude: loc.coords.longitude,
                         is_online: true
                     }, { headers: { Authorization: `Bearer ${token}` } });
-                    setLastGeoSync(new Date());
+                    
+                    // Only update sync UI if it's been > 30s to reduce re-renders
+                    setLastGeoSync(prev => {
+                        const now = new Date();
+                        if (!prev || (now - prev) > 30000) return now;
+                        return prev;
+                    });
                 }
             } catch (err) {
-                console.log("Loc Update Fail", err.response?.data?.message || err.message);
+                // Silent error for geo sync to avoid annoying driver
             } finally {
                 setIsSyncing(false);
             }
@@ -93,16 +108,26 @@ export default function DashboardScreen() {
         };
     }, [isOnline]);
 
-    // Regular Polling for New Orders when Online
+    // Regular Polling for New Orders when Online (Adaptive based on status)
+    // EXTREME BATT OPT: Only poll when app is Active
     useEffect(() => {
         let interval;
-        if (isOnline) {
+        if (isOnline && appState === 'active') {
+            // If delivering an order, poll less frequently (60s), otherwise 30s
+            const isDelivering = orders.some(o => o.status === 'picked_up');
+            const pollInterval = isDelivering ? 60000 : 30000;
+
+            console.log(`Polling started: Interval ${pollInterval/1000}s`);
             interval = setInterval(() => {
                 fetchOrders();
-            }, 15000); // 15 seconds
+            }, pollInterval);
+        } else {
+            console.log("Polling paused (App in Background or Offline)");
         }
-        return () => clearInterval(interval);
-    }, [isOnline]);
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [isOnline, appState, orders.length > 0 && orders[0].status]); 
 
     const fetchOrders = async () => {
         try {
@@ -115,14 +140,21 @@ export default function DashboardScreen() {
             });
 
             if (response.data.success) {
-                setOrders(response.data.orders);
-                await AsyncStorage.setItem('offlineOrders', JSON.stringify(response.data.orders));
+                const newOrders = response.data.orders;
+                setOrders(newOrders);
+                
+                // --- BATTERY OPT: Only write to disk if data changed ---
+                const oldOrdersStr = await AsyncStorage.getItem('offlineOrders');
+                const newOrdersStr = JSON.stringify(newOrders);
+                if (oldOrdersStr !== newOrdersStr) {
+                    await AsyncStorage.setItem('offlineOrders', newOrdersStr);
+                }
 
                 // --- NEW RINGER LOGIC ---
                 const ackStr = await AsyncStorage.getItem('acknowledged_orders');
                 const ackList = ackStr ? JSON.parse(ackStr) : [];
 
-                const unacked = response.data.orders.find(o => o.status === 'assigned' && !ackList.includes(o.id));
+                const unacked = newOrders.find(o => o.status === 'assigned' && !ackList.includes(o.id));
                 if (unacked) {
                     router.push({ pathname: '/new-order-ringer', params: { orderData: JSON.stringify(unacked) } });
                 }
@@ -263,7 +295,10 @@ export default function DashboardScreen() {
             <TouchableOpacity
                 style={styles.card}
                 activeOpacity={0.9}
-                onPress={() => router.push({ pathname: '/active-delivery', params: { orderId: item.id } })}
+                onPress={() => router.push({ 
+                    pathname: '/active-delivery', 
+                    params: { orderId: item.id, orderData: JSON.stringify(item) } 
+                })}
             >
                 <View style={styles.cardHeader}>
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>

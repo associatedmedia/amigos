@@ -2,7 +2,7 @@
  * Amigos Pizza - Local Printer Bridge
  * This script runs locally on the system connected to the printers.
  * It polls the backend API for pending print jobs and sends them to local printers.
-*. DATED : 25/MAR/2026  
+*. DATED : 06/APR/2026  
 */
 
 import fs from 'fs';

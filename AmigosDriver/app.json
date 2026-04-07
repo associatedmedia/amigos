@@ -2,7 +2,7 @@
   "expo": {
     "name": "Amigos Driver",
     "slug": "AmigosDriver",
-    "version": "1.0.0",
+    "version": "1.2.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "amigosdriver",
@@ -16,7 +16,8 @@
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "This app uses your location to track delivery progress and show routes to customers.",
         "UIBackgroundModes": [
-          "fetch"
+          "fetch",
+          "location"
         ]
       }
     },
@@ -62,3 +63,4 @@
     }
   }
 }
+/////// eas build --platform android --profile preview
