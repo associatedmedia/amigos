@@ -41,8 +41,8 @@ Route::get('/settings', [\App\Http\Controllers\Api\SettingController::class, 'in
 Route::get('/banners', [BannerController::class, 'index']);
 Route::get('/offer-banner', function() {
     $banner = \App\Models\OfferBanner::where('is_active', true)->latest()->first();
-    if($banner && $banner->image_url && !str_starts_with($banner->image_url, 'http')){
-         $banner->image_url = rtrim(env('APP_URL', url('/')), '/') . '-' . $banner->image_url;
+    if($banner && $banner->image_url){
+         $banner->image_url = rtrim(env('APP_URL', url('/')), '/') . $banner->image_url;
     }
     return response()->json(['success' => true, 'data' => $banner]);
 });
