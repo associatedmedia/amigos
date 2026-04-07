@@ -42,7 +42,7 @@ Route::get('/banners', [BannerController::class, 'index']);
 Route::get('/offer-banner', function() {
     $banner = \App\Models\OfferBanner::where('is_active', true)->latest()->first();
     if($banner && $banner->image_url){
-         $banner->image_url = rtrim(env('APP_URL', url('/')), '/') . $banner->image_url;
+         $banner->image_url = env('APP_URL') . '/' . $banner->image_url;
     }
     return response()->json(['success' => true, 'data' => $banner]);
 });
