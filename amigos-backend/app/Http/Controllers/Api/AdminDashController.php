@@ -37,7 +37,7 @@ class AdminDashController extends Controller
     {
         $request->validate([
             // Add 'out_for_delivery' to the allowed list
-            'status' => 'required|in:pending,cooking,ready_for_pickup,out_for_delivery,delivered,cancelled',
+            'status' => 'required|in:pending,accepted,cooking,ready_for_pickup,out_for_delivery,delivered,cancelled',
             'driver_id' => 'nullable|exists:users,id' // Check if driver exists
         ]);
 
