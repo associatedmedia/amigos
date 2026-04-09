@@ -35,7 +35,7 @@
             processing: true,
             serverSide: true,
             stateSave: true,
-            order: [[7, "desc"]],
+            order: [[8, "desc"]],
             ajax: "{{ route('admin.orders.data') }}",
             columns: [
                 { data: 'order_number', name: 'order_number' },
