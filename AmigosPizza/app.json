@@ -1,0 +1,72 @@
+{
+  "expo": {
+    "name": "AmigosPizza",
+    "slug": "AmigosPizza",
+    "version": "21.0.0",
+    "scheme": "amigospizza",
+    "orientation": "portrait",
+    "icon": "./assets/ic_launcher_round.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.associatedmedia.amigospizza",
+      "config": {
+        "googleMapsApiKey": "AIzaSyA024waSwg_D8uc9p631ClPteTdpDRDQ4U"
+      },
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSPhotoLibraryUsageDescription": "This allows you to upload a profile picture or share images with support.",
+        "NSCameraUsageDescription": "This allows you to take a photo for your profile or support requests.",
+        "NSLocationWhenInUseUsageDescription": "We use your location to show delivery drivers near you and estimate delivery times."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/ic_launcher_round.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.associatedmedia.amigospizza",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyA024waSwg_D8uc9p631ClPteTdpDRDQ4U"
+        }
+      },
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.INTERNET"
+      ],
+      "blockedPermissions": [
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "b5e8ed3b-7ac3-4131-8a5a-56230915c462"
+      }
+    },
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ],
+      "expo-audio"
+    ],
+    "runtimeVersion": "1.0.0",
+    "updates": {
+      "url": "https://u.expo.dev/b5e8ed3b-7ac3-4131-8a5a-56230915c462"
+    }
+  }
+}
