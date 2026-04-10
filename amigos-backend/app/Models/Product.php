@@ -58,4 +58,9 @@ class Product extends Model
         // 3. Otherwise, add the domain name (e.g. localhost:8000/storage/...)
         return asset($value);
     }
+
+    public function variants()
+    {
+        return $this->hasMany(ProductVariant::class);
+    }
 }
