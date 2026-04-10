@@ -115,36 +115,3 @@ Route::prefix('admin')->group(function () {
         Route::get('/orders/{id}/live-location', [App\Http\Controllers\webadmin\OrderController::class, 'getLiveLocation'])->name('admin.orders.live-location');
     });
 });
-
-
-
-Route::get('/fix-database', function() {
-    $uniqueNames = \App\Models\Product::select('name')->distinct()->pluck('name');
-    $count = 0;
-
-    foreach($uniqueNames as $name) {
-        // Find all products with the same name
-        $duplicates = \App\Models\Product::where('name', $name)->orderBy('id', 'asc')->get();
-
-        if($duplicates->count() > 1) {
-            $primaryProduct = $duplicates->first(); // Keep the first one
-
-            foreach($duplicates as $index => $dup) {
-                if($index === 0) continue; // Skip the primary one
-
-                // Move all variants (sizes) from the duplicate to the primary product
-                \App\Models\ProductVariant::where('product_id', $dup->id)
-                    ->update(['product_id' => $primaryProduct->id]);
-
-                // Delete the duplicate product row
-                $dup->delete();
-                $count++;
-            }
-        }
-    }
-    
-    // Clear the cache so the app sees the changes instantly
-    \Illuminate\Support\Facades\Cache::flush();
-
-    return "Database Fixed! Successfully merged variants and deleted {$count} duplicate products.";
-});
