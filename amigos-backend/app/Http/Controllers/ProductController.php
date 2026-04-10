@@ -11,6 +11,7 @@ class ProductController extends Controller
     {
         // Return all products. 
         // Optional: You can optimize this later to only send needed columns
-        return response()->json(Product::all());
+        $products = Product::with('variants')->get();
+        return response()->json($products);
     }
 }
