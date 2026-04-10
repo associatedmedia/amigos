@@ -6,7 +6,7 @@
     <a href="{{ route('admin.products.index') }}" class="btn btn-secondary btn-sm"><i class="bi bi-arrow-left"></i> Back to Products</a>
 </div>
 
-<div class="card shadow-sm border-0">
+<div class="card shadow-sm border-0 mb-4">
     <div class="card-body">
         <form action="{{ route('admin.products.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
@@ -17,10 +17,12 @@
                     <input type="text" name="name" class="form-control" placeholder="E.g., Margherita Pizza" value="{{ old('name') }}" required>
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label class="form-label fw-bold">Price (₹)</label>
+                    <label class="form-label fw-bold">Base Price (₹)</label>
                     <input type="number" step="0.01" name="price" class="form-control" placeholder="0.00" value="{{ old('price') }}" required>
+                    <small class="text-muted">Default price if no sizes are selected.</small>
                 </div>
             </div>
+            
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label class="form-label fw-bold">Category</label>
@@ -79,8 +81,8 @@
 
                 <div class="col-md-4 mb-3">
                     <label class="form-label fw-bold">Upload Local Image</label>
-                    <input type="file" name="image" class="form-control" accept="image/jpeg,image/webp">
-                    <div class="form-text">Recommended Size: 600 x 600 px (1:1 Square), JPG / WebP</div>
+                    <input type="file" name="image" class="form-control" accept="image/jpeg,image/webp,image/png">
+                    <div class="form-text">Recommended Size: 600 x 600 px (1:1 Square)</div>
                 </div>
                 
                 <div class="col-md-4 mb-3 d-flex align-items-end pb-2">
@@ -112,8 +114,62 @@
                 </div>
             </div>
 
-            <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Save Product</button>
+            <div class="card shadow-sm mb-4 border-primary">
+                <div class="card-header bg-primary text-white fw-bold d-flex justify-content-between align-items-center">
+                    <span>Product Variants / Sizes (Optional)</span>
+                    <button type="button" class="btn btn-sm btn-light" id="addVariantBtn">
+                        <i class="bi bi-plus-circle"></i> Add Size
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table mb-0" id="variantsTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Variant Name (e.g., M, L, XL)</th>
+                                <th>Price (₹)</th>
+                                <th style="width: 80px;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg"><i class="bi bi-save"></i> Save Product</button>
         </form>
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    $(document).ready(function() {
+        let variantIndex = 0; // Start at 0 for new products
+
+        // Add new row
+        $('#addVariantBtn').click(function() {
+            let html = `
+                <tr class="variant-row">
+                    <td>
+                        <input type="text" name="variants[${variantIndex}][variant_name]" class="form-control text-uppercase" placeholder="e.g. M, L, XL, REGULAR" required>
+                    </td>
+                    <td>
+                        <input type="number" step="0.01" name="variants[${variantIndex}][price]" class="form-control" placeholder="Price" required>
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-danger remove-variant"><i class="bi bi-trash"></i></button>
+                    </td>
+                </tr>
+            `;
+            $('#variantsTable tbody').append(html);
+            variantIndex++;
+        });
+
+        // Remove row
+        $(document).on('click', '.remove-variant', function() {
+            $(this).closest('tr').remove();
+        });
+    });
+</script>
+@endpush
