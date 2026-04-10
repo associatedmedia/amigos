@@ -6,22 +6,27 @@
     <a href="{{ route('admin.products.index') }}" class="btn btn-secondary btn-sm"><i class="bi bi-arrow-left"></i> Back to Products</a>
 </div>
 
-<div class="card shadow-sm border-0">
+<div class="card shadow-sm border-0 mb-4">
     <div class="card-body">
         <form action="{{ route('admin.products.update', $product->id) }}" method="POST" enctype="multipart/form-data">
             @csrf
             @method('PUT')
             
             <div class="row">
-                <div class="col-md-6 mb-3">
+                <div class="col-md-4 mb-3">
                     <label class="form-label fw-bold">Name</label>
                     <input type="text" name="name" class="form-control" value="{{ old('name', $product->name) }}" required>
                 </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label fw-bold">Price (₹)</label>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label fw-bold">Base Price (₹)</label>
                     <input type="number" step="0.01" name="price" class="form-control" value="{{ old('price', $product->price) }}" required>
                 </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label fw-bold">Takeaway Price (₹) <span class="text-muted fw-normal">(Optional)</span></label>
+                    <input type="number" step="0.01" name="takeaway_price" class="form-control" value="{{ old('takeaway_price', $product->takeaway_price) }}">
+                </div>
             </div>
+            
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label class="form-label fw-bold">Category</label>
@@ -129,8 +134,83 @@
                 </div>
             </div>
 
-            <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Update Product</button>
+            <div class="card shadow-sm mb-4 border-primary">
+                <div class="card-header bg-primary text-white fw-bold d-flex justify-content-between align-items-center">
+                    <span>Product Variants / Sizes (Optional)</span>
+                    <button type="button" class="btn btn-sm btn-light" id="addVariantBtn">
+                        <i class="bi bi-plus-circle"></i> Add Size
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table mb-0" id="variantsTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Variant Name (e.g., M, L, XL)</th>
+                                <th>Price (₹)</th>
+                                <th style="width: 80px;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @php $vIndex = 0; @endphp
+                            @foreach($product->variants as $variant)
+                            <tr class="variant-row">
+                                <td>
+                                    <input type="hidden" name="variants[{{$vIndex}}][id]" value="{{ $variant->id }}">
+                                    <input type="text" name="variants[{{$vIndex}}][variant_name]" class="form-control text-uppercase" value="{{ $variant->variant_name }}" required>
+                                </td>
+                                <td>
+                                    <input type="number" step="0.01" name="variants[{{$vIndex}}][price]" class="form-control" value="{{ $variant->price }}" required>
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-danger remove-variant"><i class="bi bi-trash"></i></button>
+                                </td>
+                            </tr>
+                            @php $vIndex++; @endphp
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg"><i class="bi bi-save"></i> Update Product</button>
         </form>
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    $(document).ready(function() {
+        // Start the index right after the existing variants
+        let variantIndex = {{ $product->variants->count() }};
+
+        // Add new row
+        $('#addVariantBtn').click(function() {
+            let html = `
+                <tr class="variant-row">
+                    <td>
+                        <input type="hidden" name="variants[${variantIndex}][id]" value="">
+                        <input type="text" name="variants[${variantIndex}][variant_name]" class="form-control text-uppercase" placeholder="e.g. M, L, XL, REGULAR" required>
+                    </td>
+                    <td>
+                        <input type="number" step="0.01" name="variants[${variantIndex}][price]" class="form-control" placeholder="Price" required>
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-danger remove-variant"><i class="bi bi-trash"></i></button>
+                    </td>
+                </tr>
+            `;
+            $('#variantsTable tbody').append(html);
+            variantIndex++;
+        });
+
+        // Remove row
+        $(document).on('click', '.remove-variant', function() {
+            // When user clicks the red trash can, we just remove the row from the HTML.
+            // Because its ID won't be sent in the array during form submit, 
+            // the ProductController will automatically detect it's missing and delete it from the database!
+            $(this).closest('tr').remove();
+        });
+    });
+</script>
+@endpush
