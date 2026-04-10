@@ -199,57 +199,64 @@ class ProductController extends Controller
     //         ->make(true);
     // }
 
-    public function data()
-    {
-        $products = Product::with('variants')->select('products.*');
+  use Yajra\DataTables\Facades\DataTables;
 
-        return DataTables::of($products)
-            ->addColumn('image_url', function ($product) {
-                $url = $product->image_url ? asset($product->image_url) : asset('assets/images/no-image.png');
-                return '<img src="'.$url.'" class="rounded" width="50" height="50" style="object-fit: cover;">';
-            })
-            ->editColumn('price', function ($product) {
-                // If the product has variants, list them as badges
-                if ($product->variants->count() > 0) {
-                    $html = '<div class="d-flex flex-wrap gap-1">';
-                    foreach ($product->variants as $variant) {
-                        $html .= '<span class="badge bg-light text-dark border" style="font-size: 0.75rem;">' . 
-                                $variant->variant_name . ': ₹' . number_format($variant->price, 0) . 
-                                '</span>';
-                    }
-                    
-                    // Add Takeaway price if it exists
-                    if($product->takeaway_price > 0) {
-                        $html .= '<span class="badge bg-info-subtle text-info border" style="font-size: 0.75rem;">TA: ₹' . 
-                                number_format($product->takeaway_price, 0) . '</span>';
-                    }
-                    
-                    $html .= '</div>';
-                    return $html;
+public function data()
+{
+    // 🛑 THE FIX: This sub-query groups by name, hiding all old database duplicates!
+    $products = Product::with('variants')
+        ->whereIn('id', function($query) {
+            $query->selectRaw('MIN(id)')
+                  ->from('products')
+                  ->groupBy('name');
+        })
+        ->select('products.*');
+
+    return DataTables::of($products)
+        ->addColumn('image_url', function ($product) {
+            $url = $product->image_url ? asset($product->image_url) : asset('assets/images/no-image.png');
+            return '<img src="'.$url.'" class="rounded" width="50" height="50" style="object-fit: cover;">';
+        })
+        ->editColumn('price', function ($product) {
+            // Display variants as nice badges
+            if ($product->variants->count() > 0) {
+                $html = '<div class="d-flex flex-wrap gap-1">';
+                foreach ($product->variants as $variant) {
+                    $html .= '<span class="badge bg-light text-dark border" style="font-size: 0.75rem;">' . 
+                             $variant->variant_name . ': ₹' . number_format($variant->price, 0) . 
+                             '</span>';
                 }
                 
-                // Fallback for products without variants
-                return '<strong>₹' . number_format($product->price, 2) . '</strong>';
-            })
-            ->addColumn('type', function ($product) {
-                return $product->is_veg 
-                    ? '<span class="badge bg-success">Veg</span>' 
-                    : '<span class="badge bg-danger">Non-Veg</span>';
-            })
-            ->editColumn('is_available', function ($product) {
-                $checked = $product->is_available ? 'checked' : '';
-                return '<div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" role="switch" '.$checked.' disabled>
-                        </div>';
-            })
-            ->addColumn('action', function ($product) {
-                return '
-                    <div class="btn-group">
-                        <a href="'.route('admin.products.edit', $product->id).'" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
-                        <button onclick="confirmDelete(\''.route('admin.products.destroy', $product->id).'\')" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                if($product->takeaway_price > 0) {
+                    $html .= '<span class="badge bg-info-subtle text-info border" style="font-size: 0.75rem;">TA: ₹' . 
+                             number_format($product->takeaway_price, 0) . '</span>';
+                }
+                
+                $html .= '</div>';
+                return $html;
+            }
+            
+            return '<strong>₹' . number_format($product->price, 2) . '</strong>';
+        })
+        ->addColumn('type', function ($product) {
+            return $product->is_veg 
+                ? '<span class="badge bg-success">Veg</span>' 
+                : '<span class="badge bg-danger">Non-Veg</span>';
+        })
+        ->editColumn('is_available', function ($product) {
+            $checked = $product->is_available ? 'checked' : '';
+            return '<div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" '.$checked.' disabled>
                     </div>';
-            })
-            ->rawColumns(['image_url', 'price', 'type', 'is_available', 'action'])
-            ->make(true);
-    }
+        })
+        ->addColumn('action', function ($product) {
+            return '
+                <div class="btn-group">
+                    <a href="'.route('admin.products.edit', $product->id).'" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+                    <button onclick="confirmDelete(\''.route('admin.products.destroy', $product->id).'\')" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                </div>';
+        })
+        ->rawColumns(['image_url', 'price', 'type', 'is_available', 'action'])
+        ->make(true);
+}
 }
