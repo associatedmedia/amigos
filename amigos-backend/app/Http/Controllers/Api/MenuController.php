@@ -12,7 +12,7 @@ class MenuController extends Controller
     public function index()
     {
         // Cache menu for 5 minutes to reduce DB queries on every app open
-        $grouped = Cache::remember('app_menu_data', 300, function () {
+        $grouped = Cache::remember('app_menu_data_fresh_v1', 300, function () {
             // Get all active categories
             $categories = \App\Models\Category::where('is_active', true)->orderBy('sort_order', 'asc')->get();
             
