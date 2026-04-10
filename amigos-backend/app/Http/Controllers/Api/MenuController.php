@@ -17,7 +17,7 @@ class MenuController extends Controller
             $categories = \App\Models\Category::where('is_active', true)->orderBy('sort_order', 'asc')->get();
             
             // Get all available products
-            $products = Product::where('is_available', true)->get()->map(function ($product) {
+            $products = Product::with('variants')->where('is_available', true)->get()->map(function ($product) {
                 if ($product->image_url) {
                     $product->image_url = str_starts_with($product->image_url, 'http') ? $product->image_url : rtrim(url('/'), '/') . '/' . ltrim($product->image_url, '/');
                 }
