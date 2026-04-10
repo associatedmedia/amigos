@@ -49,7 +49,7 @@ const STORES = [
   },
   {
     id: '2',
-    name: 'AMIGOS ANANTNAG',
+    name: 'AMIGOS HAZRATBAL',
     address: 'University Main Road, opposite Sir Syed Gate University of Kashmir, Hazaratbal, Srinagar, Jammu and Kashmir 190006',
     distance: '12.0 km',
     openTime: '10:30 AM to 10:30 PM',
