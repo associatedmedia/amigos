@@ -40,9 +40,9 @@
                 { data: 'image_url', name: 'image_url', orderable: false, searchable: false },
                 { data: 'name', name: 'name' },
                 { data: 'category', name: 'category' },
-                { data: 'price', name: 'price' },
-                { data: 'type', name: 'type', searchable: false },
-                { data: 'is_available', name: 'is_available', searchable: false },
+                { data: 'price', name: 'price' }, // This now handles our variant HTML
+                { data: 'type', name: 'type', orderable: false, searchable: false },
+                { data: 'is_available', name: 'is_available', orderable: false, searchable: false },
                 { data: 'action', name: 'action', orderable: false, searchable: false }
             ]
         });

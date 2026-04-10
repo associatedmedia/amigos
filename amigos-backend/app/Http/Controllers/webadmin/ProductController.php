@@ -14,7 +14,8 @@ class ProductController extends Controller
 {
     public function index()
     {
-        return view('webadmin.products.index');
+        $products = Product::with('variants')->orderBy('name')->get();
+        return view('webadmin.products.index', compact('products'));
     }
 
     public function create()
@@ -153,48 +154,102 @@ class ProductController extends Controller
         return response()->json(['success' => true]);
     }
 
+    // public function data()
+    // {
+    //     $query = Product::select('products.*');
+
+    //     return DataTables::of($query)
+    //         ->editColumn('image_url', function ($product) {
+    //             if ($product->image_url) {
+    //                 $url = str_starts_with($product->image_url, 'http') ? $product->image_url : asset($product->image_url);
+    //                 return '<img src="' . $url . '" style="height:40px; width:40px; object-fit:cover; border-radius:4px;" />';
+    //             }
+    //             return '<span class="text-muted">None</span>';
+    //         })
+    //         ->editColumn('category', function ($product) {
+    //             return $product->category ? $product->category : 'Uncategorized';
+    //         })
+    //         ->editColumn('price', function ($product) {
+    //             return '₹' . number_format($product->price, 2);
+    //         })
+    //         ->editColumn('type', function ($product) {
+    //             $color = $product->is_veg ? 'success' : 'danger';
+    //             $text = $product->is_veg ? 'VEG' : 'NON-VEG';
+    //             $html = '<span class="badge bg-' . $color . '">' . $text . '</span>';
+    //             if ($product->is_best_seller) {
+    //                 $html .= ' <span class="badge bg-warning text-dark"><i class="bi bi-star-fill"></i> Best Seller</span>';
+    //             }
+    //             return $html;
+    //         })
+    //         ->editColumn('is_available', function ($product) {
+    //             $color = $product->is_available ? 'primary' : 'secondary';
+    //             $text = $product->is_available ? 'Available' : 'Unavailable';
+    //             return '<span class="badge bg-' . $color . '">' . $text . '</span>';
+    //         })
+    //         ->addColumn('action', function ($product) {
+    //             $viewUrl = route('admin.products.show', $product->id);
+    //             $editUrl = route('admin.products.edit', $product->id);
+    //             $deleteUrl = route('admin.products.destroy', $product->id);
+                
+    //             return '<a href="' . $viewUrl . '" class="btn btn-sm btn-outline-info me-1"><i class="bi bi-eye"></i> View</a>' .
+    //                    '<a href="' . $editUrl . '" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i> Edit</a>' .
+    //                    '<button onclick="confirmDelete(\'' . $deleteUrl . '\')" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Delete</button>';
+    //         })
+    //         ->rawColumns(['image_url', 'type', 'is_available', 'action'])
+    //         ->make(true);
+    // }
+
     public function data()
     {
-        $query = Product::select('products.*');
+        $products = Product::with('variants')->select('products.*');
 
-        return DataTables::of($query)
-            ->editColumn('image_url', function ($product) {
-                if ($product->image_url) {
-                    $url = str_starts_with($product->image_url, 'http') ? $product->image_url : asset($product->image_url);
-                    return '<img src="' . $url . '" style="height:40px; width:40px; object-fit:cover; border-radius:4px;" />';
-                }
-                return '<span class="text-muted">None</span>';
-            })
-            ->editColumn('category', function ($product) {
-                return $product->category ? $product->category : 'Uncategorized';
+        return DataTables::of($products)
+            ->addColumn('image_url', function ($product) {
+                $url = $product->image_url ? asset($product->image_url) : asset('assets/images/no-image.png');
+                return '<img src="'.$url.'" class="rounded" width="50" height="50" style="object-fit: cover;">';
             })
             ->editColumn('price', function ($product) {
-                return '₹' . number_format($product->price, 2);
-            })
-            ->editColumn('type', function ($product) {
-                $color = $product->is_veg ? 'success' : 'danger';
-                $text = $product->is_veg ? 'VEG' : 'NON-VEG';
-                $html = '<span class="badge bg-' . $color . '">' . $text . '</span>';
-                if ($product->is_best_seller) {
-                    $html .= ' <span class="badge bg-warning text-dark"><i class="bi bi-star-fill"></i> Best Seller</span>';
+                // If the product has variants, list them as badges
+                if ($product->variants->count() > 0) {
+                    $html = '<div class="d-flex flex-wrap gap-1">';
+                    foreach ($product->variants as $variant) {
+                        $html .= '<span class="badge bg-light text-dark border" style="font-size: 0.75rem;">' . 
+                                $variant->variant_name . ': ₹' . number_format($variant->price, 0) . 
+                                '</span>';
+                    }
+                    
+                    // Add Takeaway price if it exists
+                    if($product->takeaway_price > 0) {
+                        $html .= '<span class="badge bg-info-subtle text-info border" style="font-size: 0.75rem;">TA: ₹' . 
+                                number_format($product->takeaway_price, 0) . '</span>';
+                    }
+                    
+                    $html .= '</div>';
+                    return $html;
                 }
-                return $html;
+                
+                // Fallback for products without variants
+                return '<strong>₹' . number_format($product->price, 2) . '</strong>';
+            })
+            ->addColumn('type', function ($product) {
+                return $product->is_veg 
+                    ? '<span class="badge bg-success">Veg</span>' 
+                    : '<span class="badge bg-danger">Non-Veg</span>';
             })
             ->editColumn('is_available', function ($product) {
-                $color = $product->is_available ? 'primary' : 'secondary';
-                $text = $product->is_available ? 'Available' : 'Unavailable';
-                return '<span class="badge bg-' . $color . '">' . $text . '</span>';
+                $checked = $product->is_available ? 'checked' : '';
+                return '<div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" '.$checked.' disabled>
+                        </div>';
             })
             ->addColumn('action', function ($product) {
-                $viewUrl = route('admin.products.show', $product->id);
-                $editUrl = route('admin.products.edit', $product->id);
-                $deleteUrl = route('admin.products.destroy', $product->id);
-                
-                return '<a href="' . $viewUrl . '" class="btn btn-sm btn-outline-info me-1"><i class="bi bi-eye"></i> View</a>' .
-                       '<a href="' . $editUrl . '" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i> Edit</a>' .
-                       '<button onclick="confirmDelete(\'' . $deleteUrl . '\')" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Delete</button>';
+                return '
+                    <div class="btn-group">
+                        <a href="'.route('admin.products.edit', $product->id).'" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+                        <button onclick="confirmDelete(\''.route('admin.products.destroy', $product->id).'\')" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                    </div>';
             })
-            ->rawColumns(['image_url', 'type', 'is_available', 'action'])
+            ->rawColumns(['image_url', 'price', 'type', 'is_available', 'action'])
             ->make(true);
     }
 }
