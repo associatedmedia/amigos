@@ -199,7 +199,6 @@ class ProductController extends Controller
     //         ->make(true);
     // }
 
-  use Yajra\DataTables\Facades\DataTables;
 
 public function data()
 {
