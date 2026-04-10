@@ -11,32 +11,38 @@ class MenuController extends Controller
 {
     public function index()
     {
-        // Cache menu for 5 minutes to reduce DB queries on every app open
-        $grouped = Cache::remember('app_menu_data', 300, function () {
-            // Get all active categories
+        // 🛑 NEW CACHE KEY: Bypasses the old data
+        $grouped = Cache::remember('app_menu_data_v2', 300, function () {
+            
             $categories = \App\Models\Category::where('is_active', true)->orderBy('sort_order', 'asc')->get();
             
-            // 🛑 THE FIX: Fetch available products, load variants, and hide duplicates!
             $products = Product::with('variants')
                 ->where('is_available', true)
-                ->whereIn('id', function($query) {
-                    $query->selectRaw('MIN(id)')
-                          ->from('products')
-                          ->groupBy('name');
-                })
                 ->get()
                 ->map(function ($product) {
-                    if ($product->image_url) {
-                        $product->image_url = str_starts_with($product->image_url, 'http') ? $product->image_url : rtrim(url('/'), '/') . '/' . ltrim($product->image_url, '/');
+                    
+                    // Force the Laravel Model to become a standard array
+                    $data = $product->toArray();
+                    
+                    // Fix Image URL
+                    if (!empty($data['image_url'])) {
+                        $data['image_url'] = str_starts_with($data['image_url'], 'http') 
+                            ? $data['image_url'] 
+                            : rtrim(url('/'), '/') . '/' . ltrim($data['image_url'], '/');
                     }
-                    // Ensure boolean flags are explicitly present for SQLite/MySQL consistency
-                    $product->is_upsell = (bool)$product->is_upsell;
-                    $product->is_best_seller = (bool)$product->is_best_seller;
-                    return $product;
+                    
+                    // Explicitly cast booleans for React Native
+                    $data['is_upsell'] = (bool)($data['is_upsell'] ?? false);
+                    $data['is_best_seller'] = (bool)($data['is_best_seller'] ?? false);
+                    
+                    // 🛑 THE ULTIMATE FIX: Forcefully inject the variants as an array
+                    $data['variants'] = $product->variants ? $product->variants->toArray() : [];
+                    
+                    return $data;
                 });
 
             // Group products by category string
-            $groupedProducts = $products->groupBy('category');
+            $groupedProducts = collect($products)->groupBy('category');
 
             return $categories->map(function ($category) use ($groupedProducts) {
                 $imageUrl = $category->image_url;
