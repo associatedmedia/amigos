@@ -19,7 +19,6 @@
                 <th>Total</th>
                 <th>Payment Status</th>
                 <th>Order Status</th>
-                <th>Comments</th>
                 <th>Date</th>
                 <th>Action</th>
             </tr>
@@ -35,7 +34,7 @@
             processing: true,
             serverSide: true,
             stateSave: true,
-            order: [[8, "desc"]],
+            order: [[7, "desc"]],
             ajax: "{{ route('admin.orders.data') }}",
             columns: [
                 { data: 'order_number', name: 'order_number' },
@@ -45,7 +44,6 @@
                 { data: 'total_amount', name: 'total_amount' },
                 { data: 'payment_status', name: 'payment_status' },
                 { data: 'status', name: 'status' },
-                { data: 'comment', name: 'comment' },
                 { data: 'created_at', name: 'created_at' },
                 { data: 'action', name: 'action', orderable: false, searchable: false }
             ]
