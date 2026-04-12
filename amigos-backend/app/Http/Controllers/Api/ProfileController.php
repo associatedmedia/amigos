@@ -14,10 +14,14 @@ class ProfileController extends Controller
      */
     public function show(Request $request)
     {
+        $user = $request->user();
+        $isFirstOrder = \App\Models\Order::where('user_id', $user->id)->count() === 0;
+
         // $request->user() returns the user associated with the Sanctum token
         return response()->json([
             'success' => true,
-            'user' => $request->user()
+            'user' => $user,
+            'is_first_order' => $isFirstOrder
         ], 200);
     }
 

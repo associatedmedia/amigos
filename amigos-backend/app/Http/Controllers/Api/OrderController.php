@@ -23,7 +23,9 @@ class OrderController extends Controller
             'items.*.id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.price' => 'required|numeric',
-            'total_amount' => 'required|numeric'
+            'total_amount' => 'required|numeric',
+            'first_order_discount' => 'nullable|numeric|min:0',
+            'is_first_order_discount' => 'nullable|boolean'
         ]);
 
         
@@ -47,7 +49,9 @@ class OrderController extends Controller
                     'longitude' => $request->longitude,
                     'platform' => $request->platform,
                     'comment' => $request->comment,
-                    'status' => 'pending' 
+                    'status' => 'pending',
+                    'first_order_discount' => $request->first_order_discount ?? 0,
+                    'is_first_order_discount' => $request->is_first_order_discount ?? false
                 ]);
 
                 // 4. Save Each Item in the Order

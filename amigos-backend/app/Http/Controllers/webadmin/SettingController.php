@@ -16,6 +16,10 @@ class SettingController extends Controller
         $isStoreOnline = $settings->get('is_store_online')->value ?? '1';
         $minOrderCriteria = json_decode($settings->get('minimum_order_criteria')->value ?? '[]', true);
         $appCacheTimeline = $settings->get('app_cache_timeline_minutes')->value ?? '15';
+        $firstOrderEnabled = $settings->get('first_order_discount_enabled')->value ?? '0';
+        $firstOrderType = $settings->get('first_order_discount_type')->value ?? 'flat';
+        $firstOrderValue = $settings->get('first_order_discount_value')->value ?? '0';
+        $firstOrderMinAmount = $settings->get('first_order_discount_min_amount')->value ?? '500';
 
         // Pad the criteria array to ensure there are always enough fields in the form
         $distances = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 'fallback'];
@@ -28,7 +32,7 @@ class SettingController extends Controller
             ];
         }
 
-        return view('webadmin.settings.index', compact('codEnabled', 'isStoreOnline', 'fullCriteria', 'appCacheTimeline'));
+        return view('webadmin.settings.index', compact('codEnabled', 'isStoreOnline', 'fullCriteria', 'appCacheTimeline', 'firstOrderEnabled', 'firstOrderType', 'firstOrderValue', 'firstOrderMinAmount'));
     }
 
     public function update(Request $request)
@@ -37,6 +41,10 @@ class SettingController extends Controller
             'cod_enabled' => 'required|in:0,1',
             'is_store_online' => 'required|in:0,1',
             'app_cache_timeline_minutes' => 'required|integer|min:0',
+            'first_order_discount_enabled' => 'required|in:0,1',
+            'first_order_discount_type' => 'required|in:percent,flat',
+            'first_order_discount_value' => 'required|numeric|min:0',
+            'first_order_discount_min_amount' => 'required|numeric|min:0',
             'criteria' => 'required|array',
             'criteria.*.min_value' => 'required|numeric|min:0',
         ]);
@@ -44,6 +52,10 @@ class SettingController extends Controller
         Setting::updateOrCreate(['key' => 'cod_enabled'], ['value' => $request->cod_enabled]);
         Setting::updateOrCreate(['key' => 'is_store_online'], ['value' => $request->is_store_online]);
         Setting::updateOrCreate(['key' => 'app_cache_timeline_minutes'], ['value' => $request->app_cache_timeline_minutes]);
+        Setting::updateOrCreate(['key' => 'first_order_discount_enabled'], ['value' => $request->first_order_discount_enabled]);
+        Setting::updateOrCreate(['key' => 'first_order_discount_type'], ['value' => $request->first_order_discount_type]);
+        Setting::updateOrCreate(['key' => 'first_order_discount_value'], ['value' => $request->first_order_discount_value]);
+        Setting::updateOrCreate(['key' => 'first_order_discount_min_amount'], ['value' => $request->first_order_discount_min_amount]);
 
         $criteriaToSave = [];
         foreach ($request->criteria as $distance => $values) {

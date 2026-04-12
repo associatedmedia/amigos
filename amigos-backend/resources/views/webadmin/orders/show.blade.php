@@ -166,6 +166,12 @@
                             <td class="text-end">₹{{ number_format($order->delivery_fee, 2) }}</td>
                         </tr>
                         @endif
+                        @if($order->first_order_discount > 0)
+                        <tr>
+                            <td colspan="3" class="text-end text-success fw-bold">First Order Discount:</td>
+                            <td class="text-end text-success fw-bold">-₹{{ number_format($order->first_order_discount, 2) }}</td>
+                        </tr>
+                        @endif
                         <tr>
                             <td colspan="3" class="text-end fw-bold fs-5">Grand Total:</td>
                             <td class="text-end fw-bold text-success fs-5">₹{{ number_format($order->total_amount, 2) }}</td>
@@ -405,6 +411,12 @@
         <div class="flex-between">
             <span>Delivery:</span>
             <span>₹{{ number_format($order->delivery_fee, 2) }}</span>
+        </div>
+        @endif
+        @if($order->first_order_discount > 0)
+        <div class="flex-between" style="font-weight: bold;">
+            <span>Discount:</span>
+            <span>-₹{{ number_format($order->first_order_discount, 2) }}</span>
         </div>
         @endif
         <div class="divider"></div>
