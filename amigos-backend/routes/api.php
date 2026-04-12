@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\AuthOtpController;
 use App\Http\Controllers\Api\MenuController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\CouponApiController;
 use App\Http\Controllers\ContentController;
 use App\Http\Controllers\Api\AdminDashController;
 use App\Http\Controllers\BannerController;
@@ -70,6 +71,7 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Ordering
     Route::post('/place-order', [OrderController::class, 'store']);
+    Route::post('/validate-coupon', [CouponApiController::class, 'validateCoupon']);
     Route::get('/order-history', [OrderController::class, 'index']);
     Route::get('/orders', [OrderController::class, 'index']); // Customer view
     Route::post('/update-order-status', [OrderController::class, 'updatePaymentStatus']);

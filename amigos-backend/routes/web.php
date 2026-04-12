@@ -11,6 +11,7 @@ use App\Http\Controllers\webadmin\CustomerController;
 use App\Http\Controllers\webadmin\OfferBannerController;
 use App\Http\Controllers\webadmin\SettingController;
 use App\Http\Controllers\webadmin\PrinterSetupController;
+use App\Http\Controllers\webadmin\CouponController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -111,6 +112,9 @@ Route::prefix('admin')->group(function () {
         Route::put('order-statuses/{id}', [\App\Http\Controllers\webadmin\OrderStatusController::class, 'update'])->name('admin.order-statuses.update');
         Route::delete('order-statuses/{id}', [\App\Http\Controllers\webadmin\OrderStatusController::class, 'destroy'])->name('admin.order-statuses.destroy');
 
+        // Coupons
+        Route::get('coupons/data', [CouponController::class, 'data'])->name('admin.coupons.data');
+        Route::resource('coupons', CouponController::class)->names('admin.coupons');
 
         Route::get('/orders/{id}/live-location', [App\Http\Controllers\webadmin\OrderController::class, 'getLiveLocation'])->name('admin.orders.live-location');
     });

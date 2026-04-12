@@ -25,7 +25,9 @@ class OrderController extends Controller
             'items.*.price' => 'required|numeric',
             'total_amount' => 'required|numeric',
             'first_order_discount' => 'nullable|numeric|min:0',
-            'is_first_order_discount' => 'nullable|boolean'
+            'is_first_order_discount' => 'nullable|boolean',
+            'coupon_code' => 'nullable|string',
+            'coupon_discount' => 'nullable|numeric|min:0'
         ]);
 
         
@@ -33,6 +35,18 @@ class OrderController extends Controller
         try {
             // 2. Start Transaction
             return DB::transaction(function () use ($request) {
+
+                // Validate Coupon strictly again
+                if ($request->filled('coupon_code')) {
+                    $coupon = \App\Models\Coupon::where('code', $request->coupon_code)->first();
+                    if (!$coupon || !$coupon->is_active) {
+                        throw new \Exception('Invalid or inactive coupon code.');
+                    }
+                    if ($request->total_amount + ($request->coupon_discount ?? 0) < $coupon->min_cart_amount) {
+                         throw new \Exception('Cart total does not meet the minimum required for this coupon.');
+                    }
+                    // Limit checks could also go here for absolute precision
+                }
 
                 // 3. Create the Main Order
                 $order = Order::create([
@@ -51,7 +65,9 @@ class OrderController extends Controller
                     'comment' => $request->comment,
                     'status' => 'pending',
                     'first_order_discount' => $request->first_order_discount ?? 0,
-                    'is_first_order_discount' => $request->is_first_order_discount ?? false
+                    'is_first_order_discount' => $request->is_first_order_discount ?? false,
+                    'coupon_code' => $request->coupon_code,
+                    'coupon_discount' => $request->coupon_discount ?? 0
                 ]);
 
                 // 4. Save Each Item in the Order
