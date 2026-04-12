@@ -5,27 +5,42 @@ const CartContext = createContext();
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
   const [chefNote, setChefNote] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
 
   const clearCart = () => {
     setCartItems([]);
     setChefNote('');
+    setAppliedCoupon(null);
   };
 
-  const addToCart = (product) => {
+  const addToCart = (product, selectedVariant = null) => {
     Vibration.vibrate(100);
     setCartItems(prevItems => {
-      const existingItem = prevItems.find(item => item.id === product.id);
+      let cartItemId = product.cartItemId || (selectedVariant ? `${product.id}_v${selectedVariant.id}` : product.id);
+      
+      const existingItem = prevItems.find(item => (item.cartItemId || item.id) === cartItemId);
       if (existingItem) {
         return prevItems.map(item =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+          (item.cartItemId || item.id) === cartItemId ? { ...item, quantity: item.quantity + 1 } : item
         );
       }
-      return [...prevItems, { ...product, quantity: 1 }];
+      
+      const price = selectedVariant ? parseFloat(selectedVariant.price) : parseFloat(product.price);
+      const name = selectedVariant ? `${product.name} (${selectedVariant.variant_name})` : product.name;
+      
+      return [...prevItems, { 
+        ...product, 
+        cartItemId, 
+        price, 
+        name, 
+        variant_id: selectedVariant ? selectedVariant.id : null, 
+        quantity: 1 
+      }];
     });
   };
 
-  const removeFromCart = (productId) => {
-    setCartItems(prevItems => prevItems.filter(item => item.id !== productId));
+  const removeFromCart = (identifier) => {
+    setCartItems(prevItems => prevItems.filter(item => (item.cartItemId || item.id) !== identifier));
   };
 
   const cartTotal = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
@@ -33,7 +48,7 @@ export const CartProvider = ({ children }) => {
   return (
     <CartContext.Provider value={{ 
       cartItems, addToCart, removeFromCart, clearCart, cartTotal,
-      chefNote, setChefNote 
+      chefNote, setChefNote, appliedCoupon, setAppliedCoupon
     }}>
       {children}
     </CartContext.Provider>

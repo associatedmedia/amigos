@@ -10,6 +10,7 @@ import { COLORS } from '../../utils/colors';
 
 import { useAuth } from '../../context/AuthContext';
 import { useSettings } from '../../context/SettingsContext';
+import api from '../../services/api';
 // ✅ Import the Upsell Component
 import UpsellItems from '../../components/UpsellItems';
 import BackButton from '../../components/BackButton';
@@ -21,12 +22,16 @@ const GREEN_SAVINGS = '#E8F5E9';
 const GREEN_TEXT = '#2E7D32';
 
 const CartScreen = ({ navigation }) => {
-  const { cartItems, addToCart, removeFromCart, cartTotal, chefNote, setChefNote } = useCart();
-  const { isGuest, logout } = useAuth();
+  const { cartItems, addToCart, removeFromCart, cartTotal, chefNote, setChefNote, appliedCoupon, setAppliedCoupon } = useCart();
+  const { isGuest, logout, user } = useAuth();
   const { isStoreOnline } = useSettings();
   const insets = useSafeAreaInsets();
   const [address, setAddress] = useState('Loading location...');
   const [loadingAddr, setLoadingAddr] = useState(true);
+
+  const [couponInput, setCouponInput] = useState('');
+  const [validatingCoupon, setValidatingCoupon] = useState(false);
+  const [userId, setUserId] = useState(null);
 
   // Fetch Address on Mount
   useEffect(() => {
@@ -43,6 +48,7 @@ const CartScreen = ({ navigation }) => {
       const response = await getUserProfile();
       if (response.data.success) {
         setAddress(response.data.user.address || 'Please add an address');
+        setUserId(response.data.user.id);
       }
     } catch (error) {
       setAddress('Set Location');
@@ -72,7 +78,11 @@ const CartScreen = ({ navigation }) => {
           <Text style={styles.itemPrice}>₹{item.price}</Text>
         </View>
         <View style={styles.qtyContainer}>
-          <TouchableOpacity onPress={() => removeFromCart(item.id)} style={styles.qtyBtn}>
+          <TouchableOpacity onPress={() => {
+            removeFromCart(item.cartItemId || item.id);
+            // Clear coupon if cart empties
+            if (cartItems.length === 1 && item.quantity === 1) setAppliedCoupon(null);
+          }} style={styles.qtyBtn}>
             <Text style={styles.qtyBtnText}>-</Text>
           </TouchableOpacity>
           <Text style={styles.qtyText}>{item.quantity}</Text>
@@ -130,7 +140,7 @@ const CartScreen = ({ navigation }) => {
           {/* CART ITEMS */}
           <FlatList
             data={cartItems}
-            keyExtractor={(item) => item.id.toString()}
+            keyExtractor={(item) => (item.cartItemId || item.id).toString()}
             renderItem={renderCartItem}
             scrollEnabled={false}
             contentContainerStyle={{ padding: 15, marginTop: -14 }}
@@ -154,8 +164,67 @@ const CartScreen = ({ navigation }) => {
             />
           </View>
 
+          {/* COUPON SECTION */}
+          <View style={styles.couponContainer}>
+            <Text style={styles.couponTitle}>% Promos & Coupons</Text>
+            {appliedCoupon ? (
+              <View style={styles.appliedCouponBox}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.appliedCouponCode}>{appliedCoupon.code}</Text>
+                  <Text style={styles.appliedCouponSave}>Saved ₹{appliedCoupon.discount_amount} on this order!</Text>
+                </View>
+                <TouchableOpacity onPress={() => setAppliedCoupon(null)}>
+                  <Text style={styles.removeCouponText}>REMOVE</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={styles.couponInputRow}>
+                <TextInput
+                  style={styles.couponInput}
+                  placeholder="Enter a coupon code"
+                  placeholderTextColor="#999"
+                  value={couponInput}
+                  onChangeText={setCouponInput}
+                  autoCapitalize="characters"
+                />
+                <TouchableOpacity
+                  style={styles.applyBtn}
+                  onPress={async () => {
+                    if (!couponInput.trim()) return;
+                    if (isGuest || !userId) {
+                      Alert.alert("Login Required", "Please login to apply coupons.");
+                      return;
+                    }
+                    setValidatingCoupon(true);
+                    try {
+                      const res = await api.post('/validate-coupon', {
+                        code: couponInput.trim(),
+                        cart_total: cartTotal,
+                        user_id: userId
+                      });
+                      if (res.data.success) {
+                        setAppliedCoupon(res.data.coupon);
+                        setCouponInput('');
+                      } else {
+                        Alert.alert("Invalid Coupon", res.data.message);
+                      }
+                    } catch (e) {
+                      Alert.alert("Error", "Could not apply coupon.");
+                    }
+                    setValidatingCoupon(false);
+                  }}
+                  disabled={validatingCoupon}
+                >
+                  {validatingCoupon ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.applyBtnText}>APPLY</Text>}
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+
           {/* UPSELL SECTION */}
           <UpsellItems />
+
+
 
         </ScrollView>
 
@@ -164,7 +233,12 @@ const CartScreen = ({ navigation }) => {
           <View style={styles.paymentRow}>
             <View style={styles.paymentInfo}>
               <Text style={styles.totalLabel}>Total to Pay</Text>
-              <Text style={styles.finalTotal}>₹{cartTotal}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
+                <Text style={styles.finalTotal}>₹{appliedCoupon ? (cartTotal - appliedCoupon.discount_amount).toFixed(2) : cartTotal}</Text>
+                {appliedCoupon && (
+                  <Text style={styles.strikethroughTotal}>₹{cartTotal}</Text>
+                )}
+              </View>
             </View>
 
             {/* ✅ NAVIGATE TO CHECKOUT SCREEN */}
@@ -247,7 +321,19 @@ const styles = StyleSheet.create({
   emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
   emptyText: { marginVertical: 20, color: '#888', fontSize: 16 },
   goBackBtn: { backgroundColor: PRIMARY_RED, padding: 12, borderRadius: 8 },
-  goBackText: { color: '#fff', fontWeight: 'bold' }
+  goBackText: { color: '#fff', fontWeight: 'bold' },
+
+  couponContainer: { margin: 15, padding: 15, backgroundColor: '#fff', borderRadius: 10, elevation: 1, borderWidth: 1, borderColor: '#eee' },
+  couponTitle: { fontSize: 14, fontWeight: 'bold', color: '#333', marginBottom: 10 },
+  couponInputRow: { flexDirection: 'row', alignItems: 'center' },
+  couponInput: { flex: 1, backgroundColor: '#F9F9F9', borderWidth: 1, borderColor: '#ddd', borderRadius: 8, paddingHorizontal: 12, height: 45, textTransform: 'uppercase' },
+  applyBtn: { backgroundColor: '#333', borderRadius: 8, height: 45, paddingHorizontal: 20, justifyContent: 'center', alignItems: 'center', marginLeft: 10 },
+  applyBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
+  appliedCouponBox: { flexDirection: 'row', backgroundColor: '#E8F5E9', padding: 12, borderRadius: 8, borderWidth: 1, borderColor: '#A5D6A7', alignItems: 'center' },
+  appliedCouponCode: { fontWeight: 'bold', color: '#2E7D32', fontSize: 15 },
+  appliedCouponSave: { fontSize: 12, color: '#2E7D32', marginTop: 2 },
+  removeCouponText: { color: PRIMARY_RED, fontWeight: 'bold', fontSize: 13, padding: 5 },
+  strikethroughTotal: { textDecorationLine: 'line-through', color: '#999', fontSize: 14, marginLeft: 5, marginBottom: 2 }
 });
 
 export default CartScreen;

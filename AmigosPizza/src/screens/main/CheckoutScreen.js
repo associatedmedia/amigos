@@ -24,7 +24,7 @@ import Constants from 'expo-constants';
 
 // Configuration
 const RAZORPAY_KEY_ID = Constants.expoConfig?.extra?.razorpayKeyId || 'rzp_test_cGaBr3RC6a520W';
-const GOOGLE_MAPS_API_KEY = Constants.expoConfig?.extra?.googleMapsApiKey || 'YOUR_ACTUAL_API_KEY_HERE';
+const GOOGLE_MAPS_API_KEY = Constants.expoConfig?.extra?.googleMapsApiKey || Constants.expoConfig?.android?.config?.googleMaps?.apiKey || Constants.expoConfig?.ios?.config?.googleMapsApiKey || 'YOUR_ACTUAL_API_KEY_HERE';
 const GOLD_COLOR = '#FFD700';
 const PRIMARY_RED = '#D23F45';
 
@@ -33,14 +33,15 @@ const MAIN_STORE_LAT = 34.0706;
 const MAIN_STORE_LONG = 74.8033;
 
 const CheckoutScreen = ({ navigation }) => {
-  const { cartItems, cartTotal, clearCart, chefNote } = useCart();
+  const { cartItems, cartTotal, clearCart, chefNote, appliedCoupon } = useCart();
   const { isGuest, logout } = useAuth();
-  const { isCodEnabled, minOrderCriteria } = useSettings();
+  const { isCodEnabled, minOrderCriteria, firstOrderDiscount } = useSettings();
   const insets = useSafeAreaInsets();
 
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('razorpay');
+  const [isFirstOrder, setIsFirstOrder] = useState(false);
 
   const STORES = {
     '0': { name: 'Srinagar Branch', address: 'Gogji Bagh, Srinagar' },
@@ -64,17 +65,7 @@ const CheckoutScreen = ({ navigation }) => {
     }, [])
   );
 
-  // --- HELPER: Manual Distance (Fallback) ---
-  const getDistanceFromLatLonInKm = (lat1, lon1, lat2, lon2) => {
-    const R = 6371;
-    const dLat = (lat2 - lat1) * (Math.PI / 180);
-    const dLon = (lon2 - lon1) * (Math.PI / 180);
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-  };
+  // Distance Calculation via Google ONLY
 
   // --- NEW: Google Distance Matrix Logic ---
   const getRoadDistance = async (userLat, userLong) => {
@@ -92,15 +83,19 @@ const CheckoutScreen = ({ navigation }) => {
       }
       throw new Error(`Google API status: ${response.data.status}`);
     } catch (error) {
-      console.warn("Road distance failed, using Haversine fallback:", error);
-      return getDistanceFromLatLonInKm(userLat, userLong, MAIN_STORE_LAT, MAIN_STORE_LONG);
+      console.warn("Road distance failed:", error);
+      throw error; // Throw error directly instead of falling back
     }
   };
 
-  const determineStore = (userLat, userLong) => {
+  const determineStore = async (userLat, userLong) => {
     if (!userLat || !userLong) return '0';
-    const distance = getDistanceFromLatLonInKm(userLat, userLong, MAIN_STORE_LAT, MAIN_STORE_LONG);
-    return distance <= 20 ? '0' : '1';
+    try {
+      const distance = await getRoadDistance(userLat, userLong);
+      return distance <= 20 ? '0' : '1';
+    } catch (e) {
+      return '0'; // Default to Srinagar branch if verification fails on load
+    }
   };
 
   const fetchUserData = async () => {
@@ -115,7 +110,9 @@ const CheckoutScreen = ({ navigation }) => {
       const response = await api.get('/user');
       if (response.data.success) {
         const user = response.data.user;
-        const detectedStoreId = determineStore(user.latitude, user.longitude);
+        const detectedStoreId = await determineStore(user.latitude, user.longitude);
+
+        setIsFirstOrder(response.data.is_first_order || false);
 
         setOrderData({
           user_id: user.id.toString(),
@@ -145,6 +142,28 @@ const CheckoutScreen = ({ navigation }) => {
 
     setProcessing(true);
 
+    let originalBasePrice = cartTotal / 1.05;
+    let discountBase = 0;
+    let isFirstOrderDiscountApplied = false;
+    
+    if (appliedCoupon) {
+      discountBase = appliedCoupon.discount_amount / 1.05;
+    } else if (firstOrderDiscount?.enabled && isFirstOrder && cartTotal >= firstOrderDiscount.minAmount) {
+      if (firstOrderDiscount.type === 'percent') {
+        discountBase = originalBasePrice * (firstOrderDiscount.value / 100);
+      } else {
+        discountBase = firstOrderDiscount.value / 1.05;
+      }
+      isFirstOrderDiscountApplied = true;
+    }
+    
+    if (discountBase > originalBasePrice) discountBase = originalBasePrice;
+    
+    let discountedBasePrice = originalBasePrice - discountBase;
+    let finalGst = discountedBasePrice * 0.05;
+    let finalTotal = discountedBasePrice + finalGst;
+    let displayDiscount = discountBase * 1.05;
+
     // --- MINIMUM ORDER CRITERIA BY ROAD DISTANCE ---
     if (paymentMethod !== 'pickup' && orderData.latitude && orderData.longitude && minOrderCriteria?.length > 0) {
       try {
@@ -162,15 +181,17 @@ const CheckoutScreen = ({ navigation }) => {
           }
         }
 
-        if (cartTotal < minOrderVal) {
+        if (finalTotal < minOrderVal) {
           setProcessing(false);
           return Alert.alert(
             "Minimum Order Not Met",
-            `The travel distance is ${roadDistance.toFixed(1)} km. For this distance, the minimum order value is ₹${minOrderVal}.\n\nCurrent Total: ₹${cartTotal}`
+            `The travel distance is ${roadDistance.toFixed(1)} km. For this distance, the minimum order value is ₹${minOrderVal}.\n\nCurrent Total: ₹${finalTotal.toFixed(2)}`
           );
         }
       } catch (err) {
         console.error("Criteria check error", err);
+        setProcessing(false);
+        return Alert.alert("Distance Verification Failed", "Order criteria not working because we couldn't verify the delivery distance via Maps. Please try again or contact support.");
       }
     }
 
@@ -191,7 +212,11 @@ const CheckoutScreen = ({ navigation }) => {
       store_id: orderData.store_id,
       payment_method: paymentMethod,
       items: formattedItems,
-      total_amount: cartTotal,
+      total_amount: finalTotal,
+      first_order_discount: isFirstOrderDiscountApplied ? displayDiscount : 0,
+      is_first_order_discount: isFirstOrderDiscountApplied && displayDiscount > 0,
+      coupon_code: appliedCoupon ? appliedCoupon.code : null,
+      coupon_discount: appliedCoupon ? displayDiscount : 0,
       comment: chefNote,
       platform: Platform.OS,
       status: 'pending'
@@ -200,7 +225,7 @@ const CheckoutScreen = ({ navigation }) => {
     try {
       if (paymentMethod === 'razorpay') {
         const tempOrderId = `TEMP_${Date.now()}`;
-        startRazorpayPayment(tempOrderId, cartTotal, orderData, payload);
+        startRazorpayPayment(tempOrderId, finalTotal, orderData, payload);
       } else {
         const response = await api.post('/place-order', payload);
         if (response.status === 201 || response.data.success) {
@@ -225,12 +250,12 @@ const CheckoutScreen = ({ navigation }) => {
       image: logoUri,
       currency: 'INR',
       key: RAZORPAY_KEY_ID,
-      amount: amount * 100,
+      amount: Math.round(amount * 100),
       name: 'Amigos Pizza',
       prefill: {
-        email: userDetails.email,
-        contact: userDetails.mobile_no,
-        name: userDetails.customer_name
+        email: userDetails.email || '',
+        contact: userDetails.mobile_no || '',
+        name: userDetails.customer_name || ''
       },
       notes: { temp_order_id: orderId },
       theme: { color: COLORS.primary }
@@ -259,8 +284,8 @@ const CheckoutScreen = ({ navigation }) => {
       })
       .catch((error) => {
         let title = "Payment Failed";
-        let message = error.description || "Something went wrong";
-        if (error.code === 0 || error.code === '0') {
+        let message = error?.description || error?.message || (typeof error === 'string' ? error : JSON.stringify(error));
+        if (error?.code === 0 || error?.code === '0') {
           title = "Payment Cancelled";
           message = "You cancelled the payment.";
         }
@@ -353,14 +378,47 @@ const CheckoutScreen = ({ navigation }) => {
             <Text style={styles.summaryLabel}>Item Total</Text>
             <Text style={styles.summaryValue}>₹{(cartTotal / 1.05).toFixed(2)}</Text>
           </View>
-          <View style={styles.row}>
-            <Text style={styles.summaryLabel}>GST (5%)</Text>
-            <Text style={styles.summaryValue}>₹{(cartTotal - (cartTotal / 1.05)).toFixed(2)}</Text>
-          </View>
-          <View style={[styles.row, { marginTop: 10, borderTopWidth: 1, borderTopColor: '#ddd', paddingTop: 10 }]}>
-            <Text style={styles.totalLabel}>Total Amount</Text>
-            <Text style={styles.totalValue}>₹{cartTotal.toFixed(2)}</Text>
-          </View>
+          
+          {(() => {
+            let originalBasePrice = cartTotal / 1.05;
+            let discountBase = 0;
+            let appliedCouponInfo = null;
+            
+            if (appliedCoupon) {
+              discountBase = appliedCoupon.discount_amount / 1.05;
+              appliedCouponInfo = appliedCoupon;
+            } else if (firstOrderDiscount?.enabled && isFirstOrder && cartTotal >= firstOrderDiscount.minAmount) {
+              discountBase = firstOrderDiscount.type === 'percent' ? originalBasePrice * (firstOrderDiscount.value / 100) : firstOrderDiscount.value / 1.05;
+            }
+            
+            if (discountBase > originalBasePrice) discountBase = originalBasePrice;
+            let displayDiscount = discountBase * 1.05;
+            
+            let discountedBasePrice = originalBasePrice - discountBase;
+            let finalGst = discountedBasePrice * 0.05;
+            let finalTotal = discountedBasePrice + finalGst;
+
+            return (
+              <>
+                {displayDiscount > 0 && (
+                  <View style={styles.row}>
+                    <Text style={[styles.summaryLabel, { color: COLORS.primary, fontWeight: 'bold' }]}>
+                      {appliedCouponInfo ? `Coupon (${appliedCouponInfo.code})` : 'First Order Discount'}
+                    </Text>
+                    <Text style={[styles.summaryValue, { color: COLORS.primary, fontWeight: 'bold' }]}>-₹{displayDiscount.toFixed(2)}</Text>
+                  </View>
+                )}
+                <View style={styles.row}>
+                  <Text style={styles.summaryLabel}>GST (5%)</Text>
+                  <Text style={styles.summaryValue}>₹{finalGst.toFixed(2)}</Text>
+                </View>
+                <View style={[styles.row, { marginTop: 10, borderTopWidth: 1, borderTopColor: '#ddd', paddingTop: 10 }]}>
+                  <Text style={styles.totalLabel}>Total Amount</Text>
+                  <Text style={styles.totalValue}>₹{finalTotal.toFixed(2)}</Text>
+                </View>
+              </>
+            );
+          })()}
         </View>
       </ScrollView>
 
@@ -370,11 +428,23 @@ const CheckoutScreen = ({ navigation }) => {
           onPress={handleConfirmOrder}
           disabled={processing || (!orderData.address && paymentMethod !== 'pickup')}
         >
-          {processing ? <ActivityIndicator color="#000" /> :
-            <Text style={styles.confirmBtnText}>
-              {paymentMethod === 'razorpay' ? `Pay ₹${cartTotal}` : 'Confirm Order'}
-            </Text>
-          }
+          {(() => {
+            let originalBasePrice = cartTotal / 1.05;
+            let discountBase = 0;
+            
+            if (appliedCoupon) {
+              discountBase = appliedCoupon.discount_amount / 1.05;
+            } else if (firstOrderDiscount?.enabled && isFirstOrder && cartTotal >= firstOrderDiscount.minAmount) {
+              discountBase = firstOrderDiscount.type === 'percent' ? originalBasePrice * (firstOrderDiscount.value / 100) : firstOrderDiscount.value / 1.05;
+            }
+            if (discountBase > originalBasePrice) discountBase = originalBasePrice;
+            let finalTotal = (originalBasePrice - discountBase) * 1.05;
+            
+            return processing ? <ActivityIndicator color="#000" /> :
+              <Text style={styles.confirmBtnText}>
+                {paymentMethod === 'razorpay' ? `Pay ₹${finalTotal.toFixed(2)}` : 'Confirm Order'}
+              </Text>;
+          })()}
         </TouchableOpacity>
       </View>
     </SafeAreaView>

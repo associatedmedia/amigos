@@ -206,18 +206,20 @@ const FullMenuScreen = ({ navigation }) => {
               disabled={!isStoreOnline}
               activeOpacity={0.7}
               onPress={() => {
-                addToCart(item);
-                Toast.show({ type: 'success', text1: 'Added', text2: `${item.name} in cart` });
+                const hasVariants = item.variants && item.variants.length > 0;
                 
-                // Show Upsell Modal for Pizza Categories
-                const catName = (item.category_name || '').toLowerCase();
-                if (catName.includes('pizza')) {
+                if (hasVariants) {
                   setTargetProduct(item);
                   setUpsellVisible(true);
+                } else {
+                  addToCart(item);
+                  Toast.show({ type: 'success', text1: 'Added', text2: `${item.name} in cart` });
                 }
               }}
             >
-              <Text style={[styles.addBtnText, !isStoreOnline && { color: '#888' }]}>ADD +</Text>
+              <Text style={[styles.addBtnText, !isStoreOnline && { color: '#888' }]}>
+                {item.variants && item.variants.length > 0 ? 'OPTIONS' : 'ADD +'}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>

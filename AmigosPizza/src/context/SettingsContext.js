@@ -10,6 +10,12 @@ export const SettingsProvider = ({ children }) => {
     const [isCodEnabled, setIsCodEnabled] = useState(true);
     const [minOrderCriteria, setMinOrderCriteria] = useState([]);
     const [appCacheTimeline, setAppCacheTimeline] = useState(15);
+    const [firstOrderDiscount, setFirstOrderDiscount] = useState({
+        enabled: false,
+        type: 'flat',
+        value: 0,
+        minAmount: 500
+    });
     const [isLoadingSettings, setIsLoadingSettings] = useState(true);
 
     const fetchStoreStatus = useCallback(async () => {
@@ -36,6 +42,14 @@ export const SettingsProvider = ({ children }) => {
                                 setAppCacheTimeline(minutes);
                                 AsyncStorage.setItem('app_cache_timeline_minutes', minutes.toString());
                             }
+                        } else if (setting.key === 'first_order_discount_enabled') {
+                            setFirstOrderDiscount(prev => ({ ...prev, enabled: setting.value === '1' }));
+                        } else if (setting.key === 'first_order_discount_type') {
+                            setFirstOrderDiscount(prev => ({ ...prev, type: setting.value || 'flat' }));
+                        } else if (setting.key === 'first_order_discount_value') {
+                            setFirstOrderDiscount(prev => ({ ...prev, value: parseFloat(setting.value) || 0 }));
+                        } else if (setting.key === 'first_order_discount_min_amount') {
+                            setFirstOrderDiscount(prev => ({ ...prev, minAmount: parseFloat(setting.value) || 500 }));
                         }
                     });
                 }
@@ -83,7 +97,7 @@ export const SettingsProvider = ({ children }) => {
     };
 
     return (
-        <SettingsContext.Provider value={{ isStoreOnline, isCodEnabled, minOrderCriteria, appCacheTimeline, isLoadingSettings, fetchStoreStatus, updateSetting }}>
+        <SettingsContext.Provider value={{ isStoreOnline, isCodEnabled, minOrderCriteria, appCacheTimeline, firstOrderDiscount, isLoadingSettings, fetchStoreStatus, updateSetting }}>
             {children}
         </SettingsContext.Provider>
     );

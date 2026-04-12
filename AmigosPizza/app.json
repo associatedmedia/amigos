@@ -2,7 +2,7 @@
   "expo": {
     "name": "AmigosPizza",
     "slug": "AmigosPizza",
-    "version": "21.0.0",
+    "version": "22.0.0",
     "scheme": "amigospizza",
     "orientation": "portrait",
     "icon": "./assets/ic_launcher_round.png",
@@ -51,7 +51,8 @@
     "extra": {
       "eas": {
         "projectId": "b5e8ed3b-7ac3-4131-8a5a-56230915c462"
-      }
+      },
+      "googleMapsApiKey": "AIzaSyA024waSwg_D8uc9p631ClPteTdpDRDQ4U"
     },
     "plugins": [
       [
