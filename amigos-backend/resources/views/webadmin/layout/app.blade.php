@@ -225,7 +225,7 @@
                             <li class="nav-item">
                                 <a class="nav-link py-3 border-bottom d-flex justify-content-between align-items-center {{ request()->routeIs('admin.push_notifications.*') ? 'active bg-light fw-bold text-dark' : 'text-secondary' }}" 
                                    data-bs-toggle="collapse" href="#pushNotificationsCollapse" role="button" aria-expanded="{{ request()->routeIs('admin.push_notifications.*') ? 'true' : 'false' }}">
-                                    <span><i class="bi bi-bell me-2"></i> Mass Notifications</span>
+                                    <span><i class="bi bi-bell me-2"></i> Marketing</span>
                                     <i class="bi bi-chevron-down small"></i>
                                 </a>
                                 <div class="collapse {{ request()->routeIs('admin.push_notifications.*') ? 'show' : '' }}" id="pushNotificationsCollapse" data-bs-parent="#sidebarMenu">
