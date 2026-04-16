@@ -56,5 +56,6 @@ export const placeOrder = (orderData) => api.post('/orders', orderData);
 export const updateUserProfile = (profileData) => api.post('/user/update', profileData);
 export const getUserProfile = () => api.get('/user');
 export const getOfferBanner = () => api.get('/offer-banner');
+export const updateUserToken = (token) => api.post('/user/token', { token });
 
 export default api;

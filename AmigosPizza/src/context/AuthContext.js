@@ -38,6 +38,20 @@ export const AuthProvider = ({ children }) => {
       await SecureStore.deleteItemAsync('guestMode');
       setIsLoggedIn(true);
       setIsGuest(false);
+      
+      // Attempt to register and upload push token
+      try {
+        const { registerForPushNotificationsAsync } = require('../services/notificationService');
+        const { updateUserToken } = require('../services/api');
+        const pushToken = await registerForPushNotificationsAsync();
+        if (pushToken) {
+          await updateUserToken(pushToken);
+          console.log('Push token uploaded successfully');
+        }
+      } catch (pushErr) {
+        console.log('Error registering push token on login:', pushErr);
+      }
+      
     } catch (error) {
       console.error('Error saving token:', error);
     }
