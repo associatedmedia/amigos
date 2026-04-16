@@ -100,4 +100,32 @@ class ProfileController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Update the authenticated user's push notification token.
+     */
+    public function updateToken(Request $request)
+    {
+        $request->validate([
+            'token' => 'required|string',
+        ]);
+
+        $user = $request->user();
+        
+        try {
+            $user->update([
+                'fcm_token' => $request->token
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Token updated successfully'
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Token update failed: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

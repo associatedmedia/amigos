@@ -116,6 +116,10 @@ Route::prefix('admin')->group(function () {
         Route::get('coupons/data', [CouponController::class, 'data'])->name('admin.coupons.data');
         Route::resource('coupons', CouponController::class)->names('admin.coupons');
 
+        // Push Notifications
+        Route::post('push-notifications/{pushNotification}/dispatch', [\App\Http\Controllers\webadmin\PushNotificationController::class, 'dispatch'])->name('admin.push_notifications.dispatch');
+        Route::resource('push-notifications', \App\Http\Controllers\webadmin\PushNotificationController::class)->names('admin.push_notifications');
+
         Route::get('/orders/{id}/live-location', [App\Http\Controllers\webadmin\OrderController::class, 'getLiveLocation'])->name('admin.orders.live-location');
     });
 });

@@ -221,6 +221,25 @@
                                 </div>
                             </li>
 
+                            <!-- Push Notifications Menu -->
+                            <li class="nav-item">
+                                <a class="nav-link py-3 border-bottom d-flex justify-content-between align-items-center {{ request()->routeIs('admin.push_notifications.*') ? 'active bg-light fw-bold text-dark' : 'text-secondary' }}" 
+                                   data-bs-toggle="collapse" href="#pushNotificationsCollapse" role="button" aria-expanded="{{ request()->routeIs('admin.push_notifications.*') ? 'true' : 'false' }}">
+                                    <span><i class="bi bi-bell me-2"></i> Mass Notifications</span>
+                                    <i class="bi bi-chevron-down small"></i>
+                                </a>
+                                <div class="collapse {{ request()->routeIs('admin.push_notifications.*') ? 'show' : '' }}" id="pushNotificationsCollapse" data-bs-parent="#sidebarMenu">
+                                    <ul class="nav flex-column mb-0 py-2 bg-light border-bottom">
+                                        <li class="nav-item">
+                                            <a class="nav-link {{ request()->routeIs('admin.push_notifications.create') ? 'fw-bold text-primary' : 'text-secondary' }}" href="{{ route('admin.push_notifications.create') }}">Create Notification</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link {{ request()->routeIs('admin.push_notifications.index') ? 'fw-bold text-primary' : 'text-secondary' }}" href="{{ route('admin.push_notifications.index') }}">List Notifications</a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </li>
+
                             <!-- Delivery Boys Menu -->
                             <li class="nav-item">
                                 <a class="nav-link py-3 border-bottom d-flex justify-content-between align-items-center {{ request()->routeIs('admin.drivers.*') ? 'active bg-light fw-bold text-dark' : 'text-secondary' }}" 

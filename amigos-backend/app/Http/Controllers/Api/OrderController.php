@@ -88,6 +88,17 @@ class OrderController extends Controller
                     \Log::error("Printing failed for order {$order->id}: " . $e->getMessage());
                 }
 
+                // Send Push Notification
+                $user = Auth::user();
+                if ($user && $user->fcm_token) {
+                    app(\App\Services\ExpoPushService::class)->send(
+                        "Order Placed successfully! 🍕",
+                        "Your order #{$order->order_number} has been placed.",
+                        [$user->fcm_token],
+                        ['order_id' => $order->id]
+                    );
+                }
+
                 return response()->json([
                     'success' => true,
                     'message' => 'Order placed successfully!',

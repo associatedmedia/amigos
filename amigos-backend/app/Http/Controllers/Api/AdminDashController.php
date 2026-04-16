@@ -56,8 +56,27 @@ class AdminDashController extends Controller
             app(\App\Services\PrinterService::class)->queuePrintJobs($order);
         }
 
-        // TODO: Notification logic
-        // If status == 'out_for_delivery', notify Customer ("Driver X is coming") AND Driver ("New Order Assigned")
+        // Send Push Notification on status change
+        $user = $order->user;
+        if ($user && $user->fcm_token) {
+            $statusTitles = [
+                'accepted' => 'Order Accepted ✅',
+                'cooking' => 'Cooking Now 👨‍🍳',
+                'ready_for_pickup' => 'Ready for Pickup 🛍️',
+                'out_for_delivery' => 'On the Way 🛵',
+                'delivered' => 'Delivered! 🍕',
+                'cancelled' => 'Order Cancelled ❌',
+            ];
+            
+            if (isset($statusTitles[$request->status])) {
+                app(\App\Services\ExpoPushService::class)->send(
+                    $statusTitles[$request->status],
+                    "Your order #{$order->order_number} is now {$request->status}.",
+                    [$user->fcm_token],
+                    ['order_id' => $order->id]
+                );
+            }
+        }
 
         return response()->json([
             'success' => true,
