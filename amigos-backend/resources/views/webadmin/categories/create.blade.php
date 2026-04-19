@@ -55,6 +55,38 @@
                         <label class="form-check-label fs-6 ms-2" for="is_active">Category is Active</label>
                     </div>
                 </div>
+
+                <div class="col-12 mt-3 pt-3 border-top">
+                    <h5>Dynamic Upsell Settings</h5>
+                    <div class="form-check form-switch fs-5 mb-3">
+                        <input class="form-check-input" type="checkbox" role="switch" id="is_upsell_enabled" name="is_upsell_enabled" {{ old('is_upsell_enabled') ? 'checked' : '' }}>
+                        <label class="form-check-label fs-6 ms-2" for="is_upsell_enabled">Enable Upsell for this Category</label>
+                    </div>
+                    
+                    <div class="mb-3" id="upsell_products_container" style="display: none;">
+                        <label class="form-label fw-bold">Select Upsell Products</label>
+                        <select name="upsell_product_ids[]" class="form-select select2" multiple="multiple" style="height: 150px;">
+                            @foreach($all_products as $prod)
+                                <option value="{{ $prod->id }}" {{ is_array(old('upsell_product_ids')) && in_array($prod->id, old('upsell_product_ids')) ? 'selected' : '' }}>{{ $prod->name }}</option>
+                            @endforeach
+                        </select>
+                        <small class="text-muted">Hold CTRL or CMD to select multiple. These items will be shown to users after adding items from this category.</small>
+                    </div>
+
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const toggle = document.getElementById('is_upsell_enabled');
+                            const container = document.getElementById('upsell_products_container');
+                            
+                            function updateVisibility() {
+                                container.style.display = toggle.checked ? 'block' : 'none';
+                            }
+                            
+                            toggle.addEventListener('change', updateVisibility);
+                            updateVisibility();
+                        });
+                    </script>
+                </div>
             </div>
 
             <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Save Category</button>

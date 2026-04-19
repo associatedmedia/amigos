@@ -12,10 +12,20 @@ class Category extends Model
     protected $table = 'categories';
 
     protected $fillable = [
-        'name', 
-        'image_url', // If you add category icons later
+        'name',
+        'is_active',
+        'image_url',
         'print_assign',
         'sort_order',
+        'is_upsell_enabled',
+        'upsell_product_ids'
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
+        'is_upsell_enabled' => 'boolean',
+        'upsell_product_ids' => 'array',
+        'sort_order' => 'integer'
     ];
 
     /**

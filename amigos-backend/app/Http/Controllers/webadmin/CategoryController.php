@@ -19,7 +19,8 @@ class CategoryController extends Controller
     public function create()
     {
         $printers = \App\Models\PrinterSetup::all();
-        return view('webadmin.categories.create', compact('printers'));
+        $all_products = \App\Models\Product::where('is_available', true)->get();
+        return view('webadmin.categories.create', compact('printers', 'all_products'));
     }
 
     public function store(Request $request)
@@ -37,6 +38,8 @@ class CategoryController extends Controller
         $category->is_active = $request->has('is_active') ? true : false;
         $category->print_assign = $request->print_assign;
         $category->sort_order = $request->sort_order ?? 0;
+        $category->is_upsell_enabled = $request->has('is_upsell_enabled') ? true : false;
+        $category->upsell_product_ids = $request->has('upsell_product_ids') ? $request->upsell_product_ids : [];
 
         if ($request->filled('image_url')) {
             $category->image_url = $request->image_url;
@@ -62,7 +65,8 @@ class CategoryController extends Controller
     {
         $category = Category::findOrFail($id);
         $printers = \App\Models\PrinterSetup::all();
-        return view('webadmin.categories.edit', compact('category', 'printers'));
+        $all_products = \App\Models\Product::where('is_available', true)->get();
+        return view('webadmin.categories.edit', compact('category', 'printers', 'all_products'));
     }
 
     public function update(Request $request, $id)
@@ -81,6 +85,8 @@ class CategoryController extends Controller
         $category->is_active = $request->has('is_active') ? true : false;
         $category->print_assign = $request->print_assign;
         $category->sort_order = $request->sort_order ?? 0;
+        $category->is_upsell_enabled = $request->has('is_upsell_enabled') ? true : false;
+        $category->upsell_product_ids = $request->has('upsell_product_ids') ? $request->upsell_product_ids : [];
 
         if ($request->filled('image_url')) {
             // Delete old image if it was a stored file

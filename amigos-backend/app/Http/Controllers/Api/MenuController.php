@@ -53,6 +53,8 @@ class MenuController extends Controller
                 return [
                     'category_name' => $category->name,
                     'image_url' => $imageUrl,
+                    'is_upsell_enabled' => (bool)$category->is_upsell_enabled,
+                    'upsell_product_ids' => $category->upsell_product_ids ?? [],
                     'products' => $groupedProducts->get($category->name, collect())->values()
                 ];
             })->values();
