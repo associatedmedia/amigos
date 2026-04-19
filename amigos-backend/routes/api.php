@@ -58,7 +58,7 @@ Route::get('/products', [ProductController::class, 'index']);
 Route::get('/app-version', function () {
     return response()->json([
         'success'         => true,
-        'minimum_version' => '23.0.0', // Update this when you want to force updates
+        'minimum_version' => '24.0.0', // Update this when you want to force updates
         'store_url_android' => 'https://play.google.com/store/apps/details?id=com.associatedmedia.amigospizza',
         'store_url_ios'     => 'https://apps.apple.com/us/app/amigos-pizza/id6758044063' // Replace with actual iOS ID if needed
     ]);
