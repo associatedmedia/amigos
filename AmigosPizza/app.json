@@ -2,7 +2,7 @@
   "expo": {
     "name": "AmigosPizza",
     "slug": "AmigosPizza",
-    "version": "23.0.0",
+    "version": "24.0.0",
     "scheme": "amigospizza",
     "orientation": "portrait",
     "icon": "./assets/ic_launcher_round.png",
