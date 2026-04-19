@@ -50,7 +50,7 @@ class CategoryController extends Controller
         }
 
         $category->save();
-        Cache::forget('app_menu_data');
+        Cache::forget('app_menu_data_v2');
 
         return redirect()->route('admin.categories.index')->with('success', 'Category created successfully.');
     }
@@ -104,7 +104,7 @@ class CategoryController extends Controller
         }
 
         $category->save();
-        Cache::forget('app_menu_data');
+        Cache::forget('app_menu_data_v2');
 
         return redirect()->route('admin.categories.index')->with('success', 'Category updated successfully.');
     }
@@ -118,7 +118,7 @@ class CategoryController extends Controller
         }
         
         $category->delete();
-        Cache::forget('app_menu_data');
+        Cache::forget('app_menu_data_v2');
 
         return response()->json(['success' => true]);
     }
