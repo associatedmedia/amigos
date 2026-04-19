@@ -22,7 +22,8 @@ import { useSettings } from '../../context/SettingsContext';
 import { getMenu } from '../../services/api';
 import { COLORS } from '../../utils/colors';
 import BackButton from '../../components/BackButton';
-import UpsellModal from '../../components/UpsellModal';
+import VariantSelectionModal from '../../components/VariantSelectionModal';
+import DynamicUpsellModal from '../../components/DynamicUpsellModal';
 
 // --- CONSTANTS ---
 const CACHE_KEY = '@menu_data_cache';
@@ -61,8 +62,22 @@ const FullMenuScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
 
   // Upsell Modal State
-  const [upsellVisible, setUpsellVisible] = useState(false);
+  const [variantModalVisible, setVariantModalVisible] = useState(false);
+  const [dynamicUpsellVisible, setDynamicUpsellVisible] = useState(false);
   const [targetProduct, setTargetProduct] = useState(null);
+
+  const tryShowUpsell = (product) => {
+    const prod = product || targetProduct;
+    if (!prod) return;
+    const categoryName = prod.category_name || prod.category;
+    const catData = categories.find(c => c.category_name === categoryName);
+    
+    if (catData?.is_upsell_enabled && catData?.upsell_product_ids?.length > 0) {
+      setDynamicUpsellVisible(true);
+    } else {
+      Toast.show({ type: 'success', text1: 'Added', text2: `${prod.name} added to cart` });
+    }
+  };
 
   // --- 1. INITIAL LOAD (CACHE + API) ---
   useEffect(() => {
@@ -210,10 +225,11 @@ const FullMenuScreen = ({ navigation }) => {
                 
                 if (hasVariants) {
                   setTargetProduct(item);
-                  setUpsellVisible(true);
+                  setVariantModalVisible(true);
                 } else {
                   addToCart(item);
-                  Toast.show({ type: 'success', text1: 'Added', text2: `${item.name} in cart` });
+                  setTargetProduct(item);
+                  tryShowUpsell(item);
                 }
               }}
             >
@@ -330,10 +346,21 @@ const FullMenuScreen = ({ navigation }) => {
       )}
 
       {/* UPSELL MODAL */}
-      <UpsellModal 
-        isVisible={upsellVisible} 
-        onClose={() => setUpsellVisible(false)} 
+      <VariantSelectionModal 
+        isVisible={variantModalVisible} 
+        onClose={() => setVariantModalVisible(false)} 
         currentProduct={targetProduct} 
+        onVariantAdded={tryShowUpsell}
+      />
+
+      <DynamicUpsellModal
+        isVisible={dynamicUpsellVisible}
+        onClose={() => setDynamicUpsellVisible(false)}
+        upsellProductIds={
+          targetProduct 
+            ? (categories.find(c => c.category_name === (targetProduct.category_name || targetProduct.category))?.upsell_product_ids || [])
+            : []
+        }
       />
 
     </SafeAreaView>

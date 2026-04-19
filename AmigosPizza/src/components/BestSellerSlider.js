@@ -13,20 +13,39 @@ import { useCart } from '../context/CartContext';
 import { useSettings } from '../context/SettingsContext';
 import { useMenuData } from '../hooks/useMenuData'; // ✅ Uses Offline Cache
 import Toast from 'react-native-toast-message';
-import UpsellModal from './UpsellModal';
+import VariantSelectionModal from './VariantSelectionModal';
+import DynamicUpsellModal from './DynamicUpsellModal';
 
 const { width } = Dimensions.get('window');
 const PRIMARY_RED = '#D23F45';
 
 const BestSellerSlider = () => {
   const navigation = useNavigation();
-  const { products } = useMenuData(); // Get all products from DB/Cache
+  const { products, categories } = useMenuData(); // Get all products from DB/Cache
   const { addToCart } = useCart();
   const { isStoreOnline } = useSettings();
   
   // Upsell Modal State
-  const [upsellVisible, setUpsellVisible] = useState(false);
+  const [variantModalVisible, setVariantModalVisible] = useState(false);
+  const [dynamicUpsellVisible, setDynamicUpsellVisible] = useState(false);
   const [targetProduct, setTargetProduct] = useState(null);
+
+  const tryShowUpsell = (product) => {
+    const prod = product || targetProduct;
+    if (!prod) return;
+    
+    // Find category data to see if upselling is enabled
+    const catName = prod.category_name || prod.category;
+    const catData = categories.find(c => c.category_name === catName || c.name === catName);
+    
+    if (catData?.is_upsell_enabled && catData?.upsell_product_ids?.length > 0) {
+      setDynamicUpsellVisible(true);
+    } else {
+      if (Toast && Toast.show) {
+        Toast.show({ type: 'success', text1: 'Added to cart!' });
+      }
+    }
+  };
 
   // ✅ FILTER LOGIC: Only show items marked as Best Seller in DB
   const bestSellers = useMemo(() => {
@@ -90,17 +109,14 @@ const BestSellerSlider = () => {
               style={[styles.addButton, !isStoreOnline && { backgroundColor: '#ccc' }]}
               disabled={!isStoreOnline}
               onPress={() => {
-                addToCart(item);
-                // Use a simpler toast call or ensure Toast is set up in App.js
-                if (Toast && Toast.show) {
-                  Toast.show({ type: 'success', text1: 'Added to cart!' });
-                }
-
-                // Show Upsell Modal for Pizza Categories
-                const catName = (item.category || '').toLowerCase();
-                if (catName.includes('pizza')) {
+                const hasVariants = item.variants && item.variants.length > 0;
+                if (hasVariants) {
                   setTargetProduct(item);
-                  setUpsellVisible(true);
+                  setVariantModalVisible(true);
+                } else {
+                  addToCart(item);
+                  setTargetProduct(item);
+                  tryShowUpsell(item);
                 }
               }}
             >
@@ -130,10 +146,21 @@ const BestSellerSlider = () => {
       />
 
       {/* UPSELL MODAL */}
-      <UpsellModal 
-        isVisible={upsellVisible} 
-        onClose={() => setUpsellVisible(false)} 
+      <VariantSelectionModal 
+        isVisible={variantModalVisible} 
+        onClose={() => setVariantModalVisible(false)} 
         currentProduct={targetProduct} 
+        onVariantAdded={tryShowUpsell}
+      />
+
+      <DynamicUpsellModal
+        isVisible={dynamicUpsellVisible}
+        onClose={() => setDynamicUpsellVisible(false)}
+        upsellProductIds={
+          targetProduct 
+            ? (categories.find(c => c.category_name === (targetProduct.category_name || targetProduct.category) || c.name === (targetProduct.category_name || targetProduct.category))?.upsell_product_ids || [])
+            : []
+        }
       />
     </View>
   );

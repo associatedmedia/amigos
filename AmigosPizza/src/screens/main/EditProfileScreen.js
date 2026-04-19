@@ -19,6 +19,7 @@ import { COLORS } from '../../utils/colors';
 import api from '../../services/api';
 import Toast from 'react-native-toast-message';
 import BackButton from '../../components/BackButton';
+import * as Location from 'expo-location';
 
 // 🔴 REPLACE WITH YOUR VALID GOOGLE API KEY
 const GOOGLE_API_KEY = "AIzaSyA024waSwg_D8uc9p631ClPteTdpDRDQ4U";
@@ -195,11 +196,64 @@ const EditProfileScreen = ({ navigation }) => {
               fetchDetails={true}
               debounce={300}
               minLength={2}
+              predefinedPlaces={[{
+                description: '📍 Use My Current Location',
+                geometry: { location: { lat: 0, lng: 0 } },
+              }]}
 
               onFail={(error) => Alert.alert("Google Maps Error", error)}
               onNotFound={() => Toast.show({ type: 'error', text1: 'No results found' })}
 
-              onPress={(data, details = null) => {
+              onPress={async (data, details = null) => {
+                const isCurrentLocation = data.description === '📍 Use My Current Location';
+                if (isCurrentLocation) {
+                  try {
+                    Toast.show({ type: 'info', text1: 'Detecting Location...' });
+                    let { status } = await Location.requestForegroundPermissionsAsync();
+                    if (status !== 'granted') {
+                      Toast.show({ type: 'error', text1: 'Permission Denied' });
+                      return;
+                    }
+                    let loc = await Location.getCurrentPositionAsync({ accuracy: 3 }); // Balanced accuracy
+                    const lat = loc.coords.latitude;
+                    const lng = loc.coords.longitude;
+
+                    // Manual reverse geocode to bypass strictbounds limitations
+                    const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_API_KEY}`);
+                    const json = await response.json();
+
+                    let address = "Unknown Location";
+                    if (json.results && json.results.length > 0) {
+                      address = json.results[0].formatted_address;
+                    }
+
+                    if (ref.current) {
+                      ref.current.setAddressText(address);
+                    }
+
+                    setFormData({
+                      ...formData,
+                      address: address,
+                      latitude: lat,
+                      longitude: lng
+                    });
+
+                    setRegion({
+                      latitude: parseFloat(lat),
+                      longitude: parseFloat(lng),
+                      latitudeDelta: 0.005,
+                      longitudeDelta: 0.005,
+                    });
+                    
+                    Toast.show({ type: 'success', text1: 'Location Detected!' });
+                  } catch (error) {
+                    console.error("Auto detect error:", error);
+                    Toast.show({ type: 'error', text1: 'Failed to detect location' });
+                  }
+                  return;
+                }
+
+                // Standard Autocomplete Selection
                 const lat = details?.geometry?.location.lat;
                 const lng = details?.geometry?.location.lng;
                 const address = data.description;
@@ -221,10 +275,10 @@ const EditProfileScreen = ({ navigation }) => {
                 }
               }}
 
-              // 2. Enable Nested Scrolling for Android
+              // 2. Disable nested VirtualizedList scrolling to fix React Native warning
               flatListProps={{
-                nestedScrollEnabled: true,
                 keyboardShouldPersistTaps: 'always',
+                scrollEnabled: false,
               }}
 
               query={{

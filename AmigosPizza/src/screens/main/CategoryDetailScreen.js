@@ -6,47 +6,58 @@ import ProductCard from '../../components/ProductCard';
 import { useCart } from '../../context/CartContext';
 import { useMenuData } from '../../hooks/useMenuData';
 import BackButton from '../../components/BackButton';
-import UpsellModal from '../../components/UpsellModal';
+import VariantSelectionModal from '../../components/VariantSelectionModal';
+import DynamicUpsellModal from '../../components/DynamicUpsellModal';
+import Toast from 'react-native-toast-message';
 
 const CategoryDetailScreen = ({ route, navigation }) => {
   const { categoryName } = route.params || {};
-  const { products: allProducts, loading } = useMenuData();
+  const { products: allProducts, categories, loading } = useMenuData();
   const { addToCart, cartItems, cartTotal } = useCart();
 
-  const [upsellVisible, setUpsellVisible] = useState(false);
+  const [variantModalVisible, setVariantModalVisible] = useState(false);
+  const [dynamicUpsellVisible, setDynamicUpsellVisible] = useState(false);
   const [targetProduct, setTargetProduct] = useState(null);
+
+  // Find the entire category object
+  const currentCategory = useMemo(() => {
+    if (categories && categories.length > 0) {
+      return categories.find(cat => cat.name === categoryName || cat.category_name === categoryName);
+    }
+    // Fallback if useMenuData magically returns grouped products somehow
+    if (allProducts && allProducts.length > 0 && allProducts[0].products !== undefined) {
+      return allProducts.find(cat => cat.category_name === categoryName);
+    }
+    return null;
+  }, [categories, allProducts, categoryName]);
 
   // Filter products by category
   const categoryProducts = useMemo(() => {
-    if (!allProducts || !categoryName) return [];
-
-    // CASE 1: Data is grouped from the API (Your current setup)
-    if (allProducts.length > 0 && allProducts[0].products !== undefined) {
-      const foundCategory = allProducts.find(cat => cat.category_name === categoryName);
-      return foundCategory ? foundCategory.products : [];
+    // If the category object already has a nested products array, use it
+    if (currentCategory && currentCategory.products) {
+      return currentCategory.products;
     }
+    
+    // Fallback: If it's a flat list, filter all products manually
+    return allProducts ? allProducts.filter(item => item.category === categoryName) : [];
+  }, [currentCategory, allProducts, categoryName]);
 
-    // CASE 2: Fallback if data is a flat list
-    return allProducts.filter(item => item.category === categoryName);
-  }, [allProducts, categoryName]);
-
-  // console.log("Category Products:", categoryProducts);
-
-  // ----------------------------------------------------
-  // SIMPLE CLICK LOGIC
-  // ----------------------------------------------------
-  const handleProductClick = (product) => {
-    // Just check if the product has any sizes attached
-
-    const hasVariants = product.variants && product.variants.length > 0;
-
-    if (hasVariants) {
-      // It has sizes! Open the Modal.
-      setTargetProduct(product);
-      setUpsellVisible(true);
+  const tryShowUpsell = () => {
+    if (currentCategory?.is_upsell_enabled && currentCategory?.upsell_product_ids?.length > 0) {
+      setDynamicUpsellVisible(true);
     } else {
-      // No sizes. Just add it straight to the cart.
+      Toast.show({ type: 'success', text1: 'Added', text2: `Item added to cart` });
+    }
+  };
+
+  const handleProductClick = (product) => {
+    const hasVariants = product.variants && product.variants.length > 0;
+    if (hasVariants) {
+      setTargetProduct(product);
+      setVariantModalVisible(true);
+    } else {
       addToCart(product);
+      tryShowUpsell();
     }
   };
 
@@ -76,7 +87,7 @@ const CategoryDetailScreen = ({ route, navigation }) => {
           renderItem={({ item }) => (
             <ProductCard
               item={item}
-              onPress={handleProductClick} // Pass our smart logic here!
+              onPress={handleProductClick} 
             />
           )}
           contentContainerStyle={styles.listContent}
@@ -93,10 +104,17 @@ const CategoryDetailScreen = ({ route, navigation }) => {
         </TouchableOpacity>
       )}
 
-      <UpsellModal
-        isVisible={upsellVisible}
-        onClose={() => setUpsellVisible(false)}
+      <VariantSelectionModal
+        isVisible={variantModalVisible}
+        onClose={() => setVariantModalVisible(false)}
         currentProduct={targetProduct}
+        onVariantAdded={tryShowUpsell}
+      />
+
+      <DynamicUpsellModal
+        isVisible={dynamicUpsellVisible}
+        onClose={() => setDynamicUpsellVisible(false)}
+        upsellProductIds={currentCategory?.upsell_product_ids || []}
       />
     </SafeAreaView>
   );
