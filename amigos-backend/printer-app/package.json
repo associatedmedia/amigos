@@ -1,0 +1,34 @@
+{
+  "name": "amigos-printer-bridge",
+  "version": "1.0.0",
+  "description": "Amigos Pizza Local Printer Bridge App",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder build --win --x64"
+  },
+  "author": "Amigos Pizza",
+  "license": "ISC",
+  "dependencies": {
+    "node-thermal-printer": "^4.1.2",
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.amigospizza.printerbridge",
+    "productName": "Amigos Printer Bridge",
+    "win": {
+      "target": "nsis",
+      "icon": "icon.png"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false,
+      "runAfterFinish": true
+    }
+  }
+}

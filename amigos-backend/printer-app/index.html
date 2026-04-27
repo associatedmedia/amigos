@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline';">
+    <title>Amigos Printer Bridge</title>
+    <style>
+        :root {
+            --bg-color: #1e1e1e;
+            --text-color: #d4d4d4;
+            --primary-color: #f39c12; 
+            --danger-color: #e74c3c;
+            --success-color: #2ecc71;
+            --panel-bg: #252526;
+            --border-color: #3e3e42;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-running {
+            background-color: rgba(46, 204, 113, 0.2);
+            color: var(--success-color);
+        }
+
+        .status-stopped {
+            background-color: rgba(231, 76, 60, 0.2);
+            color: var(--danger-color);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 16px;
+            cursor: pointer;
+            padding: 8px 16px;
+            border-radius: 4px;
+        }
+
+        .tab-btn.active {
+            background-color: var(--panel-bg);
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        .tab-content {
+            display: none;
+            flex-direction: column;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .tab-content.active {
+            display: flex;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background-color: var(--panel-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 10px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: #333333;
+            border-color: #555555;
+        }
+
+        button.primary {
+            background-color: var(--primary-color);
+            color: #fff;
+            border-color: #e67e22;
+        }
+
+        button.primary:hover:not(:disabled) {
+            background-color: #e67e22;
+        }
+
+        button.danger {
+            background-color: var(--danger-color);
+            color: #fff;
+            border-color: #c0392b;
+        }
+
+        button.danger:hover:not(:disabled) {
+            background-color: #c0392b;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .terminal {
+            flex: 1;
+            background-color: #0d0d0d;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 15px;
+            overflow-y: auto;
+            font-family: 'Consolas', 'Courier New', Courier, monospace;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .log-line {
+            margin-bottom: 4px;
+            word-break: break-all;
+        }
+
+        .log-info { color: #cccccc; }
+        .log-error { color: #ff5555; }
+        .log-debug { color: #888888; }
+        .log-warning { color: #ffb86c; }
+
+        .test-print-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            background-color: var(--panel-bg);
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            background-color: #1e1e1e;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 10px;
+            border-radius: 4px;
+            flex: 1;
+            font-size: 14px;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        /* Printer Setup Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            background-color: var(--panel-bg);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: #2d2d30;
+            font-weight: 600;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 5px;
+        }
+
+        .action-btns button {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+
+        /* Modal / Form Row */
+        .form-row {
+            display: flex;
+            gap: 10px;
+            background-color: var(--panel-bg);
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            align-items: center;
+        }
+        .scrollable-content {
+            flex: 1;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="title">
+            🖨️ Amigos Printer Bridge
+        </div>
+        <div id="statusBadge" class="status-badge status-stopped">
+            <span id="statusIcon">🔴</span> <span id="statusText">Stopped</span>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" data-target="dashboard">Dashboard</button>
+        <button class="tab-btn" data-target="setup">Printer Setup</button>
+    </div>
+
+    <!-- DASHBOARD TAB -->
+    <div id="dashboard" class="tab-content active">
+        <div class="controls">
+            <button id="startBtn" class="primary">▶ Start Service</button>
+            <button id="stopBtn" class="danger" disabled>⏹ Stop Service</button>
+            <button id="clearLogsBtn">🗑️ Clear Logs</button>
+        </div>
+
+        <div class="test-print-row">
+            <span><strong>Test Print:</strong></span>
+            <input type="text" id="printerIpInput" placeholder="Enter Printer IP (e.g. 192.168.1.100)">
+            <button id="testPrintBtn">🖨️ Send Test Print</button>
+        </div>
+
+        <div class="terminal" id="terminal">
+            <div class="log-line log-info">Welcome to Amigos Printer Bridge.</div>
+        </div>
+    </div>
+
+    <!-- PRINTER SETUP TAB -->
+    <div id="setup" class="tab-content">
+        <div class="form-row" style="margin-bottom: 20px;">
+            <input type="hidden" id="editConfigId">
+            <input type="text" id="opTypeInput" placeholder="Operation Type (e.g. KOT, BILL, PIZZA)" required>
+            <input type="text" id="printerIdInput" placeholder="Printer IP Address" required>
+            <input type="text" id="printerModelInput" placeholder="Printer Model (Optional)">
+            <button id="saveConfigBtn" class="primary">💾 Save</button>
+            <button id="cancelEditBtn" style="display:none;">Cancel</button>
+        </div>
+
+        <div class="scrollable-content">
+            <table id="configsTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Operation Type</th>
+                        <th>Printer IP</th>
+                        <th>Model</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="configsTableBody">
+                    <tr><td colspan="5" style="text-align: center;">Loading configs...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="./renderer.js"></script>
+</body>
+</html>
