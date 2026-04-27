@@ -23,3 +23,11 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+node_modules
+/build
+/dist
+/printer-app/node_modules
+/printer-app/build
+
+

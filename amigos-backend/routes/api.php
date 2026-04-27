@@ -143,6 +143,10 @@ Route::post('/settings/update', [SettingController::class, 'updateSetting'])->mi
 // Printer API (For Local Bridge)
 Route::group(['prefix' => 'printer'], function () {
     Route::get('/configs', [PrinterApiController::class, 'getConfigs']);
+    Route::post('/configs', [PrinterApiController::class, 'storeConfig']);
+    Route::put('/configs/{id}', [PrinterApiController::class, 'updateConfig']);
+    Route::delete('/configs/{id}', [PrinterApiController::class, 'deleteConfig']);
+    
     Route::get('/pending-jobs', [PrinterApiController::class, 'getPendingJobs']);
     Route::post('/jobs/{id}/status', [PrinterApiController::class, 'updateJobStatus']);
     
