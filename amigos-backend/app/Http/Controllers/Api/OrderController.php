@@ -80,13 +80,8 @@ class OrderController extends Controller
                     ]);
                 }
                 
-                // Auto queue print jobs for the new order
-                try {
-                    app(\App\Services\PrinterService::class)->queuePrintJobs($order);
-                } catch (\Exception $e) {
-                    // Log error but don't fail the order placement
-                    \Log::error("Printing failed for order {$order->id}: " . $e->getMessage());
-                }
+                // Print jobs will be queued when the admin accepts the order, not here.
+
 
                 // Send Push Notification
                 $user = Auth::user();

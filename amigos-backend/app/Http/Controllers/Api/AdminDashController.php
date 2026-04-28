@@ -51,8 +51,8 @@ class AdminDashController extends Controller
 
         $order->save();
 
-        // Auto queue print jobs if moved to 'cooking' (Kitchen) 
-        if ($request->status === 'cooking') {
+        // Auto queue print jobs if moved to 'accepted'
+        if ($request->status === 'accepted') {
             app(\App\Services\PrinterService::class)->queuePrintJobs($order);
         }
 

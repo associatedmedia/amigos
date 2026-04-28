@@ -258,8 +258,13 @@ async function simulatePrint(job) {
                 taxes[taxPercent] += taxAmount;
             }
 
+            let itemName = item.name;
+            if (item.variety && item.variety !== 'Regular') {
+                itemName += ` (${item.variety})`;
+            }
+
             printer.tableCustom([
-                { text: item.name.substring(0, 25), align: "LEFT", width: 0.50 },
+                { text: itemName.substring(0, 25), align: "LEFT", width: 0.50 },
                 { text: `${item.quantity} ${baseRate.toFixed(2)}`, align: "RIGHT", width: 0.25 },
                 { text: amount.toFixed(2), align: "RIGHT", width: 0.25 }
             ]);
