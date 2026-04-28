@@ -1,6 +1,6 @@
 {
   "name": "amigos-printer-bridge",
-  "version": "1.0.0",
+  "version": "1.5.0",
   "description": "Amigos Pizza Local Printer Bridge App",
   "main": "main.js",
   "scripts": {

@@ -4,6 +4,7 @@
  */
 
 const net = require('net');
+const { Notification } = require('electron');
 
 let ThermalPrinter, PrinterTypes, CharacterSet, BreakLine;
 
@@ -24,9 +25,14 @@ const CONFIG = {
 };
 
 let printerConfigs = [];
+let appSettings = {};
 let isPolling = false;
 let currentStatus = 'Stopped';
 let pollTimer = null;
+
+let retryQueue = [];
+const MAX_RETRIES = 5;
+let isRetrying = false;
 
 let logCallback = null;
 let statusCallback = null;
@@ -83,6 +89,7 @@ async function poll() {
             if (configRes.ok) {
                 const configData = await configRes.json();
                 printerConfigs = configData.data || [];
+                appSettings = configData.settings || {};
             }
         } catch (e) {
             log('Could not fetch printer configs', 'DEBUG');
@@ -110,6 +117,48 @@ async function poll() {
     }
 }
 
+function showNotification(title, body) {
+    if (Notification.isSupported()) {
+        new Notification({ title, body }).show();
+    }
+}
+
+async function processRetryQueue() {
+    if (isRetrying || retryQueue.length === 0 || !isPolling) return;
+    isRetrying = true;
+
+    for (let i = retryQueue.length - 1; i >= 0; i--) {
+        const queuedItem = retryQueue[i];
+        
+        log(`Retrying job ID: ${queuedItem.job.id} (Attempt ${queuedItem.attempts} of ${MAX_RETRIES})...`, 'WARNING');
+        try {
+            const success = await simulatePrint(queuedItem.job);
+            if (success) {
+                log(`Successfully printed job ID: ${queuedItem.job.id} on retry.`);
+                await updateJobStatus(queuedItem.job.id, 'completed');
+                retryQueue.splice(i, 1);
+            }
+        } catch (error) {
+            queuedItem.attempts++;
+            if (queuedItem.attempts >= MAX_RETRIES) {
+                log(`Job ID: ${queuedItem.job.id} exceeded max retries. Failing permanently.`, 'ERROR');
+                await updateJobStatus(queuedItem.job.id, 'failed', error.message);
+                retryQueue.splice(i, 1);
+            } else {
+                log(`Retry failed for job ID: ${queuedItem.job.id}. Will try again later.`, 'ERROR');
+            }
+        }
+    }
+    
+    isRetrying = false;
+}
+
+setInterval(() => {
+    if (retryQueue.length > 0 && isPolling) {
+        processRetryQueue();
+    }
+}, 15000); // Check retry queue every 15 seconds
+
 async function processJob(job) {
     log(`Processing job ID: ${job.id} for Order #${job.order_id} (${job.printer_type})`);
 
@@ -124,7 +173,15 @@ async function processJob(job) {
         }
     } catch (error) {
         log(`Failed to process job ID: ${job.id}. Error: ${error.message}`, 'ERROR');
-        await updateJobStatus(job.id, 'failed', error.message);
+        
+        // Add to retry queue if it's a connection-related error
+        if (error.message.includes('TCP Error') || error.message.includes('timed out') || error.message.includes('socket failed')) {
+            log(`Adding job ID: ${job.id} to retry queue.`);
+            retryQueue.push({ job: job, attempts: 1 });
+            showNotification('Kitchen Printer Offline', `Order #${job.order_id} failed to print. Will auto-retry.`);
+        } else {
+            await updateJobStatus(job.id, 'failed', error.message);
+        }
     }
 }
 
@@ -211,16 +268,41 @@ async function simulatePrint(job) {
         printer.drawLine();
         printer.alignCenter();
         printer.println("*** END OF TICKET ***");
+    } else if (data.type === 'LABEL') {
+        printer.alignCenter();
+        for (const item of data.items) {
+            printer.setTextSize(1, 1); // Larger text for sticker
+            let itemName = item.name;
+            if (item.variety && item.variety !== 'Regular') {
+                itemName += ` (${item.variety})`;
+            }
+            printer.println(itemName);
+            printer.setTextNormal();
+            
+            printer.println(`Order #${data.order_number}`);
+            printer.println(`Customer: ${data.customer_name || data.customer || 'Guest'}`);
+            printer.println(dateStr + ' ' + timeStr);
+            printer.println(" "); // Space before cut
+        }
     } else if (data.type === 'BILL') {
         printer.alignCenter();
         printer.println("Office Copy | Web Order");
         printer.println("");
-        printer.println("Amigo's Foods & Hospitalities");
-        printer.println("Gogji Bagh , Opp. Amar Singh College");
-        printer.println("Main Gate , Srinagar, J & K");
-        printer.println("Phone : 9797798505,9906667444");
-        printer.println("        9070145454,8716988621");
-        printer.println("GST NO.- 01ABIFA7518C1ZZ");
+        
+        const storeName = appSettings['store_name'] || "Amigo's Foods & Hospitalities";
+        const storeAddress = appSettings['store_address'] || "Gogji Bagh , Opp. Amar Singh College\nMain Gate , Srinagar, J & K";
+        const storePhone = appSettings['store_phone'] || "Phone : 9797798505,9906667444\n        9070145454,8716988621";
+        const gstNo = appSettings['gst_number'] || "GST NO.- 01ABIFA7518C1ZZ";
+
+        printer.println(storeName);
+        storeAddress.split('\\n').forEach(line => {
+            if(line.trim()) printer.println(line.trim());
+        });
+        storePhone.split('\\n').forEach(line => {
+            if(line.trim()) printer.println(line.trim());
+        });
+        printer.println(gstNo);
+        
         printer.println("(All Taxes are Inclusive)");
         printer.drawLine();
 
@@ -432,6 +514,7 @@ async function fetchConfigs() {
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const result = await response.json();
         printerConfigs = result.data || [];
+        appSettings = result.settings || {};
         return { success: true, data: printerConfigs };
     } catch (error) {
         log(`Failed to fetch configs: ${error.message}`, 'ERROR');

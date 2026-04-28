@@ -15,9 +15,11 @@ class PrinterApiController extends Controller
     public function getConfigs()
     {
         $configs = PrinterSetup::all();
+        $settings = \App\Models\Setting::pluck('value', 'key')->toArray();
         return response()->json([
             'success' => true,
-            'data' => $configs
+            'data' => $configs,
+            'settings' => $settings
         ]);
     }
 
