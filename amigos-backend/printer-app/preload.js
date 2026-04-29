@@ -9,6 +9,9 @@ contextBridge.exposeInMainWorld('bridgeAPI', {
     fetchConfigs: () => ipcRenderer.invoke('fetch-configs'),
     saveConfig: (data) => ipcRenderer.invoke('save-config', data),
     deleteConfig: (id) => ipcRenderer.invoke('delete-config', id),
+    fetchLabelConfig: () => ipcRenderer.invoke('fetch-label-config'),
+    saveLabelConfig: (data) => ipcRenderer.invoke('save-label-config', data),
+    testLabelPrint: (printerId, config) => ipcRenderer.invoke('test-label-print', printerId, config),
 
     // Listeners for UI to receive data from Main Process
     onLog: (callback) => ipcRenderer.on('bridge-log', (event, data) => callback(data)),

@@ -122,4 +122,44 @@ class PrinterApiController extends Controller
             'message' => 'Job status updated successfully.'
         ]);
     }
+
+    /**
+     * Get label configuration.
+     */
+    public function getLabelConfig()
+    {
+        $setting = \App\Models\Setting::where('key', 'label_configuration')->first();
+        $config = $setting ? json_decode($setting->value, true) : null;
+
+        return response()->json([
+            'success' => true,
+            'data' => $config
+        ]);
+    }
+
+    /**
+     * Store or update label configuration.
+     */
+    public function storeLabelConfig(Request $request)
+    {
+        $validated = $request->validate([
+            'fontSize' => 'nullable|integer',
+            'showCustomerName' => 'nullable|boolean',
+            'showOrderNumber' => 'nullable|boolean',
+            'showDateTime' => 'nullable|boolean',
+            'footerText' => 'nullable|string',
+            'labelWidth' => 'nullable|integer',
+        ]);
+
+        $setting = \App\Models\Setting::updateOrCreate(
+            ['key' => 'label_configuration'],
+            ['value' => json_encode($validated)]
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Label configuration saved successfully.',
+            'data' => json_decode($setting->value, true)
+        ]);
+    }
 }

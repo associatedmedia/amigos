@@ -1,6 +1,6 @@
 const { app, BrowserWindow, Tray, Menu, ipcMain } = require('electron');
 const path = require('path');
-const { startPolling, stopPolling, getStatus, setStatusCallback, setLogCallback, testPrint, fetchConfigs, saveConfig, deleteConfig } = require('./printer_bridge.js');
+const { startPolling, stopPolling, getStatus, setStatusCallback, setLogCallback, testPrint, fetchConfigs, saveConfig, deleteConfig, fetchLabelConfig, saveLabelConfig, testLabelPrint } = require('./printer_bridge.js');
 
 let mainWindow = null;
 let tray = null;
@@ -127,6 +127,11 @@ if (!gotTheLock) {
         ipcMain.handle('fetch-configs', async () => await fetchConfigs());
         ipcMain.handle('save-config', async (event, data) => await saveConfig(data));
         ipcMain.handle('delete-config', async (event, id) => await deleteConfig(id));
+        ipcMain.handle('fetch-label-config', async () => await fetchLabelConfig());
+        ipcMain.handle('save-label-config', async (event, data) => await saveLabelConfig(data));
+        ipcMain.handle('test-label-print', async (event, printerId, config) => {
+            return await testLabelPrint(printerId, config);
+        });
 
         // Auto-start on system boot
         app.setLoginItemSettings({

@@ -150,6 +150,9 @@ Route::group(['prefix' => 'printer'], function () {
     Route::get('/pending-jobs', [PrinterApiController::class, 'getPendingJobs']);
     Route::post('/jobs/{id}/status', [PrinterApiController::class, 'updateJobStatus']);
     
+    Route::get('/label-config', [PrinterApiController::class, 'getLabelConfig']);
+    Route::post('/label-config', [PrinterApiController::class, 'storeLabelConfig']);
+    
     // TEMPORARY: Expose logs to debug missing print jobs on AWS
     // Route::get('/debug-logs', function () {
     //     $logFile = storage_path('logs/laravel.log');

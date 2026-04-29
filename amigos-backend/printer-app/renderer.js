@@ -250,3 +250,122 @@ async function deleteConfig(id) {
         alert(`Error: ${e.message}`);
     }
 }
+
+// ==========================================
+// LABEL SETUP LOGIC
+// ==========================================
+const labelFontSize = document.getElementById('labelFontSize');
+const labelShowCustomer = document.getElementById('labelShowCustomer');
+const labelShowOrder = document.getElementById('labelShowOrder');
+const labelShowTime = document.getElementById('labelShowTime');
+const labelFooterText = document.getElementById('labelFooterText');
+const labelWidthSelect = document.getElementById('labelWidthSelect');
+const saveLabelBtn = document.getElementById('saveLabelBtn');
+const labelPreviewBox = document.getElementById('labelPreviewBox');
+const testLabelIp = document.getElementById('testLabelIp');
+const testLabelBtn = document.getElementById('testLabelBtn');
+
+function updateLabelPreview() {
+    let width = parseInt(labelWidthSelect.value) || 32;
+    let fs = parseInt(labelFontSize.value) || 1;
+    let fontSizeCss = fs === 1 ? '14px' : fs === 2 ? '18px' : '22px';
+    
+    let html = `<div style="font-size: ${fontSizeCss}; font-weight: bold; text-align: center; margin-bottom: 10px;">Pizza L (Cheese Burst)</div>`;
+    
+    html += `<div style="font-size: 14px; display: flex; flex-direction: column; gap: 5px;">`;
+    if (labelShowOrder.checked) html += `<div>Order #1042</div>`;
+    if (labelShowCustomer.checked) html += `<div>Customer: John Doe</div>`;
+    if (labelShowTime.checked) html += `<div>${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</div>`;
+    if (labelFooterText.value.trim()) html += `<div style="margin-top: 10px; text-align: center;">${labelFooterText.value}</div>`;
+    html += `</div>`;
+    
+    labelPreviewBox.style.width = width === 32 ? '220px' : '300px';
+    labelPreviewBox.innerHTML = html;
+}
+
+[labelFontSize, labelShowCustomer, labelShowOrder, labelShowTime, labelFooterText, labelWidthSelect].forEach(el => {
+    el.addEventListener('input', updateLabelPreview);
+    el.addEventListener('change', updateLabelPreview);
+});
+
+async function loadLabelConfig() {
+    try {
+        const res = await window.bridgeAPI.fetchLabelConfig();
+        if (res.success && res.data) {
+            labelFontSize.value = res.data.fontSize || "1";
+            labelShowCustomer.checked = res.data.showCustomerName ?? true;
+            labelShowOrder.checked = res.data.showOrderNumber ?? true;
+            labelShowTime.checked = res.data.showDateTime ?? true;
+            labelFooterText.value = res.data.footerText || "";
+            labelWidthSelect.value = res.data.labelWidth || "32";
+        }
+        updateLabelPreview();
+    } catch (e) {
+        console.error("Failed to load label config", e);
+        updateLabelPreview();
+    }
+}
+
+saveLabelBtn.addEventListener('click', async () => {
+    const payload = {
+        fontSize: parseInt(labelFontSize.value),
+        showCustomerName: labelShowCustomer.checked,
+        showOrderNumber: labelShowOrder.checked,
+        showDateTime: labelShowTime.checked,
+        footerText: labelFooterText.value.trim(),
+        labelWidth: parseInt(labelWidthSelect.value)
+    };
+    
+    saveLabelBtn.disabled = true;
+    saveLabelBtn.textContent = 'Saving...';
+    try {
+        const res = await window.bridgeAPI.saveLabelConfig(payload);
+        if (res.success) {
+            alert('Label configuration saved successfully.');
+        } else {
+            alert(`Error saving: ${res.error || res.message}`);
+        }
+    } catch (e) {
+        alert(`Error: ${e.message}`);
+    } finally {
+        saveLabelBtn.disabled = false;
+        saveLabelBtn.textContent = '💾 Save Template';
+    }
+});
+
+testLabelBtn.addEventListener('click', async () => {
+    const ip = testLabelIp.value.trim();
+    if (!ip) {
+        alert("Please enter a valid Printer IP address for label testing.");
+        return;
+    }
+    
+    testLabelBtn.disabled = true;
+    testLabelBtn.textContent = "⏳ Testing...";
+    
+    const payload = {
+        fontSize: parseInt(labelFontSize.value),
+        showCustomerName: labelShowCustomer.checked,
+        showOrderNumber: labelShowOrder.checked,
+        showDateTime: labelShowTime.checked,
+        footerText: labelFooterText.value.trim(),
+        labelWidth: parseInt(labelWidthSelect.value)
+    };
+
+    try {
+        const result = await window.bridgeAPI.testLabelPrint(ip, payload);
+        if (result.success) {
+            alert(`Success! Test label sent to ${ip}.`);
+        } else {
+            alert(`Failed: ${result.error}`);
+        }
+    } catch (e) {
+        alert(`Error: ${e.message}`);
+    } finally {
+        testLabelBtn.disabled = false;
+        testLabelBtn.textContent = "🖨️ Test Print";
+    }
+});
+
+// Load label config on start
+loadLabelConfig();

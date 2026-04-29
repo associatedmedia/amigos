@@ -270,8 +270,31 @@ async function simulatePrint(job) {
         printer.println("*** END OF TICKET ***");
     } else if (data.type === 'LABEL') {
         printer.alignCenter();
+        
+        let labelConfig = {
+            fontSize: 1,
+            showCustomerName: true,
+            showOrderNumber: true,
+            showDateTime: true,
+            footerText: ""
+        };
+
+        try {
+            const configRes = await fetch(`${CONFIG.API_URL}/label-config`);
+            if (configRes.ok) {
+                const configData = await configRes.json();
+                if (configData.data) {
+                    labelConfig = configData.data;
+                }
+            }
+        } catch (e) {
+            log('Could not fetch label config during print', 'DEBUG');
+        }
+
+        let fs = labelConfig.fontSize || 1;
+
         for (const item of data.items) {
-            printer.setTextSize(1, 1); // Larger text for sticker
+            printer.setTextSize(fs, fs); 
             let itemName = item.name;
             if (item.variety && item.variety !== 'Regular') {
                 itemName += ` (${item.variety})`;
@@ -279,9 +302,13 @@ async function simulatePrint(job) {
             printer.println(itemName);
             printer.setTextNormal();
             
-            printer.println(`Order #${data.order_number}`);
-            printer.println(`Customer: ${data.customer_name || data.customer || 'Guest'}`);
-            printer.println(dateStr + ' ' + timeStr);
+            if (labelConfig.showOrderNumber) printer.println(`Order #${data.order_number}`);
+            if (labelConfig.showCustomerName) printer.println(`Customer: ${data.customer_name || data.customer || 'Guest'}`);
+            if (labelConfig.showDateTime) printer.println(dateStr + ' ' + timeStr);
+            if (labelConfig.footerText) {
+                printer.println("");
+                printer.println(labelConfig.footerText);
+            }
             printer.println(" "); // Space before cut
         }
     } else if (data.type === 'BILL') {
@@ -574,5 +601,104 @@ module.exports = {
     testPrint,
     fetchConfigs,
     saveConfig,
-    deleteConfig
+    deleteConfig,
+    fetchLabelConfig,
+    saveLabelConfig,
+    testLabelPrint
 };
+
+async function fetchLabelConfig() {
+    try {
+        const response = await fetch(`${CONFIG.API_URL}/label-config`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const result = await response.json();
+        return result;
+    } catch (error) {
+        log(`Failed to fetch label config: ${error.message}`, 'ERROR');
+        return { success: false, error: error.message };
+    }
+}
+
+async function saveLabelConfig(data) {
+    try {
+        const response = await fetch(`${CONFIG.API_URL}/label-config`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const result = await response.json();
+        return result;
+    } catch (error) {
+        log(`Failed to save label config: ${error.message}`, 'ERROR');
+        return { success: false, error: error.message };
+    }
+}
+
+async function testLabelPrint(printerIp, labelConfig) {
+    if (!ThermalPrinter) {
+        log("'node-thermal-printer' missing. Cannot run test print.", "ERROR");
+        return { success: false, error: "'node-thermal-printer' module missing." };
+    }
+    
+    log(`Running test label print on IP: ${printerIp}`, 'INFO');
+
+    try {
+        let printer = new ThermalPrinter({
+            type: PrinterTypes?.EPSON,
+            interface: 'tcp://' + printerIp,
+            characterSet: CharacterSet?.PC852_LATIN2,
+            removeSpecialCharacters: false,
+            lineCharacter: "-",
+            breakLine: BreakLine?.WORD,
+            width: labelConfig.labelWidth || 32,
+        });
+
+        printer.alignCenter();
+        let fs = labelConfig.fontSize || 1;
+        printer.setTextSize(fs, fs);
+        printer.println("Pizza L (Cheese Burst)");
+        printer.setTextNormal();
+        
+        if (labelConfig.showOrderNumber) printer.println("Order #1042");
+        if (labelConfig.showCustomerName) printer.println("Customer: John Doe");
+        if (labelConfig.showDateTime) {
+            const dateObj = new Date();
+            const dateStr = dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' });
+            const timeStr = dateObj.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+            printer.println(`${dateStr} ${timeStr}`);
+        }
+        if (labelConfig.footerText) {
+            printer.println("");
+            printer.println(labelConfig.footerText);
+        }
+        
+        printer.println(" "); // Space before cut
+        printer.cut();
+
+        const buffer = printer.getBuffer();
+
+        return await new Promise((resolve, reject) => {
+            const client = new net.Socket();
+            client.on('error', (err) => {
+                log(`Test print failed to connect to ${printerIp}:9100`, 'ERROR');
+                resolve({ success: false, error: err.message });
+            });
+            client.connect(9100, printerIp, () => {
+                client.write(buffer, () => {
+                    log(`Test print buffer successfully sent to ${printerIp}`, 'INFO');
+                    client.destroy(); 
+                    resolve({ success: true });
+                });
+            });
+            setTimeout(() => {
+                client.destroy();
+                resolve({ success: false, error: "Connection timed out" });
+            }, 5000);
+        });
+    } catch(err) {
+        log(`Test print error: ${err.message}`, 'ERROR');
+        return { success: false, error: err.message };
+    }
+}
